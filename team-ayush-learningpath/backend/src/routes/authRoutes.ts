@@ -7,8 +7,8 @@ import {
     getMyProfile,
     changePassword,
     logoutUser,
-    forgotPassword, // <-- New import
-    resetPassword   // <-- New import
+    forgotPassword, 
+    resetPassword  
 } from '../controllers/authController';
 import { protect } from '../middlewares/authMiddleware';
 import {
