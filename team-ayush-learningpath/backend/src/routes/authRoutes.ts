@@ -7,8 +7,8 @@ import {
     getMyProfile,
     changePassword,
     logoutUser,
-    forgotPassword, // <-- New import
-    resetPassword   // <-- New import
+    forgotPassword, 
+    resetPassword  
 } from '../controllers/authController';
 import { protect } from '../middlewares/authMiddleware';
 import {
@@ -16,10 +16,11 @@ import {
     loginRules,
     changePasswordRules,
     validate,
-    forgotPasswordRules, // <-- New import
-    resetPasswordRules   // <-- New import
+    forgotPasswordRules, 
+    resetPasswordRules  
 } from '../validators/authValidator';
 import { IUser } from '../types';
+import { verify } from 'crypto';
 
 const router = Router();
 
