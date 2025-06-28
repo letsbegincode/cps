@@ -39,12 +39,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     useEffect(() => {
         const checkUserSession = async () => {
+            console.log('Checking user session...');
+            console.log('API URL:', process.env.NEXT_PUBLIC_API_URL);
+            
             try {
                 const response = await api.get('/auth/me');
+                console.log('Auth check response:', response.data);
                 if (response.data) {
                     setUser(response.data);
                 }
             } catch (error) {
+                console.error('Auth check error:', error);
                 setUser(null);
             } finally {
                 setIsLoading(false);

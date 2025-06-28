@@ -1,7 +1,11 @@
 import express from "express";
 import { getRecommendation } from "../controllers/recommendationController";
+// import { protect } from "../middlewares/authMiddleware";
 
 const router = express.Router();
+
+// Temporarily disabled authentication for testing in Postman
+// router.use(protect);
 
 /**
  * @route GET /api/recommendation/:userId/:goalConceptId

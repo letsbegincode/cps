@@ -7,7 +7,7 @@ import { BookOpen, Brain, Target, TrendingUp, Users, ArrowRight, Play, Star, Che
 import Link from "next/link"
 import Image from "next/image"
 import { ThemeToggle } from "@/components/theme-toggle"
-import { useAuth } from "@/hooks/useAuth"
+import { useAuth } from "./context/AuthContext"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 export default function LandingPage() {

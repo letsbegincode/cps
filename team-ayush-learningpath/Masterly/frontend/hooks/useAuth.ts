@@ -1,9 +1,8 @@
 "use client"
 
 import { useContext } from 'react';
-// --- This path is now corrected to be relative ---
-import { AuthContext } from '../app/context/AuthContext';
-
+// --- Updated to use the correct AuthContext ---
+import { AuthContext } from '../lib/auth-context';
 
 export const useAuth = () => {
     const context = useContext(AuthContext);

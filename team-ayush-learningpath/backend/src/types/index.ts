@@ -1,5 +1,16 @@
 import { Document, Types } from 'mongoose';
 
+export interface ITestQuestion {
+    id: number;
+    topic: string;
+    difficulty: "Easy" | "Medium" | "Hard";
+    question: string;
+    options: string[];
+    correct: number;
+    explanation: string;
+    tags: string[];
+}
+
 export interface IQuizQuestion {
     questionText: string;
     options: string[];
@@ -15,14 +26,25 @@ export interface IQuizAttempt {
 
 export interface IConcept extends Document {
     title: string;
+    Concept?: string;
+    Level?: string;
+    Category?: string;
+    Concept_Type?: string;
+    Est_Learning_Time_Hours?: number;
+    Is_Fundamental?: boolean;
+    Learning_Resources?: string;
+    Related_Concepts?: Types.ObjectId[];
+    Test_Questions?: ITestQuestion[];
+    
     relatedConcepts?: string[];
     description: string;
     level?: string;
     category?: string;
+    complexity?: number;
     conceptType?: string;
     estLearningTimeHours?: number;
     isFundamental?: boolean;
-    learningResources?:  string;
+    learningResources?: string;
     contentBlocks: { type: string; data: string }[];
     prerequisites: Types.ObjectId[];
     quiz: IQuizQuestion[];
@@ -45,11 +67,6 @@ export interface IUser extends Document {
     isModified: (field: string) => boolean;
 }
 
-
-export interface IQuizQuestion { /* ... */ }
-export interface IQuizAttempt { /* ... */ }
-export interface IConcept extends Document { /* ... */ }
-
 // Updated IUser interface
 export interface IUser extends Document {
     firstName: string;
@@ -64,8 +81,8 @@ export interface IUser extends Document {
         masteryLevel: number;
         quizAttempts: IQuizAttempt[];
     }[];
-    resetPasswordToken?: string; // <-- New optional field
-    resetPasswordExpire?: Date; // <-- New optional field
+    resetPasswordToken?: string;
+    resetPasswordExpire?: Date;
     isModified: (field: string) => boolean;
-    getResetPasswordToken: () => string; // <-- New method
+    getResetPasswordToken: () => string;
 }
