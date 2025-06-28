@@ -4,6 +4,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import User from '../models/userModel';
+import Admin from '../models/adminModel';
 import { IUser } from '../types';
 import { sendEmail } from '../utils/sendEmail'; // <-- THIS IS THE MISSING IMPORT
 
@@ -41,7 +42,7 @@ export const loginUser = async (req: Request, res: Response) => {
             return res.status(401).json({ message: 'Invalid credentials' });
         }
         generateTokenAndSetCookie(res, user._id.toString());
-        res.status(200).json({ _id: user._id, firstName: user.firstName, lastName: user.lastName, email: user.email, role: user.role });
+        res.status(200).json({ _id: user._id, firstName: user.firstName, lastName: user.lastName, email: user.email, role: user.role, redirectUrl: '/User' });
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Server error' });
@@ -118,5 +119,78 @@ export const resetPassword = async (req: Request, res: Response) => {
     } catch (error) {
         console.error('RESET PASSWORD ERROR:', error);
         res.status(500).json({ message: 'Server error while resetting password.' });
+    }
+};
+
+// Admin Registration
+export const registerAdmin = async (req: Request, res: Response) => {
+    const { firstName, lastName, email, password, phone } = req.body;
+    if (!firstName || !lastName || !email || !password) {
+        return res.status(400).json({ message: 'All required fields must be filled.' });
+    }
+    try {
+        const adminExists = await Admin.findOne({ email });
+        if (adminExists) {
+            return res.status(400).json({ message: 'Admin already exists' });
+        }
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const admin = await Admin.create({
+            firstName,
+            lastName,
+            email,
+            password: hashedPassword,
+            phone,
+        });
+        res.status(201).json({ message: 'Registration successful', adminId: admin._id });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
+// Admin Login
+export const loginAdmin = async (req: Request, res: Response) => {
+    const { email, password } = req.body;
+    if (!email || !password) {
+        return res.status(400).json({ message: 'Email and password are required.' });
+    }
+    try {
+        const admin = await Admin.findOne({ email });
+        if (!admin || !(await bcrypt.compare(password, admin.password))) {
+            return res.status(401).json({ message: 'Invalid credentials' });
+        }
+        const token = jwt.sign({ id: admin._id, role: admin.role }, process.env.JWT_SECRET as string, { expiresIn: '1d' });
+        res.cookie('admin_token', token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            maxAge: 24 * 60 * 60 * 1000,
+        });
+        res.status(200).json({
+            _id: admin._id,
+            firstName: admin.firstName,
+            lastName: admin.lastName,
+            email: admin.email,
+            role: admin.role,
+            avatarUrl: admin.avatarUrl,
+            permissions: admin.permissions,
+            redirectUrl: '/Admin', // For frontend to redirect after login
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
+// Get Admin Profile (for dashboard)
+export const getAdminProfile = async (req: Request, res: Response) => {
+    try {
+        const admin = await Admin.findById(req.user?.id).select('-password');
+        if (!admin) {
+            return res.status(404).json({ message: 'Admin not found' });
+        }
+        res.status(200).json(admin);
+    } catch (error) {
+        res.status(500).json({ message: 'Server error' });
     }
 };
