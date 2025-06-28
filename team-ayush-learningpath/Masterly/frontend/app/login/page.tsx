@@ -32,31 +32,25 @@ export default function LoginPage() {
         rememberMe: false,
     })
 
-    // --- UPDATED LOGIC: Connects to backend login ---
+    // --- Logic functions (handleSubmit, handleSocialLogin) remain unchanged ---
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         setIsLoading(true)
         setError("")
-
         try {
-            // This is now a real API call to your backend
             await api.post('/auth/login', {
                 email: formData.email,
                 password: formData.password,
             });
-            // If successful, redirect to the dashboard
             router.push("/dashboard");
         } catch (err: any) {
-            // If the backend returns an error, display it
             setError(err.response?.data?.message || "Login failed. Please check your credentials.");
         } finally {
             setIsLoading(false)
         }
     }
 
-    // --- UPDATED LOGIC: Connects to backend Google OAuth ---
     const handleSocialLogin = (provider: string) => {
-        // This is a simple redirect. The backend handles the entire OAuth flow.
         const apiUrl = process.env.NEXT_PUBLIC_API_URL;
         if (!apiUrl) {
             setError("Frontend configuration error: API URL is not set.");
@@ -68,16 +62,16 @@ export default function LoginPage() {
     return (
         <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center p-4">
             <div className="w-full max-w-md">
-                {/* Header (No Changes) */}
+                {/* --- HEADER (UPDATED TO BE A LINK) --- */}
                 <div className="text-center mb-8">
-                    <div className="flex items-center justify-center space-x-2 mb-4">
-                        <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
+                    <Link href="/" className="flex items-center justify-center space-x-2 mb-4 group w-fit mx-auto">
+                        <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center transform transition-transform group-hover:scale-110">
                             <BookOpen className="w-6 h-6 text-white" />
                         </div>
                         <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                             Masterly
                         </span>
-                    </div>
+                    </Link>
                     <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Welcome back</h1>
                     <p className="text-gray-600 dark:text-gray-400">Sign in to continue your learning journey</p>
                 </div>

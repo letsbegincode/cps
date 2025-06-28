@@ -3,23 +3,26 @@ import { Request, Response } from 'express';
 import User from '../models/userModel';
 
 /**
- * @desc    Get the user's dashboard, including their populated learning profile.
+ * @desc    Get the logged-in user's complete dashboard data.
  * @route   GET /api/users/dashboard
  * @access  Private
  */
 export const getDashboard = async (req: Request, res: Response) => {
     try {
-        // The user ID is available from the 'protect' middleware via req.user
-        const userProfile = await User.findById(req.user?.id).populate({
+        // --- THIS IS THE FIX ---
+        // The 'protect' middleware has already fetched the user and attached it to the request.
+        // We can use it directly instead of making another database call.
+        // We just need to populate the learningProfile path on the existing user object.
+        const userWithPopulatedProfile = await req.user?.populate({
             path: 'learningProfile.concept', // Go into learningProfile and populate the 'concept' field
             select: 'title description', // From the populated concept, only select these fields
         });
 
-        if (!userProfile) {
+        if (!userWithPopulatedProfile) {
             return res.status(404).json({ message: 'User not found' });
         }
 
-        res.status(200).json(userProfile);
+        res.status(200).json(userWithPopulatedProfile);
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Server Error' });

@@ -60,7 +60,7 @@ export const getMyProfile = (req: Request, res: Response) => {
 export const changePassword = async (req: Request, res: Response) => {
     const { oldPassword, newPassword } = req.body;
     try {
-        const user = await User.findById(req.user?._id).select('+password');
+        const user = await User.findById(req.user?.id).select('+password');
         if (!user || !user.password || !(await bcrypt.compare(oldPassword, user.password))) {
             return res.status(401).json({ message: 'Incorrect old password' });
         }
@@ -113,7 +113,7 @@ export const resetPassword = async (req: Request, res: Response) => {
         user.resetPasswordToken = undefined;
         user.resetPasswordExpire = undefined;
         await user.save();
-        generateTokenAndSetCookie(res, user.id.toString());
+        generateTokenAndSetCookie(res, user._id.toString());
         res.status(200).json({ message: 'Password reset successful.' });
     } catch (error) {
         console.error('RESET PASSWORD ERROR:', error);
