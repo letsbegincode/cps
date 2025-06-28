@@ -3,7 +3,9 @@ import {
     getAllConcepts,
     getConceptById,
     searchConcepts,
-    testConcepts
+    testConcepts,
+    getConceptQuiz,
+    testQuiz
 } from '../controllers/conceptController';
 import { protect } from '../middlewares/authMiddleware';
 import { Request, Response } from 'express';
@@ -13,6 +15,9 @@ const router = Router();
 
 // Test endpoint (public)
 router.get('/test', testConcepts);
+
+// Test quiz endpoint (public)
+router.get('/test-quiz', testQuiz);
 
 // Test endpoint to get test user ID
 router.get('/test-user', async (req: Request, res: Response) => {
@@ -43,5 +48,6 @@ router.use(protect);
 router.get('/', getAllConcepts);
 router.get('/search', searchConcepts);
 router.get('/:id', getConceptById);
+router.get('/:id/quiz', getConceptQuiz);
 
 export default router;

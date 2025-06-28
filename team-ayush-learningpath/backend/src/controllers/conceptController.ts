@@ -1,6 +1,7 @@
 // src/controllers/conceptController.ts
 import { Request, Response } from 'express';
 import Concept from '../models/conceptModel';
+import { getQuizQuestions } from '../utils/conceptMapper';
 
 /**
  * @desc    Fetch all available learning concepts (course catalog).
@@ -68,6 +69,37 @@ export const testConcepts = async (req: Request, res: Response) => {
 };
 
 /**
+ * @desc    Test endpoint to check quiz functionality
+ * @route   GET /api/concepts/test-quiz
+ * @access  Public
+ */
+export const testQuiz = async (req: Request, res: Response) => {
+    try {
+        const conceptsWithQuiz = await Concept.find({
+            $or: [
+                { 'Test_Questions.0': { $exists: true } },
+                { 'quiz.0': { $exists: true } }
+            ]
+        }).select('title _id Test_Questions quiz');
+        
+        res.status(200).json({
+            conceptsWithQuiz: conceptsWithQuiz.length,
+            sampleConcepts: conceptsWithQuiz.slice(0, 3).map(c => ({
+                title: c.title,
+                id: c._id,
+                hasTestQuestions: c.Test_Questions && c.Test_Questions.length > 0,
+                hasOldQuiz: c.quiz && c.quiz.length > 0,
+                testQuestionsCount: c.Test_Questions?.length || 0,
+                oldQuizCount: c.quiz?.length || 0
+            }))
+        });
+    } catch (error) {
+        console.error('Test quiz error:', error);
+        res.status(500).json({ message: 'Database error', error: error.message });
+    }
+};
+
+/**
  * @desc    Fetch a single, detailed concept by its ID.
  * @route   GET /api/concepts/:id
  * @access  Private
@@ -85,6 +117,37 @@ export const getConceptById = async (req: Request, res: Response) => {
         }
     } catch (error) {
         console.error(error);
+        res.status(500).json({ message: 'Server Error' });
+    }
+};
+
+/**
+ * @desc    Get quiz questions for a specific concept
+ * @route   GET /api/concepts/:id/quiz
+ * @access  Private
+ */
+export const getConceptQuiz = async (req: Request, res: Response) => {
+    try {
+        const concept = await Concept.findById(req.params.id);
+        
+        if (!concept) {
+            return res.status(404).json({ message: 'Concept not found' });
+        }
+
+        const quizQuestions = getQuizQuestions(concept);
+        
+        if (quizQuestions.length === 0) {
+            return res.status(404).json({ message: 'No quiz questions found for this concept' });
+        }
+
+        res.status(200).json({
+            conceptTitle: concept.title,
+            conceptId: concept._id,
+            questions: quizQuestions,
+            totalQuestions: quizQuestions.length
+        });
+    } catch (error) {
+        console.error('Get concept quiz error:', error);
         res.status(500).json({ message: 'Server Error' });
     }
 };

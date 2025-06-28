@@ -1,5 +1,21 @@
 import { Schema, model } from 'mongoose';
-import { IConcept } from '../types';
+import { IConcept, ITestQuestion } from '../types';
+
+// Test Question Schema
+const testQuestionSchema = new Schema<ITestQuestion>({
+    id: { type: Number, required: true },
+    topic: { type: String, required: true },
+    difficulty: { 
+        type: String, 
+        required: true, 
+        enum: ['Easy', 'Medium', 'Hard'] 
+    },
+    question: { type: String, required: true },
+    options: [{ type: String, required: true }],
+    correct: { type: Number, required: true },
+    explanation: { type: String, required: true },
+    tags: [{ type: String }]
+});
 
 const conceptSchema = new Schema<IConcept>({
     title: {
@@ -69,7 +85,42 @@ const conceptSchema = new Schema<IConcept>({
         options: [{ type: String, required: true }],
         correctAnswerIndex: { type: Number, required: true },
         explanation: { type: String }
-    }]
+    }],
+
+    // New fields from your database structure
+    Concept: {
+        type: String,
+        required: false
+    },
+    Level: {
+        type: String,
+        required: false
+    },
+    Category: {
+        type: String,
+        required: false
+    },
+    Concept_Type: {
+        type: String,
+        required: false
+    },
+    Est_Learning_Time_Hours: {
+        type: Number,
+        required: false
+    },
+    Is_Fundamental: {
+        type: Boolean,
+        required: false
+    },
+    Learning_Resources: {
+        type: String,
+        required: false
+    },
+    Related_Concepts: [{
+        type: Schema.Types.ObjectId,
+        ref: 'Concept'
+    }],
+    Test_Questions: [testQuestionSchema]
 }, {
     timestamps: true
 });

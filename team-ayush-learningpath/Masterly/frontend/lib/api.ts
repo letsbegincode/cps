@@ -9,6 +9,7 @@ export interface Concept {
   prerequisites: string[];
   level?: string;
   category?: string;
+  Test_Questions?: QuizQuestion[];
 }
 
 export interface UserConceptProgress {
@@ -39,6 +40,24 @@ export interface RecommendationResponse {
     detailedPath: RecommendationPath[];
     totalCost: number;
   }>;
+}
+
+export interface QuizQuestion {
+  id: number;
+  topic: string;
+  difficulty: "Easy" | "Medium" | "Hard";
+  question: string;
+  options: string[];
+  correct: number;
+  explanation: string;
+  tags: string[];
+}
+
+export interface ConceptQuiz {
+  conceptTitle: string;
+  conceptId: string;
+  questions: QuizQuestion[];
+  totalQuestions: number;
 }
 
 class ApiService {
@@ -99,6 +118,11 @@ class ApiService {
   // Get all concepts for dropdown
   async getAllConcepts(): Promise<Concept[]> {
     return this.request<Concept[]>('/concepts');
+  }
+
+  // Get concept-specific quiz questions
+  async getConceptQuiz(conceptId: string): Promise<ConceptQuiz> {
+    return this.request<ConceptQuiz>(`/concepts/${conceptId}/quiz`);
   }
 
   // Get recommendation path

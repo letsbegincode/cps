@@ -1,45 +1,58 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import React, { useState, useEffect } from 'react'
 import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Progress } from "@/components/ui/progress"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import {
   Brain,
   Target,
-  Search,
-  CheckCircle,
+  Clock, 
+  Award, 
+  Play, 
+  Lock, 
+  Unlock, 
   AlertTriangle,
+  CheckCircle, 
+  XCircle, 
+  Sparkles, 
+  Users, 
+  RefreshCw, 
   BookOpen,
+  TrendingUp,
+  BarChart3,
+  Zap,
   Code,
   Database,
-  Globe,
-  Zap,
-  TrendingUp,
-  RefreshCw,
-  Play,
-  Lock,
+  Search,
+  Layers,
+  Cpu,
   Home,
-  Sparkles,
-  Clock,
-  Award,
-  Loader2,
-  TreePine,
+  Settings,
+  HelpCircle,
+  RotateCcw,
+  AlertCircle,
+  Shield,
+  Eye,
+  EyeOff,
+  Globe,
   Network,
-  ArrowUpDown,
-  BarChart3,
+  Trophy,
   Server,
   Cloud,
-  Trophy,
-  Users,
-} from "lucide-react"
-import Link from "next/link"
+  Loader2,
+  TreePine,
+  ArrowUpDown
+} from 'lucide-react'
+import Link from 'next/link'
 import { apiService, Concept, RecommendationResponse } from "@/lib/api"
 import { useAuth } from "@/lib/auth-context"
 import { toast } from "@/hooks/use-toast"
+import { Progress } from "@/components/ui/progress"
 
 interface Topic {
   id: string
@@ -125,6 +138,8 @@ export default function CustomPathGenerator() {
   const [selectedConcept, setSelectedConcept] = useState<Concept | null>(null)
   const [isSearching, setIsSearching] = useState(false)
   const [userProgress, setUserProgress] = useState<Record<string, number>>({})
+  const [selectedTopic, setSelectedTopic] = useState<Topic | null>(null)
+  const [showTopicModal, setShowTopicModal] = useState(false)
 
   // Fetch user progress on component mount
   useEffect(() => {
@@ -219,18 +234,18 @@ export default function CustomPathGenerator() {
           const isCompleted = masteryLevel >= 0.7; // Consider completed if mastery >= 70%
           
           return {
-            id: item.conceptId,
-            title: item.title,
-            description: `Step ${index + 1} towards ${selectedConcept.title}`,
-            courseId: "custom",
-            courseName: "Custom Learning Path",
+          id: item.conceptId,
+          title: item.title,
+          description: `Step ${index + 1} towards ${selectedConcept.title}`,
+          courseId: "custom",
+          courseName: "Custom Learning Path",
             masteryLevel: masteryLevel * 10, // Convert 0-1 scale to 0-10 scale for display
             isCompleted,
-            isPrerequisite: item.locked,
+          isPrerequisite: item.locked,
             estimatedHours: 2, // Default estimate - could be enhanced with actual concept data
-            difficulty: "Intermediate" as const,
-            icon: Target,
-            locked: item.locked,
+          difficulty: "Intermediate" as const,
+          icon: Target,
+          locked: item.locked,
           };
         });
 
@@ -243,18 +258,18 @@ export default function CustomPathGenerator() {
             const isCompleted = masteryLevel >= 0.7;
             
             return {
-              id: item.conceptId,
-              title: item.title,
-              description: `Alternative step ${index + 1}`,
-              courseId: "custom",
-              courseName: "Custom Learning Path",
+            id: item.conceptId,
+            title: item.title,
+            description: `Alternative step ${index + 1}`,
+            courseId: "custom",
+            courseName: "Custom Learning Path",
               masteryLevel: masteryLevel * 10,
               isCompleted,
-              isPrerequisite: item.locked,
-              estimatedHours: 2,
-              difficulty: "Intermediate" as const,
-              icon: Target,
-              locked: item.locked,
+            isPrerequisite: item.locked,
+            estimatedHours: 2,
+            difficulty: "Intermediate" as const,
+            icon: Target,
+            locked: item.locked,
             };
           })
         )
@@ -323,45 +338,45 @@ export default function CustomPathGenerator() {
           difficulty: "Beginner" as const,
           icon: BookOpen,
         },
-        {
-          id: "arrays",
+      {
+        id: "arrays",
           title: "Arrays & Strings",
           description: "Linear data structures, array operations, and string manipulation",
-          courseId: courseId,
+        courseId: courseId,
           courseName: course?.title || "DSA",
           masteryLevel: 0,
           isCompleted: false,
-          isPrerequisite: false,
+        isPrerequisite: false,
           estimatedHours: 25,
           difficulty: "Beginner" as const,
-          icon: Target,
-        },
-        {
-          id: "linked-lists",
-          title: "Linked Lists",
+        icon: Target,
+      },
+      {
+        id: "linked-lists",
+        title: "Linked Lists",
           description: "Singly, doubly, and circular linked lists with implementations",
-          courseId: courseId,
+        courseId: courseId,
           courseName: course?.title || "DSA",
           masteryLevel: 0,
-          isCompleted: false,
-          isPrerequisite: false,
+        isCompleted: false,
+        isPrerequisite: false,
           estimatedHours: 18,
           difficulty: "Beginner" as const,
-          icon: TrendingUp,
-        },
-        {
+        icon: TrendingUp,
+      },
+      {
           id: "stacks-queues",
           title: "Stacks & Queues",
           description: "LIFO and FIFO data structures with real-world applications",
-          courseId: courseId,
+        courseId: courseId,
           courseName: course?.title || "DSA",
           masteryLevel: 0,
-          isCompleted: false,
-          isPrerequisite: false,
+        isCompleted: false,
+        isPrerequisite: false,
           estimatedHours: 15,
           difficulty: "Beginner" as const,
-          icon: Zap,
-        },
+        icon: Zap,
+      },
         {
           id: "trees",
           title: "Trees & Binary Trees",
@@ -687,6 +702,44 @@ export default function CustomPathGenerator() {
     return currentPath.find((topic) => !topic.isCompleted && !topic.locked)
   }
 
+  // Handle topic click - show options for unlocked topics
+  const handleTopicClick = (topic: Topic) => {
+    if (topic.locked) {
+      toast({
+        title: "Topic Locked",
+        description: "Complete prerequisites to unlock this topic",
+        variant: "destructive",
+      })
+      return
+    }
+
+    setSelectedTopic(topic)
+    setShowTopicModal(true)
+  }
+
+  // Navigate to learning content
+  const handleLearnContent = () => {
+    if (!selectedTopic) return
+    
+    // Navigate to the learning content page
+    window.open(`/courses/${selectedTopic.courseId}/concepts/${selectedTopic.id}`, '_blank')
+    setShowTopicModal(false)
+    setSelectedTopic(null)
+  }
+
+  // Navigate to quiz
+  const handleTakeQuiz = () => {
+    setShowTopicModal(false)
+    // Open quiz in a new window with concept ID
+    const quizUrl = selectedTopic?.id 
+      ? `/quiz?conceptId=${selectedTopic.id}`
+      : '/quiz'
+    const quizWindow = window.open(quizUrl, '_blank', 'width=1200,height=800,scrollbars=yes,resizable=yes')
+    if (quizWindow) {
+      quizWindow.focus()
+    }
+  }
+
   const getStatusColor = (topic: Topic) => {
     if (topic.locked) return "from-red-500 to-red-600"
     if (topic.isCompleted) return "from-green-500 to-emerald-600"
@@ -983,13 +1036,10 @@ export default function CustomPathGenerator() {
                       <div className="flex items-center space-x-1 text-blue-600 dark:text-blue-400">
                         <BookOpen className="w-4 h-4" />
                         <span>
-                          {
-                            (selectedRoute === 0
+                          {(selectedRoute === 0
                               ? generatedPath
                               : alternativeRoutes[selectedRoute - 1] || generatedPath
-                            ).length
-                          }{" "}
-                          Topics
+                          ).length} topics
                         </span>
                       </div>
                       <div className="flex items-center space-x-1 text-green-600 dark:text-green-400">
@@ -1078,9 +1128,9 @@ export default function CustomPathGenerator() {
                         <div key={topic.id} className="relative">
                           {/* Topic Card - Full width within grid */}
                           <div className="flex justify-center">
-                            <Link
-                              href={`/courses/${topic.courseId}/concepts/${topic.id}`}
-                              className="group relative block w-full max-w-sm"
+                            <div
+                              onClick={() => handleTopicClick(topic)}
+                              className="group relative block w-full max-w-sm cursor-pointer"
                             >
                               <div
                                 className={`
@@ -1138,10 +1188,10 @@ export default function CustomPathGenerator() {
                                       <Clock className="w-3 h-3 mr-1" />
                                       {topic.estimatedHours}h
                                     </Badge>
-                                    {topic.masteryLevel > 0 && (
+                                    {selectedTopic?.masteryLevel && selectedTopic.masteryLevel > 0 && (
                                       <Badge variant="outline" className="text-xs">
                                         <Award className="w-3 h-3 mr-1" />
-                                        {topic.masteryLevel.toFixed(1)}/10
+                                        {selectedTopic.masteryLevel.toFixed(1)}/10
                                       </Badge>
                                     )}
                                   </div>
@@ -1168,7 +1218,7 @@ export default function CustomPathGenerator() {
                                 {/* Hover Effect */}
                                 <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-blue-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                               </div>
-                            </Link>
+                            </div>
                           </div>
 
                           {/* Connection Arrow - Only show if not the last item and in appropriate positions */}
@@ -1392,6 +1442,79 @@ export default function CustomPathGenerator() {
           )}
         </div>
       </div>
+
+      {/* Topic Options Modal */}
+      <Dialog open={showTopicModal} onOpenChange={setShowTopicModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center space-x-2">
+              {selectedTopic?.icon && React.createElement(selectedTopic.icon, { className: "w-5 h-5 text-blue-600" })}
+              <span>{selectedTopic?.title}</span>
+            </DialogTitle>
+            <DialogDescription>
+              {selectedTopic?.description}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            {/* Topic Info */}
+            <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+              <div className="flex items-center space-x-2">
+                <Badge className={getDifficultyColor(selectedTopic?.difficulty || "Beginner")} variant="secondary">
+                  {selectedTopic?.difficulty}
+                </Badge>
+                <Badge variant="outline" className="text-xs">
+                  <Clock className="w-3 h-3 mr-1" />
+                  {selectedTopic?.estimatedHours}h
+                </Badge>
+              </div>
+              {selectedTopic?.masteryLevel && selectedTopic.masteryLevel > 0 && (
+                <Badge variant="outline" className="text-xs">
+                  <Award className="w-3 h-3 mr-1" />
+                  {selectedTopic.masteryLevel.toFixed(1)}/10
+                </Badge>
+              )}
+            </div>
+
+            {/* Action Buttons */}
+            <div className="space-y-3">
+              <Button
+                onClick={handleLearnContent}
+                className="w-full h-12 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                size="lg"
+              >
+                <BookOpen className="w-5 h-5 mr-3" />
+                Learn Content
+                <span className="text-xs ml-2 opacity-80">Study the material</span>
+              </Button>
+
+              <Button
+                onClick={handleTakeQuiz}
+                variant="outline"
+                className="w-full h-12 border-2 border-green-500 text-green-700 hover:bg-green-50 dark:hover:bg-green-900/20"
+                size="lg"
+              >
+                <Target className="w-5 h-5 mr-3" />
+                Take Quiz Directly
+                <span className="text-xs ml-2 opacity-80">Test your knowledge</span>
+              </Button>
+            </div>
+
+            {/* Pro Tips */}
+            <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-700">
+              <div className="flex items-start space-x-2">
+                <Sparkles className="w-4 h-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+                <div className="text-sm text-blue-800 dark:text-blue-200">
+                  <strong>Pro Tip:</strong> {(selectedTopic?.masteryLevel ?? 0) > 0 
+                    ? "You've made progress on this topic. Consider taking the quiz to assess your current level."
+                    : "Start with the learning content to build a strong foundation before attempting the quiz."
+                  }
+                </div>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
