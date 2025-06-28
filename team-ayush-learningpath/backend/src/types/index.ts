@@ -24,6 +24,29 @@ export interface IQuizAttempt {
     attemptedAt: Date;
 }
 
+export interface IArticleContent {
+    intro: string;
+    levels: Array<{
+        level: string;
+        sections: Array<{
+            heading: string;
+            content: string;
+            codeExamples?: Array<{
+                language: string;
+                code: string;
+                explanation: string;
+            }>;
+            complexityAnalysis?: {
+                timeComplexity: string;
+                spaceComplexity: string;
+                explanation: string;
+            };
+            notes?: string[];
+            imageUrl?: string;
+        }>;
+    }>;
+}
+
 export interface IConcept extends Document {
     title: string;
     Concept?: string;
@@ -35,6 +58,8 @@ export interface IConcept extends Document {
     Learning_Resources?: string;
     Related_Concepts?: Types.ObjectId[];
     Test_Questions?: ITestQuestion[];
+    articleContent?: IArticleContent;
+    prerequisites?: Types.ObjectId[];
     
     relatedConcepts?: string[];
     description: string;
@@ -46,7 +71,6 @@ export interface IConcept extends Document {
     isFundamental?: boolean;
     learningResources?: string;
     contentBlocks: { type: string; data: string }[];
-    prerequisites: Types.ObjectId[];
     quiz: IQuizQuestion[];
 }
 
