@@ -50,7 +50,7 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import { apiService, Concept, RecommendationResponse } from "@/lib/api"
-import { useAuth } from "@/lib/auth-context"
+import { useAuth } from "../context/AuthContext"
 import { toast } from "@/hooks/use-toast"
 import { Progress } from "@/components/ui/progress"
 
@@ -125,7 +125,11 @@ const availableCourses: Course[] = [
 ]
 
 export default function CustomPathGenerator() {
-  const { user } = useAuth()
+  const { user, isAuthenticated, isLoading } = useAuth()
+  
+  // Add debugging to see what's happening
+  console.log('Auth state:', { user, isAuthenticated, isLoading });
+  
   const [selectedGoal, setSelectedGoal] = useState<string>("")
   const [searchQuery, setSearchQuery] = useState("")
   const [pathType, setPathType] = useState<"course" | "topic">("course")
@@ -193,7 +197,17 @@ export default function CustomPathGenerator() {
   }, [searchQuery])
 
   const generateCustomPath = async () => {
-    if (!user) {
+    console.log('generateCustomPath called with auth state:', { user, isAuthenticated, isLoading });
+    
+    if (isLoading) {
+      toast({
+        title: "Loading",
+        description: "Please wait while we check your authentication status.",
+      })
+      return
+    }
+    
+    if (!isAuthenticated || !user) {
       toast({
         title: "Authentication Required",
         description: "Please log in to generate personalized learning paths.",
