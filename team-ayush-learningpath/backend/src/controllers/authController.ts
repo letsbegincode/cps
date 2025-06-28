@@ -4,7 +4,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import User from '../models/userModel';
-import Admin from '../models/adminModel';
+import Admin from '../models/adminModel'; // <-- Make sure this import is present
 import { IUser } from '../types';
 import { sendEmail } from '../utils/sendEmail'; // <-- THIS IS THE MISSING IMPORT
 
@@ -25,7 +25,9 @@ export const registerUser = async (req: Request, res: Response) => {
         if (userExists) {
             return res.status(400).json({ message: 'User already exists' });
         }
-        const user = await User.create({ firstName, lastName, email, password });
+        // Always hash the password before saving
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const user = await User.create({ firstName, lastName, email, password: hashedPassword });
         generateTokenAndSetCookie(res, user._id.toString());
         res.status(201).json({ _id: user._id, firstName: user.firstName, lastName: user.lastName, email: user.email, role: user.role });
     } catch (error) {
@@ -42,7 +44,7 @@ export const loginUser = async (req: Request, res: Response) => {
             return res.status(401).json({ message: 'Invalid credentials' });
         }
         generateTokenAndSetCookie(res, user._id.toString());
-        res.status(200).json({ _id: user._id, firstName: user.firstName, lastName: user.lastName, email: user.email, role: user.role, redirectUrl: '/User' });
+        res.status(200).json({ _id: user._id, firstName: user.firstName, lastName: user.lastName, email: user.email, role: user.role });
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Server error' });
@@ -133,6 +135,7 @@ export const registerAdmin = async (req: Request, res: Response) => {
         if (adminExists) {
             return res.status(400).json({ message: 'Admin already exists' });
         }
+        // Always hash the password before saving
         const hashedPassword = await bcrypt.hash(password, 10);
         const admin = await Admin.create({
             firstName,
@@ -140,7 +143,9 @@ export const registerAdmin = async (req: Request, res: Response) => {
             email,
             password: hashedPassword,
             phone,
+            role: 'admin'
         });
+        console.log("Admin registered:", admin.email);
         res.status(201).json({ message: 'Registration successful', adminId: admin._id });
     } catch (error) {
         console.error(error);
@@ -156,7 +161,12 @@ export const loginAdmin = async (req: Request, res: Response) => {
     }
     try {
         const admin = await Admin.findOne({ email });
-        if (!admin || !(await bcrypt.compare(password, admin.password))) {
+        if (!admin) {
+            return res.status(401).json({ message: 'Invalid credentials' });
+        }
+        // Compare hashed password
+        const isMatch = await bcrypt.compare(password, admin.password);
+        if (!isMatch) {
             return res.status(401).json({ message: 'Invalid credentials' });
         }
         const token = jwt.sign({ id: admin._id, role: admin.role }, process.env.JWT_SECRET as string, { expiresIn: '1d' });
@@ -166,6 +176,7 @@ export const loginAdmin = async (req: Request, res: Response) => {
             sameSite: 'strict',
             maxAge: 24 * 60 * 60 * 1000,
         });
+        console.log("Admin logged in:", admin.email);
         res.status(200).json({
             _id: admin._id,
             firstName: admin.firstName,
@@ -174,7 +185,7 @@ export const loginAdmin = async (req: Request, res: Response) => {
             role: admin.role,
             avatarUrl: admin.avatarUrl,
             permissions: admin.permissions,
-            redirectUrl: '/Admin', // For frontend to redirect after login
+            redirectUrl: '/admin',
         });
     } catch (error) {
         console.error(error);
@@ -182,15 +193,6 @@ export const loginAdmin = async (req: Request, res: Response) => {
     }
 };
 
-// Get Admin Profile (for dashboard)
-export const getAdminProfile = async (req: Request, res: Response) => {
-    try {
-        const admin = await Admin.findById(req.user?.id).select('-password');
-        if (!admin) {
-            return res.status(404).json({ message: 'Admin not found' });
-        }
-        res.status(200).json(admin);
-    } catch (error) {
-        res.status(500).json({ message: 'Server error' });
-    }
+export const getAdminProfile = (req: Request, res: Response) => {
+    res.status(200).json(req.user);
 };
