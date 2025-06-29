@@ -16,6 +16,7 @@ import {
 import { protectAdmin } from '../middlewares/authMiddleware';
 import { admin } from '../middlewares/adminMiddleware';
 import { conceptValidationRules, validate } from '../validators/conceptValidator';
+import Admin from '../models/adminModel';
 
 const router = Router();
 
@@ -41,6 +42,67 @@ router.route('/concepts/:id')
 
 // Protected admin profile (for dashboard)
 router.get('/profile', getAdminProfile);
+router.put('/profile', async (req, res) => {
+    try {
+        // Find admin by ID from req.user (set by protectAdmin middleware)
+        const admin = await Admin.findById(req.user?._id);
+        if (!admin) return res.status(401).json({ message: "Not authorized" });
+
+        // Only allow updating certain fields
+        const fields = ["firstName", "lastName", "phone", "avatarUrl", "todos"];
+        fields.forEach(field => {
+            if (req.body[field] !== undefined) admin[field] = req.body[field];
+        });
+        await admin.save();
+        res.json(admin);
+    } catch (e) {
+        res.status(500).json({ message: "Failed to update profile." });
+    }
+});
+
+// Update admin todos (replace all todos)
+router.put('/todos', async (req, res) => {
+    try {
+        const admin = await Admin.findById(req.user?._id);
+        if (!admin) return res.status(401).json({ message: "Not authorized" });
+        admin.todos = Array.isArray(req.body.todos) ? req.body.todos : [];
+        await admin.save();
+        res.json({ todos: admin.todos });
+    } catch (e) {
+        res.status(500).json({ message: "Failed to update todos." });
+    }
+});
+
+// Add a single todo
+router.post('/todos', async (req, res) => {
+    try {
+        const admin = await Admin.findById(req.user?._id);
+        if (!admin) return res.status(401).json({ message: "Not authorized" });
+        if (typeof req.body.todo === "string" && req.body.todo.trim()) {
+            admin.todos.push(req.body.todo.trim());
+            await admin.save();
+        }
+        res.json({ todos: admin.todos });
+    } catch (e) {
+        res.status(500).json({ message: "Failed to add todo." });
+    }
+});
+
+// Delete a todo by index
+router.delete('/todos/:index', async (req, res) => {
+    try {
+        const admin = await Admin.findById(req.user?._id);
+        if (!admin) return res.status(401).json({ message: "Not authorized" });
+        const idx = parseInt(req.params.index, 10);
+        if (!isNaN(idx) && idx >= 0 && idx < admin.todos.length) {
+            admin.todos.splice(idx, 1);
+            await admin.save();
+        }
+        res.json({ todos: admin.todos });
+    } catch (e) {
+        res.status(500).json({ message: "Failed to delete todo." });
+    }
+});
 
 // Logout route: clears the admin_token cookie
 router.post('/logout', (req, res) => {

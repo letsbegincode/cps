@@ -6,11 +6,11 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Bell, LogOut, Settings, User, Phone, Calendar, 
+import {
+  Bell, LogOut, Settings, User, 
   BookOpen, Users, BarChart2, Activity,
-  Mail, Shield, Database, Server, ArrowRight,
-  ChevronDown
+  Mail, Shield, Server, ArrowRight,
+  ChevronDown, Check, Plus, X
 } from "lucide-react";
 import Image from "next/image";
 import { Loader2 } from "lucide-react";
@@ -20,21 +20,22 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [notifications] = useState<number>(3);
+  const [todos, setTodos] = useState<string[]>([]);
+  const [newTodo, setNewTodo] = useState("");
   const router = useRouter();
 
   useEffect(() => {
     let ignore = false;
     const fetchAdminData = async () => {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/profile`, { 
-          credentials: "include" 
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/profile`, {
+          credentials: "include"
         });
 
         if (res.status === 401 || res.status === 403) {
           if (!ignore) {
             setAdmin(null);
             setLoading(false);
-            // Only redirect if not already on /admin/login
             if (window.location.pathname !== "/admin/login") {
               window.location.href = "/admin/login";
             }
@@ -45,6 +46,7 @@ export default function AdminDashboard() {
         const data = await res.json();
         if (!ignore) {
           setAdmin(data);
+          setTodos(Array.isArray(data.todos) ? data.todos : []);
           setLoading(false);
         }
       } catch (error) {
@@ -61,6 +63,43 @@ export default function AdminDashboard() {
     fetchAdminData();
     return () => { ignore = true; };
   }, []);
+
+  // Add todo and sync with backend
+  const addTodo = async () => {
+    if (newTodo.trim()) {
+      try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/todos`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ todo: newTodo.trim() }),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setTodos(data.todos);
+          setNewTodo("");
+        }
+      } catch {}
+    }
+  };
+
+  // Remove todo by index and sync with backend
+  const removeTodo = async (index: number) => {
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/todos/${index}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setTodos(data.todos);
+      }
+    } catch {}
+  };
+
+  const toggleTodo = (index: number) => {
+    removeTodo(index);
+  };
 
   const handleLogout = async () => {
     try {
@@ -99,7 +138,7 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-      {/* Transparent Navbar with backdrop blur */}
+      {/* Navbar */}
       <nav className="border-b bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center space-x-2">
@@ -112,7 +151,6 @@ export default function AdminDashboard() {
           </div>
 
           <div className="flex items-center gap-6">
-            {/* Notification with larger icon */}
             <div className="relative">
               <Button
                 variant="ghost"
@@ -129,7 +167,6 @@ export default function AdminDashboard() {
               </Button>
             </div>
 
-            {/* Profile Dropdown */}
             <div className="relative profile-dropdown">
               <div
                 className="flex items-center gap-2 cursor-pointer group"
@@ -151,7 +188,6 @@ export default function AdminDashboard() {
                 <ChevronDown className={`w-5 h-5 text-gray-500 dark:text-gray-400 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
               </div>
 
-              {/* Dropdown Menu */}
               {dropdownOpen && (
                 <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-xl z-50 border dark:border-gray-700 overflow-hidden">
                   <div className="px-4 py-3 border-b dark:border-gray-700">
@@ -191,90 +227,183 @@ export default function AdminDashboard() {
           </p>
         </div>
 
-        {/* Section 1: Admin Details */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-          <Card className="hover:shadow-lg transition-shadow group border-0 shadow-sm dark:bg-gray-800">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-gray-500 dark:text-gray-400">Admin Profile</CardTitle>
-              <User className="w-5 h-5 text-purple-600 group-hover:scale-110 transition-transform" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-xl font-bold text-gray-900 dark:text-white">
-                {admin?.firstName} {admin?.lastName}
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">Administrator</p>
-            </CardContent>
-          </Card>
+        {/* Section 1: Admin Profile & Priority Tasks */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+          {/* Left Column */}
+          <div className="space-y-5">
+            <Card className="hover:shadow-lg transition-shadow group border-0 shadow-sm dark:bg-gray-800">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium text-gray-500 dark:text-gray-400">Admin Profile</CardTitle>
+                <User className="w-5 h-5 text-purple-600 group-hover:scale-110 transition-transform" />
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-purple-200">
+                    <Image
+                      src={admin.avatarUrl || "/avatar-placeholder.png"}
+                      alt="Admin"
+                      width={64}
+                      height={64}
+                      className="object-cover w-full h-full"
+                    />
+                  </div>
+                  <div>
+                    <div className="text-xl font-bold text-gray-900 dark:text-white">
+                      {admin?.firstName} {admin?.lastName}
+                    </div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400">{admin?.email}</div>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4 mt-4">
+                  <div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Contact</p>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">
+                      {admin?.phone || "Not provided"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Member Since</p>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">
+                      {admin?.createdAt ? new Date(admin.createdAt).toLocaleDateString() : "N/A"}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
-          <Card className="hover:shadow-lg transition-shadow group border-0 shadow-sm dark:bg-gray-800">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-gray-500 dark:text-gray-400">Contact</CardTitle>
-              <Phone className="w-5 h-5 text-blue-600 group-hover:scale-110 transition-transform" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-xl font-bold text-gray-900 dark:text-white">
-                {admin?.phone || "Not provided"}
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">Primary contact</p>
-            </CardContent>
-          </Card>
+            <Card className="hover:shadow-lg transition-shadow group border-0 shadow-sm dark:bg-gray-800">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium text-gray-500 dark:text-gray-400">Quick Stats</CardTitle>
+                <BarChart2 className="w-5 h-5 text-blue-600 group-hover:scale-110 transition-transform" />
+              </CardHeader>
+              <CardContent className="grid grid-cols-2 gap-4">
+                <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Pending Tasks</p>
+                  <p className="text-lg font-bold text-blue-600 dark:text-blue-400">5</p>
+                </div>
+                <div className="p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                  <p className="text-xs text-gray-500 dark:text-gray-400">New Users</p>
+                  <p className="text-lg font-bold text-purple-600 dark:text-purple-400">12</p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
 
-          <Card className="hover:shadow-lg transition-shadow group border-0 shadow-sm dark:bg-gray-800">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-gray-500 dark:text-gray-400">Member Since</CardTitle>
-              <Calendar className="w-5 h-5 text-green-600 group-hover:scale-110 transition-transform" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-xl font-bold text-gray-900 dark:text-white">
-                {admin?.createdAt ? new Date(admin.createdAt).toLocaleDateString() : "N/A"}
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">Account creation date</p>
-            </CardContent>
-          </Card>
+          {/* Right Column */}
+          <div className="lg:col-span-2 space-y-5">
+            <Card className="hover:shadow-xl transition-all duration-300 border-0 shadow-sm dark:bg-gray-800">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <Check className="w-5 h-5 text-green-600" />
+                    <span>My To-Do List</span>
+                  </CardTitle>
+                  <Badge className="bg-purple-100 text-purple-700">
+                    {todos.length} {todos.length === 1 ? 'item' : 'items'}
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="flex gap-2 mb-4">
+                  <Input
+                    placeholder="What needs to be done?"
+                    value={newTodo}
+                    onChange={(e) => setNewTodo(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && addTodo()}
+                    className="flex-1"
+                  />
+                  <Button onClick={addTodo} className="whitespace-nowrap">
+                    <Plus className="w-4 h-4 mr-1" /> Add Task
+                  </Button>
+                </div>
+
+                {todos.length > 0 ? (
+                  <div className="space-y-2 max-h-96 overflow-y-auto pr-2">
+                    {todos.map((todo, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center justify-between p-3 bg-white dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 group hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
+                      >
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                          <button
+                            onClick={() => toggleTodo(index)}
+                            className="flex-shrink-0 w-5 h-5 rounded-full border border-gray-300 dark:border-gray-500 flex items-center justify-center hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors"
+                          >
+                            <Check className="w-3 h-3 text-green-600 dark:text-green-400 opacity-0 group-hover:opacity-100" />
+                          </button>
+                          <span className="text-gray-800 dark:text-gray-200 truncate">{todo}</span>
+                        </div>
+                        <button
+                          onClick={() => removeTodo(index)}
+                          className="flex-shrink-0 text-gray-400 hover:text-red-500 transition-colors ml-2"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-6 text-center">
+                    <BookOpen className="w-10 h-10 text-gray-300 dark:text-gray-600 mb-3" />
+                    <h3 className="text-base font-medium text-gray-500 dark:text-gray-400">Your to-do list is empty</h3>
+                    <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">
+                      Add tasks to stay organized
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card className="hover:shadow-xl transition-all duration-300 border-0 shadow-sm dark:bg-gray-800">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Activity className="w-5 h-5 text-purple-600" />
+                  <span>Priority Tasks</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-3 bg-red-50 dark:bg-red-900/20 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <span className="w-8 h-8 bg-red-100 dark:bg-red-800 rounded-full flex items-center justify-center">
+                        <Mail className="w-4 h-4 text-red-600 dark:text-red-400" />
+                      </span>
+                      <div>
+                        <h4 className="font-medium text-gray-900 dark:text-white">Review Emergency Contacts</h4>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">3 pending approvals</p>
+                      </div>
+                    </div>
+                    <Button variant="outline" size="sm" onClick={() => router.push("/admin/emergency-contacts")}>
+                      Review
+                    </Button>
+                  </div>
+                  
+                  <div className="flex items-center justify-between p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <span className="w-8 h-8 bg-yellow-100 dark:bg-yellow-800 rounded-full flex items-center justify-center">
+                        <Users className="w-4 h-4 text-yellow-600 dark:text-yellow-400" />
+                      </span>
+                      <div>
+                        <h4 className="font-medium text-gray-900 dark:text-white">Approve New Users</h4>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">5 pending requests</p>
+                      </div>
+                    </div>
+                    <Button variant="outline" size="sm" onClick={() => router.push("/admin/user-approvals")}>
+                      Review
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
 
-        {/* Section 2: Quick Tasks */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          <Card className="hover:shadow-xl transition-all duration-300 group hover:scale-[1.02] border-0 shadow-sm dark:bg-gray-800">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Activity className="w-5 h-5 text-purple-600" />
-                <span>Recent Activity</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-col items-center justify-center py-4 text-center">
-                <BarChart2 className="w-10 h-10 text-gray-300 dark:text-gray-600 mb-3" />
-                <h3 className="text-base font-medium text-gray-500 dark:text-gray-400">No recent activity</h3>
-                <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">
-                  Your recent actions will appear here
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+        {/* Divider */}
+        <div className="border-t border-gray-200 dark:border-gray-700 my-8"></div>
 
-          <Card className="hover:shadow-xl transition-all duration-300 group hover:scale-[1.02] border-0 shadow-sm dark:bg-gray-800">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Mail className="w-5 h-5 text-blue-600" />
-                <span>Pending Tasks</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-col items-center justify-center py-4 text-center">
-                <Database className="w-10 h-10 text-gray-300 dark:text-gray-600 mb-3" />
-                <h3 className="text-base font-medium text-gray-500 dark:text-gray-400">No pending tasks</h3>
-                <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">
-                  You're all caught up!
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Section 3: Management */}
+        {/* Section 2: Quick Management */}
         <div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-5">Management</h2>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-5">Quick Management</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
             <Card className="hover:shadow-xl transition-all duration-300 group hover:scale-[1.03] border-0 shadow-sm dark:bg-gray-800">
               <CardContent className="p-6 flex flex-col items-center text-center">

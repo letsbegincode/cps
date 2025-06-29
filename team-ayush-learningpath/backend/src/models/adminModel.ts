@@ -9,6 +9,7 @@ export interface IAdmin extends Document {
     role: 'admin';
     avatarUrl?: string;
     permissions?: string[];
+    todos?: string[]; // <-- Add this
     createdAt: Date;
     updatedAt: Date;
 }
@@ -23,6 +24,7 @@ const adminSchema = new Schema<IAdmin>(
         role: { type: String, enum: ['admin'], default: 'admin' },
         avatarUrl: { type: String },
         permissions: [{ type: String }],
+        todos: [{ type: String, default: [] }], // <-- Add this
     },
     { timestamps: true }
 );
