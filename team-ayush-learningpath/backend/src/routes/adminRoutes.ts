@@ -17,6 +17,8 @@ import { protectAdmin } from '../middlewares/authMiddleware';
 import { admin } from '../middlewares/adminMiddleware';
 import { conceptValidationRules, validate } from '../validators/conceptValidator';
 import Admin from '../models/adminModel';
+import EmergencyContact from '../models/emergencyContactModel';
+import User from '../models/userModel';
 
 const router = Router();
 
@@ -24,11 +26,51 @@ const router = Router();
 router.post('/register', registerAdmin);
 router.post('/login', loginAdmin);
 
+// --- Emergency Contact Support Routes (PUBLIC POST) ---
+router.post('/emergency-contacts', async (req, res) => {
+    try {
+        const { name, email, subject, message } = req.body;
+        if (!name || !email || !subject || !message) {
+            return res.status(400).json({ message: "All fields are required." });
+        }
+        const contact = await EmergencyContact.create({ name, email, subject, message });
+        res.status(201).json(contact);
+    } catch (e) {
+        res.status(500).json({ message: "Failed to submit contact." });
+    }
+});
+
 // --- Protected admin routes ---
 router.use(protectAdmin, admin);
 
 // User Management Routes
-router.get('/users', getAllUsers);
+router.get('/users', async (req, res) => {
+    try {
+        // Pagination support
+        const page = parseInt(req.query.page as string) || 1;
+        const limit = parseInt(req.query.limit as string) || 100;
+        const skip = (page - 1) * limit;
+
+        // Query users, not admins
+        const [totalUsers, users] = await Promise.all([
+            User.countDocuments({}),
+            User.find({}).select('-password').limit(limit).skip(skip).sort({ createdAt: -1 })
+        ]);
+
+        res.status(200).json({
+            success: true,
+            count: users.length,
+            pagination: {
+                currentPage: page,
+                totalPages: Math.ceil(totalUsers / limit),
+                totalUsers: totalUsers
+            },
+            data: users
+        });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error' });
+    }
+});
 router.route('/users/:id')
     .get(getUserById)
     .put(updateUser)
@@ -39,6 +81,45 @@ router.post('/concepts', conceptValidationRules(), validate, createConcept);
 router.route('/concepts/:id')
     .put(conceptValidationRules(), validate, updateConcept)
     .delete(deleteConcept);
+
+// Emergency contacts (admin only)
+router.get('/emergency-contacts', async (req, res) => {
+    try {
+        const contacts = await EmergencyContact.find().sort({ createdAt: -1 });
+        res.json(contacts);
+    } catch (e) {
+        res.status(500).json({ message: "Failed to fetch contacts." });
+    }
+});
+router.patch('/emergency-contacts/:id/status', async (req, res) => {
+    try {
+        const { status } = req.body;
+        const contact = await EmergencyContact.findByIdAndUpdate(
+            req.params.id,
+            { status },
+            { new: true }
+        );
+        res.json(contact);
+    } catch (e) {
+        res.status(500).json({ message: "Failed to update status." });
+    }
+});
+router.delete('/emergency-contacts/:id', async (req, res) => {
+    try {
+        await EmergencyContact.findByIdAndDelete(req.params.id);
+        res.json({ message: "Deleted" });
+    } catch (e) {
+        res.status(500).json({ message: "Failed to delete contact." });
+    }
+});
+router.get('/emergency-contacts-count', async (req, res) => {
+    try {
+        const count = await EmergencyContact.countDocuments({ status: 'pending' });
+        res.json({ count });
+    } catch (e) {
+        res.status(500).json({ message: "Failed to fetch count." });
+    }
+});
 
 // Protected admin profile (for dashboard)
 router.get('/profile', getAdminProfile);

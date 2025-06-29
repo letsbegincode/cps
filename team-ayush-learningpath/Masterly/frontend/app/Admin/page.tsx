@@ -1,19 +1,20 @@
 "use client"
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
-  Bell, LogOut, Settings, User, 
+  Bell, LogOut, Settings, User,
   BookOpen, Users, BarChart2, Activity,
   Mail, Shield, Server, ArrowRight,
-  ChevronDown, Check, Plus, X
+  ChevronDown, Check, Plus, X, Home
 } from "lucide-react";
 import Image from "next/image";
 import { Loader2 } from "lucide-react";
+import Link from "next/link";
 
 export default function AdminDashboard() {
   const [admin, setAdmin] = useState<any>(null);
@@ -22,7 +23,10 @@ export default function AdminDashboard() {
   const [notifications] = useState<number>(3);
   const [todos, setTodos] = useState<string[]>([]);
   const [newTodo, setNewTodo] = useState("");
+  const [emergencyCount, setEmergencyCount] = useState(0);
+
   const router = useRouter();
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let ignore = false;
@@ -61,10 +65,41 @@ export default function AdminDashboard() {
     };
 
     fetchAdminData();
-    return () => { ignore = true; };
+
+    // Fetch emergency contacts count for notification (dynamic)
+    const fetchCount = async () => {
+      try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/emergency-contacts-count`, { credentials: "include" });
+        const data = await res.json();
+        setEmergencyCount(data.count || 0);
+      } catch {
+        setEmergencyCount(0);
+      }
+    };
+    fetchCount();
+
+    // Optionally, poll every 30s for real-time updates
+    const interval = setInterval(fetchCount, 30000);
+
+    return () => { ignore = true; clearInterval(interval); };
   }, []);
 
-  // Add todo and sync with backend
+  // Auto-close dropdown when clicking outside
+  useEffect(() => {
+    if (!dropdownOpen) return;
+    const handleClick = (e: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(e.target as Node)
+      ) {
+        setDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [dropdownOpen]);
+
+  // Add todo and sync with backend (add to top)
   const addTodo = async () => {
     if (newTodo.trim()) {
       try {
@@ -76,10 +111,10 @@ export default function AdminDashboard() {
         });
         if (res.ok) {
           const data = await res.json();
-          setTodos(data.todos);
+          setTodos([newTodo.trim(), ...todos]);
           setNewTodo("");
         }
-      } catch {}
+      } catch { }
     }
   };
 
@@ -94,7 +129,7 @@ export default function AdminDashboard() {
         const data = await res.json();
         setTodos(data.todos);
       }
-    } catch {}
+    } catch { }
   };
 
   const toggleTodo = (index: number) => {
@@ -142,32 +177,72 @@ export default function AdminDashboard() {
       <nav className="border-b bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
-              <Shield className="w-5 h-5 text-white" />
+            <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
+              <BookOpen className="w-7 h-7 text-white" />
             </div>
-            <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              Admin Portal
+            <span className="text-3xl font-extrabold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent flex items-center gap-2 tracking-tight">
+              Masterly
+              <Badge className="ml-3 bg-purple-100 text-purple-700 text-xs font-semibold px-2 py-1 rounded scale-90">
+                Admin Portal
+              </Badge>
             </span>
           </div>
-
-          <div className="flex items-center gap-6">
-            <div className="relative">
-              <Button
-                variant="ghost"
-                size="icon"
-                aria-label="Notifications"
-                className="relative text-gray-600 hover:bg-gray-100/50 dark:text-gray-300 dark:hover:bg-gray-700/50 rounded-full h-10 w-10"
-              >
-                <Bell className="w-6 h-6" />
-                {notifications > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center">
-                    {notifications}
-                  </span>
-                )}
-              </Button>
-            </div>
-
-            <div className="relative profile-dropdown">
+          <div className="flex items-center gap-4">
+            {/* Home icon button (bigger) */}
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label="Go to Homepage"
+              className="text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 rounded-full"
+              onClick={() => router.push("/")}
+            >
+              <Home className="w-8 h-8" />
+            </Button>
+            {/* Notification icon (bigger) */}
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label="Notifications"
+              className="relative text-gray-600 hover:bg-gray-100/50 dark:text-gray-300 dark:hover:bg-gray-700/50 rounded-full h-12 w-12"
+              onClick={() => router.push("/admin/emergency-contacts")}
+            >
+              <Bell className="w-8 h-8" />
+              {(emergencyCount > 0) && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-7 h-7 flex items-center justify-center">
+                  {emergencyCount}
+                </span>
+              )}
+            </Button>
+            {/* Manage To-Do List button (smaller font/width) */}
+            <Button
+              variant="outline"
+              className="relative font-semibold border-blue-500 text-blue-700 px-3 py-1 text-sm transition-colors duration-200"
+              style={{
+                minWidth: 0,
+                fontSize: "0.95rem",
+                backgroundColor: undefined,
+                // Add hover effect for light black background
+                // This will be overridden by Tailwind unless marked as !important
+              }}
+              onMouseEnter={e => {
+                (e.currentTarget as HTMLButtonElement).style.backgroundColor = "#222";
+                (e.currentTarget as HTMLButtonElement).style.color = "#fff";
+              }}
+              onMouseLeave={e => {
+                (e.currentTarget as HTMLButtonElement).style.backgroundColor = "";
+                (e.currentTarget as HTMLButtonElement).style.color = "";
+              }}
+              onClick={() => router.push("/admin/todos")}
+            >
+              Manage To-Do
+              {todos.length > 0 && (
+                <span className="ml-2 bg-blue-500 text-white rounded-full px-2 py-0.5 text-xs font-bold">
+                  {todos.length}
+                </span>
+              )}
+            </Button>
+            {/* Profile Dropdown */}
+            <div className="relative profile-dropdown" ref={dropdownRef}>
               <div
                 className="flex items-center gap-2 cursor-pointer group"
                 onClick={() => setDropdownOpen((v) => !v)}
@@ -182,7 +257,7 @@ export default function AdminDashboard() {
                   />
                 </div>
                 <div className="hidden md:block text-right">
-                  <div className="text-sm font-medium text-gray-900 dark:text-white">{admin?.firstName} {admin?.lastName}</div>
+                  <div className="text-lg font-bold text-gray-900 dark:text-white">{admin?.firstName} {admin?.lastName}</div>
                   <div className="text-xs text-gray-500 dark:text-gray-400">Admin</div>
                 </div>
                 <ChevronDown className={`w-5 h-5 text-gray-500 dark:text-gray-400 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
@@ -271,15 +346,19 @@ export default function AdminDashboard() {
               </CardContent>
             </Card>
 
+            {/* Quick Stats: Pending Tasks = todos.length */}
             <Card className="hover:shadow-lg transition-shadow group border-0 shadow-sm dark:bg-gray-800">
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-sm font-medium text-gray-500 dark:text-gray-400">Quick Stats</CardTitle>
                 <BarChart2 className="w-5 h-5 text-blue-600 group-hover:scale-110 transition-transform" />
               </CardHeader>
               <CardContent className="grid grid-cols-2 gap-4">
-                <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                <div
+                  className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-800 transition"
+                  onClick={() => router.push("/admin/todos")}
+                >
                   <p className="text-xs text-gray-500 dark:text-gray-400">Pending Tasks</p>
-                  <p className="text-lg font-bold text-blue-600 dark:text-blue-400">5</p>
+                  <p className="text-lg font-bold text-blue-600 dark:text-blue-400">{todos.length}</p>
                 </div>
                 <div className="p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
                   <p className="text-xs text-gray-500 dark:text-gray-400">New Users</p>
@@ -291,7 +370,8 @@ export default function AdminDashboard() {
 
           {/* Right Column */}
           <div className="lg:col-span-2 space-y-5">
-            <Card className="hover:shadow-xl transition-all duration-300 border-0 shadow-sm dark:bg-gray-800">
+            {/* My To-Do List (only add and show latest 3) */}
+            <Card id="todo-list-section" className="hover:shadow-xl transition-all duration-300 border-0 shadow-sm dark:bg-gray-800">
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle className="flex items-center gap-2 text-lg">
@@ -316,44 +396,41 @@ export default function AdminDashboard() {
                     <Plus className="w-4 h-4 mr-1" /> Add Task
                   </Button>
                 </div>
-
-                {todos.length > 0 ? (
-                  <div className="space-y-2 max-h-96 overflow-y-auto pr-2">
-                    {todos.map((todo, index) => (
+                {/* Show only the latest 3 todos */}
+                <div className="space-y-2">
+                  {todos.length > 0 ? (
+                    todos.slice(0, 3).map((todo, index) => (
                       <div
                         key={index}
                         className="flex items-center justify-between p-3 bg-white dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 group hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
                       >
                         <div className="flex items-center gap-3 flex-1 min-w-0">
-                          <button
-                            onClick={() => toggleTodo(index)}
-                            className="flex-shrink-0 w-5 h-5 rounded-full border border-gray-300 dark:border-gray-500 flex items-center justify-center hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors"
-                          >
-                            <Check className="w-3 h-3 text-green-600 dark:text-green-400 opacity-0 group-hover:opacity-100" />
-                          </button>
+                          <Check className="w-3 h-3 text-green-600 dark:text-green-400" />
                           <span className="text-gray-800 dark:text-gray-200 truncate">{todo}</span>
                         </div>
-                        <button
-                          onClick={() => removeTodo(index)}
-                          className="flex-shrink-0 text-gray-400 hover:text-red-500 transition-colors ml-2"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
                       </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center py-6 text-center">
-                    <BookOpen className="w-10 h-10 text-gray-300 dark:text-gray-600 mb-3" />
-                    <h3 className="text-base font-medium text-gray-500 dark:text-gray-400">Your to-do list is empty</h3>
-                    <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">
-                      Add tasks to stay organized
-                    </p>
+                    ))
+                  ) : (
+                    <div className="flex flex-col items-center justify-center py-6 text-center">
+                      <BookOpen className="w-10 h-10 text-gray-300 dark:text-gray-600 mb-3" />
+                      <h3 className="text-base font-medium text-gray-500 dark:text-gray-400">Your to-do list is empty</h3>
+                      <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">
+                        Add tasks to stay organized
+                      </p>
+                    </div>
+                  )}
+                </div>
+                {todos.length > 3 && (
+                  <div className="text-right mt-2">
+                    <Button variant="link" size="sm" onClick={() => router.push("/admin/todos")}>
+                      View All To-Do's &rarr;
+                    </Button>
                   </div>
                 )}
               </CardContent>
             </Card>
 
+            {/* Priority Tasks */}
             <Card className="hover:shadow-xl transition-all duration-300 border-0 shadow-sm dark:bg-gray-800">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-lg">
@@ -370,14 +447,14 @@ export default function AdminDashboard() {
                       </span>
                       <div>
                         <h4 className="font-medium text-gray-900 dark:text-white">Review Emergency Contacts</h4>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">3 pending approvals</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">{emergencyCount} pending approval{emergencyCount === 1 ? "" : "s"}</p>
                       </div>
                     </div>
                     <Button variant="outline" size="sm" onClick={() => router.push("/admin/emergency-contacts")}>
-                      Review
+                      Preview
                     </Button>
                   </div>
-                  
+                  {/* ...other priority tasks... */}
                   <div className="flex items-center justify-between p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
                     <div className="flex items-center gap-3">
                       <span className="w-8 h-8 bg-yellow-100 dark:bg-yellow-800 rounded-full flex items-center justify-center">
@@ -418,14 +495,25 @@ export default function AdminDashboard() {
               </CardContent>
             </Card>
 
-            <Card className="hover:shadow-xl transition-all duration-300 group hover:scale-[1.03] border-0 shadow-sm dark:bg-gray-800">
+            <Card
+              className="hover:shadow-xl transition-all duration-300 group hover:scale-[1.03] border-0 shadow-sm dark:bg-gray-800 cursor-pointer"
+              onClick={() => router.push("/admin/users")}
+            >
               <CardContent className="p-6 flex flex-col items-center text-center">
                 <div className="w-14 h-14 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mb-4 group-hover:bg-blue-200 dark:group-hover:bg-blue-800 transition-colors">
                   <Users className="w-7 h-7 text-blue-600 dark:text-blue-400" />
                 </div>
                 <h3 className="font-medium text-lg text-gray-900 dark:text-white">Users</h3>
                 <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">Manage all users</p>
-                <Button variant="link" size="sm" className="mt-3 text-blue-600 dark:text-blue-400 group-hover:underline">
+                <Button
+                  variant="link"
+                  size="sm"
+                  className="mt-3 text-blue-600 dark:text-blue-400 group-hover:underline"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    router.push("/admin/users");
+                  }}
+                >
                   View <ArrowRight className="ml-1 w-4 h-4" />
                 </Button>
               </CardContent>
