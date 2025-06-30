@@ -56,7 +56,7 @@ export default function EmergencyContactsPage() {
           onClick={() => router.push("/admin")}
         >
           <ArrowLeft className="w-5 h-5" />
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Emergency Contacts</h1>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Contact Support</h1>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => router.push("/admin/users")}>

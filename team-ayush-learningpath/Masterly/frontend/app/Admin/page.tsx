@@ -446,7 +446,7 @@ export default function AdminDashboard() {
                         <Mail className="w-4 h-4 text-red-600 dark:text-red-400" />
                       </span>
                       <div>
-                        <h4 className="font-medium text-gray-900 dark:text-white">Review Emergency Contacts</h4>
+                        <h4 className="font-medium text-gray-900 dark:text-white">Review Contacts Support</h4>
                         <p className="text-xs text-gray-500 dark:text-gray-400">{emergencyCount} pending approval{emergencyCount === 1 ? "" : "s"}</p>
                       </div>
                     </div>
