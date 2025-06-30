@@ -1,253 +1,260 @@
 "use client"
 
-import { useState } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { useEffect, useState } from "react"
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
+import { ChevronDown, ChevronUp, X, Edit, Mail, Shield, Ban, Users, Calendar, Save, XCircle } from "lucide-react"
+import { useRouter } from "next/navigation"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Search, Filter, MoreHorizontal, UserPlus, Mail, Shield, Ban, Users, Crown, Calendar } from "lucide-react"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Input } from "@/components/ui/input"
 
 export default function AdminUsers() {
-  const [searchTerm, setSearchTerm] = useState("")
-  const [filterType, setFilterType] = useState("all")
+  const [users, setUsers] = useState<any[]>([])
+  const [expanded, setExpanded] = useState<string | null>(null)
+  const [editId, setEditId] = useState<string | null>(null)
+  const [editForm, setEditForm] = useState<{ name: string; email: string; role: string }>({ name: "", email: "", role: "" })
+  const [editError, setEditError] = useState<string | null>(null)
+  const router = useRouter()
 
-  const users = [
-    {
-      id: "1",
-      name: "Alex Johnson",
-      email: "alex@example.com",
-      avatar: "/placeholder.svg?height=32&width=32",
-      subscription: "premium",
-      coursesEnrolled: 12,
-      lastActive: "2024-01-15",
-      joinDate: "2023-06-15",
-      status: "active",
-    },
-    {
-      id: "2",
-      name: "Sarah Chen",
-      email: "sarah@example.com",
-      avatar: "/placeholder.svg?height=32&width=32",
-      subscription: "free",
-      coursesEnrolled: 3,
-      lastActive: "2024-01-14",
-      joinDate: "2023-11-20",
-      status: "active",
-    },
-    {
-      id: "3",
-      name: "Mike Rodriguez",
-      email: "mike@example.com",
-      avatar: "/placeholder.svg?height=32&width=32",
-      subscription: "premium",
-      coursesEnrolled: 8,
-      lastActive: "2024-01-10",
-      joinDate: "2023-03-10",
-      status: "inactive",
-    },
-    {
-      id: "4",
-      name: "Emily Davis",
-      email: "emily@example.com",
-      avatar: "/placeholder.svg?height=32&width=32",
-      subscription: "pro",
-      coursesEnrolled: 25,
-      lastActive: "2024-01-15",
-      joinDate: "2022-12-05",
-      status: "active",
-    },
-  ]
-
-  const getSubscriptionBadge = (subscription: string) => {
-    const badges = {
-      free: <Badge variant="secondary">Free</Badge>,
-      premium: <Badge className="bg-blue-100 text-blue-800">Premium</Badge>,
-      pro: <Badge className="bg-purple-100 text-purple-800">Pro</Badge>,
+  // Fetch users from backend (now using User model)
+  const fetchUsers = async () => {
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/users`, { credentials: "include" })
+      const data = await res.json()
+      setUsers(data.data || [])
+    } catch {
+      setUsers([])
     }
-    return badges[subscription as keyof typeof badges] || <Badge variant="secondary">{subscription}</Badge>
   }
 
-  const getStatusBadge = (status: string) => {
-    return status === "active" ? (
-      <Badge className="bg-green-100 text-green-800">Active</Badge>
-    ) : (
-      <Badge variant="outline">Inactive</Badge>
-    )
+  useEffect(() => {
+    fetchUsers()
+  }, [])
+
+  // Inline edit handlers
+  const startEdit = (user: any) => {
+    setEditId(user._id)
+    setEditForm({
+      name: user.name || "",
+      email: user.email || "",
+      role: user.role || "user"
+    })
+    setEditError(null)
+  }
+
+  const cancelEdit = () => {
+    setEditId(null)
+    setEditError(null)
+  }
+
+  const handleEditChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    setEditForm({ ...editForm, [e.target.name]: e.target.value })
+  }
+
+  const saveEdit = async (userId: string) => {
+    setEditError(null)
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/users/${userId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(editForm)
+      })
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.message || "Failed to update user")
+      }
+      setEditId(null)
+      fetchUsers()
+    } catch (err: any) {
+      setEditError(err.message || "Failed to update user")
+    }
+  }
+
+  // Delete user handler
+  const handleDelete = async (userId: string) => {
+    if (!window.confirm("Are you sure you want to delete this user?")) return
+    await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/users/${userId}`, {
+      method: "DELETE",
+      credentials: "include",
+    })
+    fetchUsers()
+  }
+
+  // Suspend user handler (example)
+  const handleSuspend = async (userId: string) => {
+    alert("Suspend user feature not implemented.")
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 p-8">
+      <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center gap-2">
+          <Users className="w-6 h-6 text-blue-600" />
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">User Management</h1>
-          <p className="text-gray-600 dark:text-gray-300">Manage your platform users</p>
         </div>
-        <Button>
-          <UserPlus className="w-4 h-4 mr-2" />
-          Invite User
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => router.push("/admin/emergency-contacts")}>
+            Go to Emergency Contacts
+          </Button>
+          <Button onClick={() => router.push("/admin")}>Return to Dashboard</Button>
+        </div>
       </div>
-
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Users</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">2,847</div>
-            <p className="text-xs text-muted-foreground">+12.5% from last month</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Premium Users</CardTitle>
-            <Crown className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">1,234</div>
-            <p className="text-xs text-muted-foreground">43% of total users</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Today</CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">892</div>
-            <p className="text-xs text-muted-foreground">31% of total users</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">New This Month</CardTitle>
-            <UserPlus className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">156</div>
-            <p className="text-xs text-muted-foreground">+23% from last month</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Users Table */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>All Users</CardTitle>
-              <CardDescription>Manage user accounts and subscriptions</CardDescription>
-            </div>
-            <div className="flex items-center space-x-4">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <Input
-                  placeholder="Search users..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 w-64"
-                />
+      <div className="space-y-4">
+        {users.map((user: any) => (
+          <Card
+            key={user._id}
+            className="relative border-2 hover:shadow-lg transition-shadow"
+            style={{
+              borderColor:
+                user.role === "admin"
+                  ? "#a21caf"
+                  : user.role === "user"
+                  ? "#2563eb"
+                  : "#d1d5db",
+            }}
+          >
+            <CardHeader
+              className="flex flex-row items-center justify-between cursor-pointer rounded-t-lg px-6 py-4 bg-white dark:bg-gray-800"
+              onClick={() => setExpanded(expanded === user._id ? null : user._id)}
+            >
+              <div className="flex items-center gap-3">
+                <Avatar>
+                  <AvatarImage src={user.avatar || "/placeholder.svg"} />
+                  <AvatarFallback>
+                    {user.name?.[0] || "U"}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <CardTitle className="text-lg">
+                    {user.name}
+                  </CardTitle>
+                  <div className="text-xs text-gray-500">{user.email}</div>
+                </div>
+                <Badge
+                  className={
+                    user.role === "admin"
+                      ? "bg-purple-100 text-purple-700"
+                      : "bg-blue-100 text-blue-700"
+                  }
+                >
+                  {user.role === "admin" ? "Admin" : "User"}
+                </Badge>
               </div>
-              <Select value={filterType} onValueChange={setFilterType}>
-                <SelectTrigger className="w-40">
-                  <Filter className="w-4 h-4 mr-2" />
-                  <SelectValue placeholder="Filter users" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Users</SelectItem>
-                  <SelectItem value="premium">Premium</SelectItem>
-                  <SelectItem value="free">Free</SelectItem>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="inactive">Inactive</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>User</TableHead>
-                <TableHead>Subscription</TableHead>
-                <TableHead>Courses</TableHead>
-                <TableHead>Last Active</TableHead>
-                <TableHead>Join Date</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {users.map((user) => (
-                <TableRow key={user.id}>
-                  <TableCell>
-                    <div className="flex items-center space-x-3">
-                      <Avatar>
-                        <AvatarImage src={user.avatar || "/placeholder.svg"} />
-                        <AvatarFallback>
-                          {user.name
-                            .split(" ")
-                            .map((n) => n[0])
-                            .join("")}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <div className="font-medium">{user.name}</div>
-                        <div className="text-sm text-gray-500">{user.email}</div>
-                      </div>
+              <div>{expanded === user._id ? <ChevronUp /> : <ChevronDown />}</div>
+            </CardHeader>
+            {expanded === user._id && (
+              <CardContent className="bg-gray-50 dark:bg-gray-900 rounded-b-lg">
+                {editId === user._id ? (
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <Mail className="w-4 h-4 text-blue-600" />
+                      <span className="font-semibold">Email:</span>
+                      <Input
+                        name="email"
+                        value={editForm.email}
+                        onChange={handleEditChange}
+                        className="w-64"
+                      />
                     </div>
-                  </TableCell>
-                  <TableCell>{getSubscriptionBadge(user.subscription)}</TableCell>
-                  <TableCell>{user.coursesEnrolled} courses</TableCell>
-                  <TableCell>{user.lastActive}</TableCell>
-                  <TableCell>{user.joinDate}</TableCell>
-                  <TableCell>{getStatusBadge(user.status)}</TableCell>
-                  <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem>
-                          <Shield className="w-4 h-4 mr-2" />
-                          View Profile
-                        </DropdownMenuItem>
-                        <DropdownMenuItem>
-                          <Mail className="w-4 h-4 mr-2" />
-                          Send Message
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-red-600">
-                          <Ban className="w-4 h-4 mr-2" />
-                          Suspend User
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold">Name:</span>
+                      <Input
+                        name="name"
+                        value={editForm.name}
+                        onChange={handleEditChange}
+                        className="w-64"
+                      />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Shield className="w-4 h-4 text-purple-600" />
+                      <span className="font-semibold">Role:</span>
+                      <select
+                        name="role"
+                        value={editForm.role}
+                        onChange={handleEditChange}
+                        className="border rounded px-2 py-1"
+                      >
+                        <option value="user">User</option>
+                        <option value="admin">Admin</option>
+                      </select>
+                    </div>
+                    {editError && (
+                      <div className="flex items-center gap-2 text-red-600 text-sm">
+                        <XCircle className="w-4 h-4" /> {editError}
+                      </div>
+                    )}
+                    <div className="flex gap-2 mt-2">
+                      <Button
+                        variant="success"
+                        onClick={() => saveEdit(user._id)}
+                        className="flex items-center gap-1"
+                      >
+                        <Save className="w-4 h-4" /> Save
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={cancelEdit}
+                        className="flex items-center gap-1"
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <div className="mb-2 flex items-center gap-2">
+                      <Mail className="w-4 h-4 text-blue-600" />
+                      <span className="font-semibold">Email:</span> {user.email}
+                    </div>
+                    <div className="mb-2 flex items-center gap-2">
+                      <Calendar className="w-4 h-4 text-green-600" />
+                      <span className="font-semibold">Joined:</span>{" "}
+                      {user.createdAt
+                        ? new Date(user.createdAt).toLocaleDateString()
+                        : "N/A"}
+                    </div>
+                    <div className="mb-2 flex items-center gap-2">
+                      <Shield className="w-4 h-4 text-purple-600" />
+                      <span className="font-semibold">Role:</span> {user.role}
+                    </div>
+                    {/* Add more user details as needed */}
+                    <div className="flex gap-2 mt-4">
+                      <Button
+                        variant="outline"
+                        onClick={() => startEdit(user)}
+                        className="flex items-center gap-1"
+                      >
+                        <Edit className="w-4 h-4" /> Edit
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        onClick={() => handleDelete(user._id)}
+                        className="flex items-center gap-1"
+                      >
+                        <X className="w-4 h-4" /> Delete
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        onClick={() => handleSuspend(user._id)}
+                        className="flex items-center gap-1"
+                      >
+                        <Ban className="w-4 h-4" /> Suspend
+                      </Button>
+                    </div>
+                  </>
+                )}
+              </CardContent>
+            )}
+          </Card>
+        ))}
+        {users.length === 0 && (
+          <div className="text-center text-gray-500 dark:text-gray-400 py-12">
+            No users found.
+          </div>
+        )}
+      </div>
     </div>
   )
 }

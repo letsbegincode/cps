@@ -179,50 +179,46 @@ export default function HelpPage() {
   }
 
   const handleContactSubmit = async (): Promise<void> => {
-  if (contactForm.name && contactForm.email && contactForm.subject && contactForm.message) {
-    try {
-      const response = await fetch("https://formspree.io/f/xnnvllzb", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        body: JSON.stringify({
-          name: contactForm.name,
-          email: contactForm.email,
-          subject: contactForm.subject,
-          message: contactForm.message,
-        }),
-      })
+    if (contactForm.name && contactForm.email && contactForm.subject && contactForm.message) {
+      try {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/emergency-contacts`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify(contactForm),
+        });
 
-      if (response.ok) {
-        toast({
-          title: "Message Sent",
-          description: "Your support request has been submitted. We'll get back to you within 24 hours.",
-        })
-        setContactForm({ name: "", email: "", subject: "", message: "" })
-      } else {
+        if (response.ok) {
+          toast({
+            title: "Message Sent",
+            description: "Your support request has been submitted. We'll get back to you within 24 hours.",
+          });
+          setContactForm({ name: "", email: "", subject: "", message: "" });
+        } else {
+          const data = await response.json();
+          toast({
+            title: "Error",
+            description: data.message || "Something went wrong. Please try again later.",
+            variant: "destructive",
+          });
+        }
+      } catch (error) {
         toast({
           title: "Error",
-          description: "Something went wrong. Please try again later.",
+          description: "Network error. Please try again later.",
           variant: "destructive",
-        })
+        });
       }
-    } catch (error) {
+    } else {
       toast({
         title: "Error",
-        description: "Network error. Please try again later.",
+        description: "Please fill in all required fields.",
         variant: "destructive",
-      })
+      });
     }
-  } else {
-    toast({
-      title: "Error",
-      description: "Please fill in all required fields.",
-      variant: "destructive",
-    })
   }
-}
 
 
   const openUserGuide = (): void => {
