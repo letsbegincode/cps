@@ -4,6 +4,8 @@ import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/toaster"
 
+
+
 // --- This path is now corrected to be relative ---
 import { AuthProvider } from "./context/AuthContext"
 
