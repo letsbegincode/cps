@@ -341,59 +341,6 @@ export default function CareersPage() {
         </div>
       </section>
 
-      {/* Stay Connected Section */}
-      <section className="py-20 px-4">
-        <div className="container mx-auto">
-          <div className="max-w-4xl mx-auto">
-            <Card className="p-8 shadow-2xl dark:bg-gray-900">
-              <div className="text-center mb-8">
-                <h2 className="text-4xl font-bold mb-4 text-gray-900 dark:text-white">
-                  Stay Connected!
-                </h2>
-                <p className="text-xl text-gray-600 dark:text-gray-300">
-                  Follow us on social media or drop us a message — we'd love to hear from you.
-                </p>
-              </div>
-              
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button size="lg" className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
-                  <Mail className="w-5 h-5 mr-2" />
-                  Contact Us
-                </Button>
-                <Button size="lg" variant="outline" className="border-blue-600 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900">
-                  Follow Us
-                </Button>
-              </div>
-            </Card>
-          </div>
-        </div>
-      </section>
-
-      {/* Contact Section */}
-      <section className="py-20 px-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white">
-        <div className="container mx-auto text-center">
-          <h2 className="text-4xl font-bold mb-4">Ready to Join Us?</h2>
-          <p className="text-xl mb-8 opacity-90 max-w-2xl mx-auto">
-            Have questions about opportunities? We'd love to hear from passionate individuals.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
-            <div className="flex items-center justify-center space-x-2">
-              <Mail className="w-5 h-5" />
-              <span>careers@masterly.com</span>
-            </div>
-            <div className="flex items-center justify-center space-x-2">
-              <MapPin className="w-5 h-5" />
-              <span>India</span>
-            </div>
-          </div>
-          <div className="flex justify-center">
-            <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-blue-600">
-              <Link href="/help">Get in Touch</Link>
-            </Button>
-          </div>
-        </div>
-      </section>
-
       {/* Footer */}
       <footer className="bg-gray-900 text-white py-12 px-4">
         <div className="container mx-auto">
@@ -428,7 +375,7 @@ export default function CareersPage() {
               <ul className="space-y-2 text-gray-400">
                 <li><Link href="/about" className="hover:text-white transition-colors">About</Link></li>
                 <li><Link href="/careers" className="hover:text-white transition-colors">Careers</Link></li>
-                <li><Link href="/settings" className="hover:text-white transition-colors">Privacy</Link></li>
+                <li><Link href="/profile" className="hover:text-white transition-colors">Privacy</Link></li>
                 <li><Link href="/settings" className="hover:text-white transition-colors">Terms</Link></li>
               </ul>
             </div>
