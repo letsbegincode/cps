@@ -162,10 +162,17 @@ export default function CustomPathGenerator() {
           progressMap[p.conceptId] = p.score;
         });
         setUserProgress(progressMap);
-        // Also update generatedPath topics' locked status if needed
+        // Update all relevant properties for each topic
         setGeneratedPath(prev => prev.map(topic => {
           const progressEntry = progress.find(p => p.conceptId === topic.id);
-          return progressEntry ? { ...topic, locked: progressEntry.locked } : topic;
+          return progressEntry
+            ? {
+                ...topic,
+                locked: progressEntry.locked,
+                masteryLevel: (progressEntry.score ?? 0) * 10,
+                isCompleted: (progressEntry.score ?? 0) >= 0.7,
+              }
+            : topic;
         }));
       } catch (error) {
         console.error('Error fetching user progress:', error);
@@ -984,6 +991,22 @@ export default function CustomPathGenerator() {
     }
   }
 
+  const handleStartJourney = () => {
+    const currentPath = selectedRoute === 0 ? generatedPath : alternativeRoutes[selectedRoute - 1] || generatedPath;
+    const firstConcept = currentPath.find(
+      (c) => !c.locked && (!c.isCompleted && (c.masteryLevel ?? 0) < 7)
+    );
+    if (firstConcept) {
+      router.push(`/quiz/${firstConcept.id}`);
+    } else {
+      toast({
+        title: "All topics mastered!",
+        description: "You've completed all unlocked topics in this path.",
+        variant: "default",
+      });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
       {/* Header */}
@@ -1019,7 +1042,7 @@ export default function CustomPathGenerator() {
       </div>
 
       <div className="max-w-7xl mx-auto p-6">
-        <div className="grid lg:grid-cols-6 gap-8 h-[calc(100vh-200px)]">
+        <div className="grid lg:grid-cols-6 gap-x-8 gap-y-2 h-[calc(100vh-200px)] items-start">
           {/* Configuration Panel - Now wider */}
           <div className="lg:col-span-2 space-y-4 overflow-y-auto">
             <Card className="dark:bg-gray-800/80 dark:border-gray-700 shadow-lg">
@@ -1306,13 +1329,20 @@ export default function CustomPathGenerator() {
 
                 <CardContent className="flex-1 overflow-y-auto px-8">
                   {/* Beautiful Path Visualization with dynamic layout */}
-                  <div className="relative min-h-full py-8">
+                  <div className="relative min-h-full py-2">
                     {/* Start Indicator */}
-                    <div className="flex justify-center mb-8">
-                      <div className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-full shadow-lg">
-                        <Play className="w-4 h-4" />
-                        <span className="font-semibold text-sm">START YOUR JOURNEY</span>
-                      </div>
+                    <div className="flex justify-center mt-2 mb-8">
+                      <button
+                        type="button"
+                        onClick={handleStartJourney}
+                        className="flex items-center space-x-3 px-7 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-full shadow-xl border-2 border-transparent hover:border-green-400 focus:outline-none focus:ring-4 focus:ring-green-300/40 transition-all duration-200 hover:scale-105 hover:shadow-2xl relative overflow-hidden"
+                        style={{ boxShadow: '0 4px 24px 0 rgba(34,197,94,0.15)' }}
+                      >
+                        {/* Glowing effect on hover */}
+                        <span className="absolute inset-0 rounded-full bg-gradient-to-r from-green-400/30 to-emerald-400/20 opacity-0 hover:opacity-100 transition-opacity duration-300 blur-sm z-0" />
+                        <Play className="w-5 h-5 z-10" />
+                        <span className="font-semibold text-base z-10 tracking-wide">START YOUR JOURNEY</span>
+                      </button>
                     </div>
 
                     {/* Dynamic Grid Layout based on path length */}
@@ -1374,7 +1404,7 @@ export default function CustomPathGenerator() {
                                 </div>
 
                                 {/* Content */}
-                                <div className="space-y-3">
+                                <div className="space-y-4">
                                   <div className="flex items-start space-x-3">
                                     <div className="p-2 rounded-lg bg-white/80 dark:bg-gray-700/80 shadow-sm">
                                       {typeof topic.icon === 'function' ? 
@@ -1459,11 +1489,32 @@ export default function CustomPathGenerator() {
 
                     {/* Finish Indicator */}
                     <div className="flex justify-center mt-12">
-                      <div className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-600 text-white rounded-full shadow-lg">
-                        <Award className="w-5 h-5" />
-                        <span className="font-semibold">CONGRATULATIONS! PATH COMPLETED</span>
-                        <Sparkles className="w-5 h-5" />
-                      </div>
+                      {(() => {
+                        const completed = generatedPath.filter(topic => topic.isCompleted).length;
+                        const total = generatedPath.length;
+                        const isMastered = total > 0 && completed === total;
+                        return (
+                          <div className="relative flex flex-col items-center w-full max-w-xl">
+                            {/* Professional, soft green border card */}
+                            <div className="relative flex flex-col items-center px-10 py-7 bg-white dark:bg-gray-900 rounded-2xl shadow-xl border border-green-400">
+                              {/* Simple checkmark badge */}
+                              <div className="flex items-center justify-center w-14 h-14 rounded-full bg-green-500 shadow mb-3">
+                                <CheckCircle className="w-8 h-8 text-white" />
+                              </div>
+                              {/* Headline */}
+                              <div className="font-bold text-2xl md:text-3xl text-emerald-700 dark:text-emerald-300 text-center mb-2">
+                                Congratulations! Path Mastered
+                              </div>
+                              {/* Thin static divider bar */}
+                              <div className="w-20 h-1 rounded-full bg-gradient-to-r from-green-400 to-emerald-600 mb-3" />
+                              {/* Motivating subtext */}
+                              <div className="text-base text-gray-600 dark:text-gray-300 text-center">
+                                You've completed every topic in this learning journey.<br />Keep challenging yourself and reach new heights!
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })()}
                     </div>
                   </div>
 
