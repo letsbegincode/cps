@@ -167,6 +167,18 @@ export const submitQuiz = async (req: Request, res: Response): Promise<void> => 
     const conceptEntry = userProgress.concepts.find((c: any) => c.conceptId.toString() === conceptId);
     const MASTERY_THRESHOLD = 0.7;
     
+    // --- Achievement logic ---
+    const achievements: string[] = [];
+    const previousScore = conceptEntry ? conceptEntry.score : 0;
+    const attemptCount = conceptEntry ? (conceptEntry.attempts || 0) + 1 : 1;
+    // Score is normalized 0-1
+    if (masteryIncrement === 1) achievements.push('Perfect Score');
+    if (masteryIncrement >= 0.9) achievements.push('Master of Concept');
+    if (masteryIncrement >= 0.75 && attemptCount === 1) achievements.push('Fast Learner');
+    if (masteryIncrement > previousScore && attemptCount > 1) achievements.push('Improver');
+    // (Optional) Add more achievement logic here
+    // --- End achievement logic ---
+
     if (conceptEntry) {
       // Average previous and new score, cap at 1
       conceptEntry.score = Math.min((conceptEntry.score + masteryIncrement) / 2, 1);
@@ -182,6 +194,8 @@ export const submitQuiz = async (req: Request, res: Response): Promise<void> => 
         conceptEntry.mastered = false;
         if (conceptEntry.masteredAt) delete conceptEntry.masteredAt;
       }
+      // Add achievements (avoid duplicates)
+      conceptEntry.achievements = Array.from(new Set([...(conceptEntry.achievements || []), ...achievements]));
     } else {
       // Add new concept progress
       const newConcept: any = {
@@ -191,13 +205,14 @@ export const submitQuiz = async (req: Request, res: Response): Promise<void> => 
         lastUpdated: new Date(),
         mastered: masteryIncrement >= MASTERY_THRESHOLD,
         masteredAt: masteryIncrement >= MASTERY_THRESHOLD ? new Date() : undefined,
+        achievements,
       };
       userProgress.concepts.push(newConcept);
     }
     
     await userProgress.save();
     console.log("Updated user progress for user:", authenticatedUserId);
-    res.status(200).json({ message: "Quiz submitted and mastery updated." });
+    res.status(200).json({ message: "Quiz submitted and mastery updated.", achievements });
   } catch (error: any) {
     console.error("Error submitting quiz:", error);
     res.status(500).json({ error: "Internal server error", details: error.message });

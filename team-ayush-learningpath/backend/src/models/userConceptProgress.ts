@@ -12,6 +12,7 @@ export interface IConceptProgress {
   lastUpdated: Date;
   mastered: boolean;
   masteredAt?: Date;
+  achievements?: string[];
 }
 
 export interface IUserConceptProgress extends Document {
@@ -50,6 +51,7 @@ const ConceptProgressSchema = new Schema<IConceptProgress>(
       type: Date,
       required: false,
     },
+    achievements: [{ type: String }],
   },
   { _id: false } // no _id for subdocuments
 );
