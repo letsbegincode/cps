@@ -127,13 +127,12 @@ class ApiService {
 
   // Get recommendation path
   async getRecommendation(
-    userId: string, 
     goalConceptId: string, 
     currentConceptId: string
   ): Promise<RecommendationResponse> {
-    console.log('Getting recommendation with params:', { userId, goalConceptId, currentConceptId });
+    console.log('Getting recommendation with params:', { goalConceptId, currentConceptId });
     return this.request<RecommendationResponse>(
-      `/recommendation/${userId}/${goalConceptId}?currentConceptId=${currentConceptId}`
+      `/recommendation/${goalConceptId}?currentConceptId=${currentConceptId}`
     );
   }
 

@@ -11,13 +11,29 @@ import { buildConceptGraph, getAllPaths } from "../utils/graphUtils";
 
 export const getRecommendation = async (req: Request, res: Response) => {
   try {
-    const { userId, goalConceptId } = req.params;
+    // Get authenticated user from middleware
+    if (!req.user) {
+      return res.status(401).json({ error: "Authentication required" });
+    }
+
+    // Cast to any to access Mongoose document properties
+    const user = req.user as any;
+    const authenticatedUserId = user._id?.toString();
+    if (!authenticatedUserId) {
+      return res.status(401).json({ error: "Invalid user ID" });
+    }
+
+    const { goalConceptId } = req.params;
     const currentConceptId = req.query.currentConceptId as string;
 
-    console.log("Recommendation request:", { userId, goalConceptId, currentConceptId });
+    console.log("Recommendation request:", { 
+      authenticatedUserId, 
+      goalConceptId, 
+      currentConceptId 
+    });
 
-    if (!userId || !goalConceptId || !currentConceptId) {
-      return res.status(400).json({ error: "Missing userId, goalConceptId, or currentConceptId" });
+    if (!goalConceptId || !currentConceptId) {
+      return res.status(400).json({ error: "Missing goalConceptId or currentConceptId" });
     }
 
     // Fetch all concepts (titles + prerequisites)
@@ -66,8 +82,8 @@ export const getRecommendation = async (req: Request, res: Response) => {
       }
     }
 
-    // ✅ Fetch user's progress (single doc with concepts array)
-    const userProgressDoc = await UserConceptProgress.findOne({ userId });
+    // ✅ Fetch user's progress using authenticated user ID
+    const userProgressDoc = await UserConceptProgress.findOne({ userId: authenticatedUserId });
     const masteryMap: Record<string, number> = {};
 
     if (userProgressDoc) {

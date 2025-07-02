@@ -229,14 +229,12 @@ export default function CustomPathGenerator() {
     try {
       if (pathType === "topic" && selectedConcept) {
         console.log('Calling recommendation API with:', {
-          userId: user._id,
           goalConceptId: selectedConcept._id,
           currentConceptId: "root"
         });
 
         // Get recommendation for specific topic
         const response = await apiService.getRecommendation(
-          user._id,
           selectedConcept._id,
           "root" // Assuming we start from root concept
         )
