@@ -16,6 +16,7 @@ import conceptRoutes from './routes/conceptRoutes';
 import adminRoutes from './routes/adminRoutes';
 import quizRoutes from './routes/quizRoutes';
 import recommendationRoutes from './routes/recommendation.routes';
+import learningPathRoutes from './routes/learningPathRoutes';
 
 const app: Express = express();
 
@@ -42,6 +43,7 @@ app.use('/api/concepts', conceptRoutes);
 app.use('/api/admin', adminRoutes);
 app.use("/api/quiz", quizRoutes);
 app.use("/api/recommendation", recommendationRoutes);
+app.use('/api/learning-path', learningPathRoutes);
 
 
 // --- Server Initialization ---

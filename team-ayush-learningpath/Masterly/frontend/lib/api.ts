@@ -180,6 +180,48 @@ class ApiService {
       method: 'POST',
     });
   }
+
+  // Submit quiz and update user progress
+  async submitQuiz(conceptId: string, score: number): Promise<{ message: string }> {
+    console.log('Submitting quiz with:', { conceptId, score });
+    return this.request<{ message: string }>(`/quiz/submit/${conceptId}`, {
+      method: 'POST',
+      body: JSON.stringify({ score }),
+    });
+  }
+
+  // Save learning path to backend
+  async saveLearningPath(pathData: {
+    pathType: 'course' | 'topic';
+    selectedGoal?: string;
+    selectedConcept?: string;
+    generatedPath: any[];
+    alternativeRoutes: any[][];
+    selectedRoute: number;
+  }): Promise<{ message: string }> {
+    console.log('Saving learning path:', pathData);
+    return this.request<{ message: string }>('/learning-path/save', {
+      method: 'POST',
+      body: JSON.stringify(pathData),
+    });
+  }
+
+  // Get saved learning path from backend
+  async getSavedLearningPath(): Promise<{
+    pathType: 'course' | 'topic';
+    selectedGoal?: string;
+    selectedConcept?: string;
+    generatedPath: any[];
+    alternativeRoutes: any[][];
+    selectedRoute: number;
+  } | null> {
+    try {
+      return await this.request('/learning-path/get');
+    } catch (error) {
+      console.log('No saved learning path found');
+      return null;
+    }
+  }
 }
 
 export const apiService = new ApiService(); 

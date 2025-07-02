@@ -66,6 +66,7 @@ interface Topic {
   estimatedHours: number
   difficulty: "Beginner" | "Intermediate" | "Advanced"
   icon: any
+  iconName?: string
   locked?: boolean
 }
 
@@ -166,6 +167,101 @@ export default function CustomPathGenerator() {
     fetchUserProgress();
   }, [user]);
 
+  // Icon mapping for restoration
+  const iconMap: Record<string, any> = {
+    Target,
+    BookOpen,
+    TrendingUp,
+    Zap,
+    Code,
+    Database,
+    Search,
+    Brain,
+    Globe,
+    Network,
+    Trophy,
+    Server,
+    Cloud,
+    TreePine,
+    ArrowUpDown
+  };
+
+  // Function to restore icon from saved data
+  const restoreIcon = (iconName: string) => {
+    return iconMap[iconName] || Target; // Default to Target if icon not found
+  };
+
+  // Load saved learning path on component mount
+  useEffect(() => {
+    const loadSavedLearningPath = async () => {
+      if (!user) return;
+      
+      try {
+        // First try to load from backend
+        const savedPath = await apiService.getSavedLearningPath();
+        if (savedPath) {
+          console.log('Loading saved learning path from backend:', savedPath);
+          setPathType(savedPath.pathType);
+          setSelectedGoal(savedPath.selectedGoal || "");
+          setSelectedConcept(savedPath.selectedConcept ? { _id: savedPath.selectedConcept } as Concept : null);
+          
+          // Restore icons in generated path
+          const restoredPath = savedPath.generatedPath.map((topic: any) => ({
+            ...topic,
+            icon: typeof topic.icon === 'string' ? restoreIcon(topic.icon) : (topic.iconName ? restoreIcon(topic.iconName) : Target)
+          }));
+          setGeneratedPath(restoredPath);
+          
+          // Restore icons in alternative routes
+          const restoredAlternatives = savedPath.alternativeRoutes.map((route: any[]) => 
+            route.map((topic: any) => ({
+              ...topic,
+              icon: typeof topic.icon === 'string' ? restoreIcon(topic.icon) : (topic.iconName ? restoreIcon(topic.iconName) : Target)
+            }))
+          );
+          setAlternativeRoutes(restoredAlternatives || []);
+          setSelectedRoute(savedPath.selectedRoute || 0);
+          return;
+        }
+      } catch (error) {
+        console.log('No saved learning path in backend, trying localStorage');
+      }
+
+      // Fallback to localStorage
+      try {
+        const savedPath = localStorage.getItem('learningPath');
+        if (savedPath) {
+          const parsedPath = JSON.parse(savedPath);
+          console.log('Loading saved learning path from localStorage:', parsedPath);
+          setPathType(parsedPath.pathType);
+          setSelectedGoal(parsedPath.selectedGoal || "");
+          setSelectedConcept(parsedPath.selectedConcept ? { _id: parsedPath.selectedConcept } as Concept : null);
+          
+          // Restore icons in generated path
+          const restoredPath = parsedPath.generatedPath.map((topic: any) => ({
+            ...topic,
+            icon: typeof topic.icon === 'string' ? restoreIcon(topic.icon) : (topic.iconName ? restoreIcon(topic.iconName) : Target)
+          }));
+          setGeneratedPath(restoredPath);
+          
+          // Restore icons in alternative routes
+          const restoredAlternatives = parsedPath.alternativeRoutes.map((route: any[]) => 
+            route.map((topic: any) => ({
+              ...topic,
+              icon: typeof topic.icon === 'string' ? restoreIcon(topic.icon) : (topic.iconName ? restoreIcon(topic.iconName) : Target)
+            }))
+          );
+          setAlternativeRoutes(restoredAlternatives || []);
+          setSelectedRoute(parsedPath.selectedRoute || 0);
+        }
+      } catch (error) {
+        console.error('Error loading learning path from localStorage:', error);
+      }
+    };
+
+    loadSavedLearningPath();
+  }, [user]);
+
   // Search concepts when user types
   useEffect(() => {
     const searchConcepts = async () => {
@@ -258,6 +354,7 @@ export default function CustomPathGenerator() {
             estimatedHours: 2, // Default estimate - could be enhanced with actual concept data
           difficulty: "Intermediate" as const,
           icon: Target,
+          iconName: "Target", // Add icon name for serialization
           locked: item.locked,
           };
         });
@@ -282,6 +379,7 @@ export default function CustomPathGenerator() {
             estimatedHours: 2,
             difficulty: "Intermediate" as const,
             icon: Target,
+            iconName: "Target", // Add icon name for serialization
             locked: item.locked,
             };
           })
@@ -289,6 +387,39 @@ export default function CustomPathGenerator() {
 
         setAlternativeRoutes(transformedAlternatives)
         setSelectedRoute(0)
+
+        // Save learning path to backend and localStorage
+        // Convert icons to strings for serialization
+        const serializedPath = transformedPath.map(topic => ({
+          ...topic,
+          icon: topic.iconName || "Target" // Save icon name instead of component
+        }));
+        
+        const serializedAlternatives = transformedAlternatives.map(route => 
+          route.map(topic => ({
+            ...topic,
+            icon: topic.iconName || "Target" // Save icon name instead of component
+          }))
+        );
+        
+        const pathData = {
+          pathType,
+          selectedGoal,
+          selectedConcept: selectedConcept._id,
+          generatedPath: serializedPath,
+          alternativeRoutes: serializedAlternatives,
+          selectedRoute: 0
+        };
+
+        try {
+          await apiService.saveLearningPath(pathData);
+          localStorage.setItem('learningPath', JSON.stringify(pathData));
+          console.log('Learning path saved successfully');
+        } catch (error) {
+          console.error('Failed to save learning path:', error);
+          // Fallback to localStorage only
+          localStorage.setItem('learningPath', JSON.stringify(pathData));
+        }
 
         toast({
           title: "Path Generated!",
@@ -313,6 +444,32 @@ export default function CustomPathGenerator() {
         setGeneratedPath(pathWithProgress)
         setAlternativeRoutes([])
         setSelectedRoute(0)
+
+        // Save learning path to backend and localStorage
+        // Convert icons to strings for serialization
+        const serializedPath = pathWithProgress.map(topic => ({
+          ...topic,
+          icon: topic.iconName || "Target" // Save icon name instead of component
+        }));
+        
+        const pathData = {
+          pathType,
+          selectedGoal,
+          selectedConcept: undefined,
+          generatedPath: serializedPath,
+          alternativeRoutes: [],
+          selectedRoute: 0
+        };
+
+        try {
+          await apiService.saveLearningPath(pathData);
+          localStorage.setItem('learningPath', JSON.stringify(pathData));
+          console.log('Learning path saved successfully');
+        } catch (error) {
+          console.error('Failed to save learning path:', error);
+          // Fallback to localStorage only
+          localStorage.setItem('learningPath', JSON.stringify(pathData));
+        }
 
         toast({
           title: "Collaborative Course Path Generated!",
@@ -350,6 +507,7 @@ export default function CustomPathGenerator() {
           estimatedHours: 20,
           difficulty: "Beginner" as const,
           icon: BookOpen,
+          iconName: "BookOpen",
         },
       {
         id: "arrays",
@@ -363,6 +521,7 @@ export default function CustomPathGenerator() {
           estimatedHours: 25,
           difficulty: "Beginner" as const,
         icon: Target,
+        iconName: "Target",
       },
       {
         id: "linked-lists",
@@ -376,20 +535,22 @@ export default function CustomPathGenerator() {
           estimatedHours: 18,
           difficulty: "Beginner" as const,
         icon: TrendingUp,
+        iconName: "TrendingUp",
       },
-      {
+            {
           id: "stacks-queues",
           title: "Stacks & Queues",
           description: "LIFO and FIFO data structures with real-world applications",
         courseId: courseId,
           courseName: course?.title || "DSA",
           masteryLevel: 0,
-        isCompleted: false,
-        isPrerequisite: false,
+          isCompleted: false,
+          isPrerequisite: false,
           estimatedHours: 15,
           difficulty: "Beginner" as const,
-        icon: Zap,
-      },
+          icon: Zap,
+          iconName: "Zap",
+        },
         {
           id: "trees",
           title: "Trees & Binary Trees",
@@ -402,6 +563,7 @@ export default function CustomPathGenerator() {
           estimatedHours: 30,
           difficulty: "Intermediate" as const,
           icon: Target,
+          iconName: "Target",
         },
         {
           id: "graphs",
@@ -415,6 +577,7 @@ export default function CustomPathGenerator() {
           estimatedHours: 35,
           difficulty: "Intermediate" as const,
           icon: Network,
+          iconName: "Network",
         },
         {
           id: "sorting",
@@ -428,6 +591,7 @@ export default function CustomPathGenerator() {
           estimatedHours: 28,
           difficulty: "Intermediate" as const,
           icon: Target,
+          iconName: "Target",
         },
         {
           id: "searching",
@@ -441,6 +605,7 @@ export default function CustomPathGenerator() {
           estimatedHours: 20,
           difficulty: "Intermediate" as const,
           icon: Search,
+          iconName: "Search",
         },
         {
           id: "dynamic-programming",
@@ -454,6 +619,7 @@ export default function CustomPathGenerator() {
           estimatedHours: 40,
           difficulty: "Advanced" as const,
           icon: Brain,
+          iconName: "Brain",
         },
         {
           id: "greedy",
@@ -467,6 +633,7 @@ export default function CustomPathGenerator() {
           estimatedHours: 25,
           difficulty: "Advanced" as const,
           icon: Target,
+          iconName: "Target",
         },
         {
           id: "advanced-data-structures",
@@ -1180,7 +1347,10 @@ export default function CustomPathGenerator() {
                                 <div className="space-y-3">
                                   <div className="flex items-start space-x-3">
                                     <div className="p-2 rounded-lg bg-white/80 dark:bg-gray-700/80 shadow-sm">
-                                      <topic.icon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                                      {typeof topic.icon === 'function' ? 
+                                        React.createElement(topic.icon, { className: "w-5 h-5 text-blue-600 dark:text-blue-400" }) :
+                                        <Target className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                                      }
                                     </div>
                                     <div className="flex-1 min-w-0">
                                       <h3 className="font-bold text-gray-900 dark:text-white text-lg leading-tight">
@@ -1461,7 +1631,7 @@ export default function CustomPathGenerator() {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center space-x-2">
-              {selectedTopic?.icon && React.createElement(selectedTopic.icon, { className: "w-5 h-5 text-blue-600" })}
+              {selectedTopic?.icon && typeof selectedTopic.icon === 'function' && React.createElement(selectedTopic.icon, { className: "w-5 h-5 text-blue-600" })}
               <span>{selectedTopic?.title}</span>
             </DialogTitle>
             <DialogDescription>

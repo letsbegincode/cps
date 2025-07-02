@@ -5,7 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
-import { CheckCircle, X, Clock, Trophy, RotateCcw, ArrowRight } from "lucide-react"
+import { CheckCircle, X, Clock, Trophy, RotateCcw, ArrowRight, Target } from "lucide-react"
+import { apiService } from "@/lib/api"
 
 interface Question {
   id: number
@@ -89,9 +90,25 @@ export function QuizPlatform({ quiz }: QuizPlatformProps) {
     }
   }
 
-  const finishQuiz = () => {
+  const finishQuiz = async () => {
     setIsActive(false)
     setShowResults(true)
+    
+    // Submit quiz results to backend if conceptId is available
+    // Note: This component doesn't have conceptId, so we'll need to pass it as a prop
+    // For now, we'll just log the score
+    const finalScore = Math.round((calculateScore() / quiz.questions.length) * 100)
+    console.log('Quiz completed with score:', finalScore)
+    
+    // TODO: Add conceptId prop and submit to API
+    // if (conceptId) {
+    //   try {
+    //     await apiService.submitQuiz(conceptId, finalScore)
+    //     console.log('Quiz results submitted successfully')
+    //   } catch (error) {
+    //     console.error('Failed to submit quiz results:', error)
+    //   }
+    // }
   }
 
   const calculateScore = () => {
@@ -239,10 +256,16 @@ export function QuizPlatform({ quiz }: QuizPlatformProps) {
             })}
           </div>
 
-          <div className="flex justify-center mt-6">
+          <div className="flex justify-center mt-6 space-x-4">
             <Button onClick={startQuiz} variant="outline">
               <RotateCcw className="w-4 h-4 mr-2" />
               Retake Quiz
+            </Button>
+            <Button asChild>
+              <a href="/learning-paths">
+                <Target className="w-4 h-4 mr-2" />
+                Return to Learning Path
+              </a>
             </Button>
           </div>
         </CardContent>

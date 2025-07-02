@@ -76,23 +76,6 @@ export interface IConcept extends Document {
 
 // Updated IUser interface
 export interface IUser extends Document {
-    firstName: string; // Changed from 'name'
-    lastName: string;  // Added
-    email: string;
-    password?: string; // Password is now optional for OAuth users
-    googleId?: string;
-    githubId?: string;
-    role: 'user' | 'admin';
-    learningProfile: {
-        concept: Types.ObjectId;
-        masteryLevel: number;
-        quizAttempts: IQuizAttempt[];
-    }[];
-    isModified: (field: string) => boolean;
-}
-
-// Updated IUser interface
-export interface IUser extends Document {
     firstName: string;
     lastName: string;
     email: string;
@@ -105,6 +88,15 @@ export interface IUser extends Document {
         masteryLevel: number;
         quizAttempts: IQuizAttempt[];
     }[];
+    learningPath?: {
+        pathType: 'course' | 'topic';
+        selectedGoal?: string;
+        selectedConcept?: string;
+        generatedPath: any[];
+        alternativeRoutes: any[][];
+        selectedRoute: number;
+        savedAt: Date;
+    };
     resetPasswordToken?: string;
     resetPasswordExpire?: Date;
     isModified: (field: string) => boolean;

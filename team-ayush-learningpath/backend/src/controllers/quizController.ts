@@ -105,37 +105,60 @@ export const getQuizForConcept = async (req: Request, res: Response) => {
 // --For Quiz Recommendation and Mastery Tracking-- 
 // Interface for request body
 interface SubmitQuizRequestBody {
-  userId: string;
   conceptId: string;
   score: number; // 0–100
 }
 
 export const submitQuiz = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { userId, conceptId, score }: SubmitQuizRequestBody = req.body;
+    // Get authenticated user from middleware
+    if (!req.user) {
+      res.status(401).json({ error: "Authentication required" });
+      return;
+    }
 
-    if (!userId || !conceptId || typeof score !== "number") {
+    // Cast to any to access Mongoose document properties
+    const user = req.user as any;
+    const authenticatedUserId = user._id?.toString();
+    if (!authenticatedUserId) {
+      res.status(401).json({ error: "Invalid user ID" });
+      return;
+    }
+
+    const { conceptId } = req.params; // Get from URL parameter
+    const { score }: { score: number } = req.body; // Get score from request body
+
+    if (!conceptId || typeof score !== "number") {
       res.status(400).json({ error: "Missing or invalid parameters" });
       return;
     }
 
+    console.log("Quiz submission:", { 
+      authenticatedUserId, 
+      conceptId, 
+      score 
+    });
+
     const masteryIncrement = Math.min(score / 100, 1); // Normalize score to 0–1
 
     // Find the user's progress document
-    let userProgress = await UserConceptProgress.findOne({ userId });
+    let userProgress = await UserConceptProgress.findOne({ userId: authenticatedUserId });
 
     if (!userProgress) {
       // No progress doc for user, create new
       userProgress = new UserConceptProgress({
-        userId,
+        userId: authenticatedUserId,
         concepts: [{
           conceptId,
           score: masteryIncrement,
           attempts: 1,
           lastUpdated: new Date(),
+          mastered: masteryIncrement >= 0.7,
+          masteredAt: masteryIncrement >= 0.7 ? new Date() : undefined,
         }],
       });
       await userProgress.save();
+      console.log("Created new user progress document for user:", authenticatedUserId);
       res.status(200).json({ message: "Quiz submitted and mastery updated (new user progress)." });
       return;
     }
@@ -143,6 +166,7 @@ export const submitQuiz = async (req: Request, res: Response): Promise<void> => 
     // Find concept entry in user's progress
     const conceptEntry = userProgress.concepts.find((c: any) => c.conceptId.toString() === conceptId);
     const MASTERY_THRESHOLD = 0.7;
+    
     if (conceptEntry) {
       // Average previous and new score, cap at 1
       conceptEntry.score = Math.min((conceptEntry.score + masteryIncrement) / 2, 1);
@@ -165,16 +189,14 @@ export const submitQuiz = async (req: Request, res: Response): Promise<void> => 
         score: masteryIncrement,
         attempts: 1,
         lastUpdated: new Date(),
+        mastered: masteryIncrement >= MASTERY_THRESHOLD,
+        masteredAt: masteryIncrement >= MASTERY_THRESHOLD ? new Date() : undefined,
       };
-      if (masteryIncrement >= MASTERY_THRESHOLD) {
-        newConcept.mastered = true;
-        newConcept.masteredAt = new Date();
-      } else {
-        newConcept.mastered = false;
-      }
       userProgress.concepts.push(newConcept);
     }
+    
     await userProgress.save();
+    console.log("Updated user progress for user:", authenticatedUserId);
     res.status(200).json({ message: "Quiz submitted and mastery updated." });
   } catch (error: any) {
     console.error("Error submitting quiz:", error);

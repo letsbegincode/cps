@@ -310,10 +310,21 @@ const DSAQuizEngine = ({ conceptId, onClose }: DSAQuizEngineProps) => {
     }, 500);
   };
 
-  const completeQuiz = () => {
+  const completeQuiz = async () => {
     setQuizCompleted(true);
     calculateScore();
     setShowResults(true);
+    
+    // Submit quiz results to backend
+    if (conceptId) {
+      try {
+        const finalScore = Math.round((Object.values(answers).filter((answer, index) => answer === questions[index]?.correct).length / questions.length) * 100);
+        await apiService.submitQuiz(conceptId, finalScore);
+        console.log('Quiz results submitted successfully');
+      } catch (error) {
+        console.error('Failed to submit quiz results:', error);
+      }
+    }
   };
 
   const calculateScore = () => {
@@ -1071,6 +1082,14 @@ const DSAQuizEngine = ({ conceptId, onClose }: DSAQuizEngineProps) => {
             >
               <Home className="w-5 h-5 mr-3 transition-transform group-hover:scale-110" />
               Home
+            </button>
+            
+            <button
+              onClick={() => window.location.href = '/learning-paths'}
+              className="group px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl text-white font-bold transition-all duration-300 hover:from-blue-700 hover:to-indigo-700 hover:scale-105 flex items-center shadow-lg hover:shadow-xl"
+            >
+              <Target className="w-5 h-5 mr-3 transition-transform group-hover:scale-110" />
+              Return to Learning Path
             </button>
           </div>
 
