@@ -6,7 +6,7 @@ export interface Concept {
   description: string;
   complexity: number;
   estLearningTimeHours: number;
-  prerequisites: string[];
+  prerequisites: { _id: string; title: string }[];
   level?: string;
   category?: string;
   Test_Questions?: QuizQuestion[];
@@ -17,6 +17,10 @@ export interface UserConceptProgress {
   score: number;
   attempts: number;
   lastUpdated: string;
+  mastered?: boolean;
+  masteredAt?: string;
+  achievements?: string[];
+  locked?: boolean;
 }
 
 export interface RecommendationPath {
@@ -182,9 +186,9 @@ class ApiService {
   }
 
   // Submit quiz and update user progress
-  async submitQuiz(conceptId: string, score: number): Promise<{ message: string }> {
+  async submitQuiz(conceptId: string, score: number): Promise<{ message: string; achievements?: string[]; newlyUnlockedConcepts?: string[] }> {
     console.log('Submitting quiz with:', { conceptId, score });
-    return this.request<{ message: string }>(`/quiz/submit/${conceptId}`, {
+    return this.request<{ message: string; achievements?: string[]; newlyUnlockedConcepts?: string[] }>(`/quiz/submit/${conceptId}`, {
       method: 'POST',
       body: JSON.stringify({ score }),
     });

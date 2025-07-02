@@ -3,6 +3,7 @@ import Concept from '../models/conceptModel';
 import User from '../models/userModel';
 import UserConceptProgress from "../models/userConceptProgress";
 import { HydratedDocument } from "mongoose";
+import { updateMasteryAndGetUnlocks } from '../utils/conceptUnlockUtils';
 
 /**
  * @desc    Fetches a quiz for a concept, removing answers before sending to the client.
@@ -212,7 +213,15 @@ export const submitQuiz = async (req: Request, res: Response): Promise<void> => 
     
     await userProgress.save();
     console.log("Updated user progress for user:", authenticatedUserId);
-    res.status(200).json({ message: "Quiz submitted and mastery updated.", achievements });
+
+    // --- Unlock logic: call updateMasteryAndGetUnlocks and get newly unlocked concept IDs ---
+    const unlockResult = await updateMasteryAndGetUnlocks(authenticatedUserId, conceptId, masteryIncrement);
+    const unlockedIds = unlockResult.unlockedConcepts || [];
+    // Get titles for newly unlocked concepts
+    const unlockedConcepts = await Concept.find({ _id: { $in: unlockedIds } }).select('title');
+    const unlockedTitles = unlockedConcepts.map(c => c.title);
+
+    res.status(200).json({ message: "Quiz submitted and mastery updated.", achievements, newlyUnlockedConcepts: unlockedTitles });
   } catch (error: any) {
     console.error("Error submitting quiz:", error);
     res.status(500).json({ error: "Internal server error", details: error.message });

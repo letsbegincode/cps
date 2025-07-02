@@ -53,6 +53,7 @@ import { apiService, Concept, RecommendationResponse } from "@/lib/api"
 import { useAuth } from "../context/AuthContext"
 import { toast } from "@/hooks/use-toast"
 import { Progress } from "@/components/ui/progress"
+import { useRouter } from 'next/navigation'
 
 interface Topic {
   id: string
@@ -127,6 +128,7 @@ const availableCourses: Course[] = [
 
 export default function CustomPathGenerator() {
   const { user, isAuthenticated, isLoading } = useAuth()
+  const router = useRouter();
   
   // Add debugging to see what's happening
   console.log('Auth state:', { user, isAuthenticated, isLoading });
@@ -145,13 +147,14 @@ export default function CustomPathGenerator() {
   const [userProgress, setUserProgress] = useState<Record<string, number>>({})
   const [selectedTopic, setSelectedTopic] = useState<Topic | null>(null)
   const [showTopicModal, setShowTopicModal] = useState(false)
+  const [refresh, setRefresh] = useState(false);
+  const [lockedConceptInfo, setLockedConceptInfo] = useState<Concept | null>(null);
+  const [conceptsMap, setConceptsMap] = useState<Record<string, Concept>>({});
 
-  // Fetch user progress on component mount
+  // Fetch user progress on component mount and when refresh changes
   useEffect(() => {
     const fetchUserProgress = async () => {
       if (!user) return;
-      // Debug log to confirm user and user._id
-      console.log('DEBUG fetchUserProgress: user:', user, 'user._id:', user._id);
       try {
         const progress = await apiService.getUserProgress(user._id);
         const progressMap: Record<string, number> = {};
@@ -159,13 +162,26 @@ export default function CustomPathGenerator() {
           progressMap[p.conceptId] = p.score;
         });
         setUserProgress(progressMap);
+        // Also update generatedPath topics' locked status if needed
+        setGeneratedPath(prev => prev.map(topic => {
+          const progressEntry = progress.find(p => p.conceptId === topic.id);
+          return progressEntry ? { ...topic, locked: progressEntry.locked } : topic;
+        }));
       } catch (error) {
         console.error('Error fetching user progress:', error);
       }
     };
-
     fetchUserProgress();
-  }, [user]);
+  }, [user, refresh]);
+
+  // Add a handler to refresh learning path when returning from quiz
+  useEffect(() => {
+    const handleVisibility = () => {
+      setRefresh(r => !r);
+    };
+    window.addEventListener('focus', handleVisibility);
+    return () => window.removeEventListener('focus', handleVisibility);
+  }, []);
 
   // Icon mapping for restoration
   const iconMap: Record<string, any> = {
@@ -292,6 +308,17 @@ export default function CustomPathGenerator() {
     const debounceTimer = setTimeout(searchConcepts, 300)
     return () => clearTimeout(debounceTimer)
   }, [searchQuery])
+
+  // Fetch all concepts for prerequisite info
+  useEffect(() => {
+    const fetchConcepts = async () => {
+      const allConcepts = await apiService.getAllConcepts();
+      const map: Record<string, Concept> = {};
+      allConcepts.forEach((c) => { map[c._id] = c; });
+      setConceptsMap(map);
+    };
+    fetchConcepts();
+  }, []);
 
   const generateCustomPath = async () => {
     console.log('generateCustomPath called with auth state:', { user, isAuthenticated, isLoading });
@@ -1309,7 +1336,10 @@ export default function CustomPathGenerator() {
                           {/* Topic Card - Full width within grid */}
                           <div className="flex justify-center">
                             <div
-                              onClick={() => handleTopicClick(topic)}
+                              onClick={() => {
+                                if (topic.locked) setLockedConceptInfo(conceptsMap[topic.id]);
+                                else handleTopicClick(topic);
+                              }}
                               className="group relative block w-full max-w-sm cursor-pointer"
                             >
                               <div
@@ -1698,6 +1728,35 @@ export default function CustomPathGenerator() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Locked Concept Info Modal */}
+      {lockedConceptInfo && (
+        <Dialog open={!!lockedConceptInfo} onOpenChange={() => setLockedConceptInfo(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>
+                🔒 To unlock "{lockedConceptInfo.title}", master:
+              </DialogTitle>
+              <DialogDescription>
+                {lockedConceptInfo.prerequisites.length > 0 ? (
+                  <ul className="mt-2 list-disc pl-6">
+                    {lockedConceptInfo.prerequisites.map((pr) => (
+                      <li key={pr._id}>
+                        <Link href={`/quiz/${pr._id}`} className="text-blue-600 underline hover:text-blue-800">
+                          {pr.title}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-gray-700 mt-2">This topic has no prerequisites.</p>
+                )}
+              </DialogDescription>
+              <Button className="mt-4" onClick={() => setLockedConceptInfo(null)}>Close</Button>
+            </DialogHeader>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   )
 }
