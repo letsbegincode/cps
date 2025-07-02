@@ -149,7 +149,8 @@ export default function CustomPathGenerator() {
   useEffect(() => {
     const fetchUserProgress = async () => {
       if (!user) return;
-      
+      // Debug log to confirm user and user._id
+      console.log('DEBUG fetchUserProgress: user:', user, 'user._id:', user._id);
       try {
         const progress = await apiService.getUserProgress(user._id);
         const progressMap: Record<string, number> = {};

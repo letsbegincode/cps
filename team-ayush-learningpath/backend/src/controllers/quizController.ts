@@ -121,27 +121,60 @@ export const submitQuiz = async (req: Request, res: Response): Promise<void> => 
 
     const masteryIncrement = Math.min(score / 100, 1); // Normalize score to 0–1
 
-    const existing = await UserConceptProgress.findOne({ userId, conceptId });
+    // Find the user's progress document
+    let userProgress = await UserConceptProgress.findOne({ userId });
 
-    if (existing) {
-      // Average previous and new score, cap at 1
-      existing.score = Math.min((existing.score + masteryIncrement) / 2, 1);
-      // existing.attempts += 1;
-      // existing.lastUpdated = new Date();
-      await existing.save();
-    } else {
-      // Create new progress record
-      const newProgress: HydratedDocument<any> = new UserConceptProgress({
+    if (!userProgress) {
+      // No progress doc for user, create new
+      userProgress = new UserConceptProgress({
         userId,
-        conceptId,
-        score: masteryIncrement,
-        // attempts: 1,
-        // lastUpdated: new Date(),
+        concepts: [{
+          conceptId,
+          score: masteryIncrement,
+          attempts: 1,
+          lastUpdated: new Date(),
+        }],
       });
-
-      await newProgress.save();
+      await userProgress.save();
+      res.status(200).json({ message: "Quiz submitted and mastery updated (new user progress)." });
+      return;
     }
 
+    // Find concept entry in user's progress
+    const conceptEntry = userProgress.concepts.find((c: any) => c.conceptId.toString() === conceptId);
+    const MASTERY_THRESHOLD = 0.7;
+    if (conceptEntry) {
+      // Average previous and new score, cap at 1
+      conceptEntry.score = Math.min((conceptEntry.score + masteryIncrement) / 2, 1);
+      conceptEntry.attempts = (conceptEntry.attempts || 0) + 1;
+      conceptEntry.lastUpdated = new Date();
+      // Mastery logic
+      if (conceptEntry.score >= MASTERY_THRESHOLD) {
+        if (!conceptEntry.mastered) {
+          conceptEntry.mastered = true;
+          conceptEntry.masteredAt = new Date();
+        }
+      } else {
+        conceptEntry.mastered = false;
+        if (conceptEntry.masteredAt) delete conceptEntry.masteredAt;
+      }
+    } else {
+      // Add new concept progress
+      const newConcept: any = {
+        conceptId,
+        score: masteryIncrement,
+        attempts: 1,
+        lastUpdated: new Date(),
+      };
+      if (masteryIncrement >= MASTERY_THRESHOLD) {
+        newConcept.mastered = true;
+        newConcept.masteredAt = new Date();
+      } else {
+        newConcept.mastered = false;
+      }
+      userProgress.concepts.push(newConcept);
+    }
+    await userProgress.save();
     res.status(200).json({ message: "Quiz submitted and mastery updated." });
   } catch (error: any) {
     console.error("Error submitting quiz:", error);

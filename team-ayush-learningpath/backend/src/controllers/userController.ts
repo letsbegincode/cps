@@ -38,6 +38,13 @@ export const getDashboard = async (req: Request, res: Response) => {
 export const getUserProgress = async (req: Request, res: Response) => {
     try {
         const { userId } = req.params;
+        // Debug log to ensure id consistency
+        console.log('DEBUG getUserProgress:', {
+          reqUser: req.user,
+          reqUser_id: req.user?._id,
+          reqUserId: req.user?.id,
+          paramUserId: userId
+        });
         
         // Check if the requesting user is accessing their own progress or is an admin
         if (req.user?.id !== userId && req.user?.role !== 'admin') {
