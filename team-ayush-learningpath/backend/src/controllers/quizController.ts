@@ -219,3 +219,23 @@ export const submitQuiz = async (req: Request, res: Response): Promise<void> => 
   }
 };
 
+/**
+ * @desc    Get next concepts unlocked by mastering the current concept
+ * @route   GET /api/concepts/next/:conceptId
+ * @access  Private
+ */
+export const getNextConcepts = async (req: Request, res: Response) => {
+  try {
+    const { conceptId } = req.params;
+    if (!conceptId) {
+      return res.status(400).json({ message: 'Missing conceptId' });
+    }
+    // Find all concepts where current concept is a prerequisite
+    const nextConcepts = await Concept.find({ prerequisites: conceptId }).select('title _id difficulty complexity');
+    res.status(200).json(nextConcepts);
+  } catch (err) {
+    console.error('Error fetching next concepts:', err);
+    res.status(500).json({ message: 'Could not fetch next concepts' });
+  }
+};
+
