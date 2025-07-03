@@ -6,7 +6,7 @@ export interface Concept {
   description: string;
   complexity: number;
   estLearningTimeHours: number;
-  prerequisites: string[];
+  prerequisites: { _id: string; title: string }[];
   level?: string;
   category?: string;
   Test_Questions?: QuizQuestion[];
@@ -17,6 +17,10 @@ export interface UserConceptProgress {
   score: number;
   attempts: number;
   lastUpdated: string;
+  mastered?: boolean;
+  masteredAt?: string;
+  achievements?: string[];
+  locked?: boolean;
 }
 
 export interface RecommendationPath {
@@ -127,13 +131,12 @@ class ApiService {
 
   // Get recommendation path
   async getRecommendation(
-    userId: string, 
     goalConceptId: string, 
     currentConceptId: string
   ): Promise<RecommendationResponse> {
-    console.log('Getting recommendation with params:', { userId, goalConceptId, currentConceptId });
+    console.log('Getting recommendation with params:', { goalConceptId, currentConceptId });
     return this.request<RecommendationResponse>(
-      `/recommendation/${userId}/${goalConceptId}?currentConceptId=${currentConceptId}`
+      `/recommendation/${goalConceptId}?currentConceptId=${currentConceptId}`
     );
   }
 
@@ -180,6 +183,48 @@ class ApiService {
     return this.request('/auth/logout', {
       method: 'POST',
     });
+  }
+
+  // Submit quiz and update user progress
+  async submitQuiz(conceptId: string, score: number): Promise<{ message: string; achievements?: string[]; newlyUnlockedConcepts?: string[] }> {
+    console.log('Submitting quiz with:', { conceptId, score });
+    return this.request<{ message: string; achievements?: string[]; newlyUnlockedConcepts?: string[] }>(`/quiz/submit/${conceptId}`, {
+      method: 'POST',
+      body: JSON.stringify({ score }),
+    });
+  }
+
+  // Save learning path to backend
+  async saveLearningPath(pathData: {
+    pathType: 'course' | 'topic';
+    selectedGoal?: string;
+    selectedConcept?: string;
+    generatedPath: any[];
+    alternativeRoutes: any[][];
+    selectedRoute: number;
+  }): Promise<{ message: string }> {
+    console.log('Saving learning path:', pathData);
+    return this.request<{ message: string }>('/learning-path/save', {
+      method: 'POST',
+      body: JSON.stringify(pathData),
+    });
+  }
+
+  // Get saved learning path from backend
+  async getSavedLearningPath(): Promise<{
+    pathType: 'course' | 'topic';
+    selectedGoal?: string;
+    selectedConcept?: string;
+    generatedPath: any[];
+    alternativeRoutes: any[][];
+    selectedRoute: number;
+  } | null> {
+    try {
+      return await this.request('/learning-path/get');
+    } catch (error) {
+      console.log('No saved learning path found');
+      return null;
+    }
   }
 }
 

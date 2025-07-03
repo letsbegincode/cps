@@ -19,6 +19,9 @@ router.get('/test', testConcepts);
 // Test quiz endpoint (public)
 router.get('/test-quiz', testQuiz);
 
+// Public route to get concept content (for learning)
+router.get('/content/:id', getConceptById);
+
 // Test endpoint to get test user ID
 router.get('/test-user', async (req: Request, res: Response) => {
   try {

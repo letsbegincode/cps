@@ -25,9 +25,8 @@ export const registerUser = async (req: Request, res: Response) => {
         if (userExists) {
             return res.status(400).json({ message: 'User already exists' });
         }
-        // Always hash the password before saving
-        const hashedPassword = await bcrypt.hash(password, 10);
-        const user = await User.create({ firstName, lastName, email, password: hashedPassword });
+        // Let the User model handle password hashing via pre-save hook
+        const user = await User.create({ firstName, lastName, email, password });
         generateTokenAndSetCookie(res, user._id.toString());
         res.status(201).json({ _id: user._id, firstName: user.firstName, lastName: user.lastName, email: user.email, role: user.role });
     } catch (error) {
@@ -39,14 +38,36 @@ export const registerUser = async (req: Request, res: Response) => {
 export const loginUser = async (req: Request, res: Response) => {
     const { email, password } = req.body;
     try {
+        console.log('Login attempt for email:', email);
+        
         const user = await User.findOne({ email }).select('+password');
-        if (!user || !user.password || !(await bcrypt.compare(password, user.password))) {
+        console.log('User found:', !!user);
+        
+        if (!user) {
+            console.log('❌ User not found');
             return res.status(401).json({ message: 'Invalid credentials' });
         }
+        
+        if (!user.password) {
+            console.log('❌ User has no password (possibly OAuth user)');
+            return res.status(401).json({ message: 'Invalid credentials' });
+        }
+        
+        console.log('Stored password hash:', user.password.substring(0, 20) + '...');
+        
+        const isPasswordValid = await bcrypt.compare(password, user.password);
+        console.log('Password comparison result:', isPasswordValid);
+        
+        if (!isPasswordValid) {
+            console.log('❌ Password does not match');
+            return res.status(401).json({ message: 'Invalid credentials' });
+        }
+        
+        console.log('✅ Login successful');
         generateTokenAndSetCookie(res, user._id.toString());
         res.status(200).json({ _id: user._id, firstName: user.firstName, lastName: user.lastName, email: user.email, role: user.role });
     } catch (error) {
-        console.error(error);
+        console.error('Login error:', error);
         res.status(500).json({ message: 'Server error' });
     }
 };
@@ -135,13 +156,12 @@ export const registerAdmin = async (req: Request, res: Response) => {
         if (adminExists) {
             return res.status(400).json({ message: 'Admin already exists' });
         }
-        // Always hash the password before saving
-        const hashedPassword = await bcrypt.hash(password, 10);
+        // Let the Admin model handle password hashing via pre-save hook
         const admin = await Admin.create({
             firstName,
             lastName,
             email,
-            password: hashedPassword,
+            password,
             phone,
             role: 'admin'
         });

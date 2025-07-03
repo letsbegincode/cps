@@ -24,6 +24,29 @@ export interface IQuizAttempt {
     attemptedAt: Date;
 }
 
+export interface IArticleContent {
+    intro: string;
+    levels: Array<{
+        level: string;
+        sections: Array<{
+            heading: string;
+            content: string;
+            codeExamples?: Array<{
+                language: string;
+                code: string;
+                explanation: string;
+            }>;
+            complexityAnalysis?: {
+                timeComplexity: string;
+                spaceComplexity: string;
+                explanation: string;
+            };
+            notes?: string[];
+            imageUrl?: string;
+        }>;
+    }>;
+}
+
 export interface IConcept extends Document {
     title: string;
     Concept?: string;
@@ -35,6 +58,8 @@ export interface IConcept extends Document {
     Learning_Resources?: string;
     Related_Concepts?: Types.ObjectId[];
     Test_Questions?: ITestQuestion[];
+    articleContent?: IArticleContent;
+    prerequisites?: Types.ObjectId[];
     
     relatedConcepts?: string[];
     description: string;
@@ -46,25 +71,7 @@ export interface IConcept extends Document {
     isFundamental?: boolean;
     learningResources?: string;
     contentBlocks: { type: string; data: string }[];
-    prerequisites: Types.ObjectId[];
     quiz: IQuizQuestion[];
-}
-
-// Updated IUser interface
-export interface IUser extends Document {
-    firstName: string; // Changed from 'name'
-    lastName: string;  // Added
-    email: string;
-    password?: string; // Password is now optional for OAuth users
-    googleId?: string;
-    githubId?: string;
-    role: 'user' | 'admin';
-    learningProfile: {
-        concept: Types.ObjectId;
-        masteryLevel: number;
-        quizAttempts: IQuizAttempt[];
-    }[];
-    isModified: (field: string) => boolean;
 }
 
 // Updated IUser interface
@@ -81,6 +88,15 @@ export interface IUser extends Document {
         masteryLevel: number;
         quizAttempts: IQuizAttempt[];
     }[];
+    learningPath?: {
+        pathType: 'course' | 'topic';
+        selectedGoal?: string;
+        selectedConcept?: string;
+        generatedPath: any[];
+        alternativeRoutes: any[][];
+        selectedRoute: number;
+        savedAt: Date;
+    };
     resetPasswordToken?: string;
     resetPasswordExpire?: Date;
     isModified: (field: string) => boolean;

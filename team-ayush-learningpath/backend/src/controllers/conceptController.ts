@@ -11,11 +11,13 @@ import { getQuizQuestions } from '../utils/conceptMapper';
 export const getAllConcepts = async (req: Request, res: Response) => {
     try {
         // Only select fields needed for a catalog view to keep the payload small.
-        const concepts = await Concept.find({}).select('title description complexity estLearningTimeHours level category');
+        const concepts = await Concept.find({})
+            .select('title description complexity estLearningTimeHours level category prerequisites')
+            .populate('prerequisites', '_id title');
         console.log('Found concepts:', concepts.length);
         res.status(200).json(concepts);
     } catch (error) {
-        console.error(error);
+        console.error(String(error));
         res.status(500).json({ message: 'Server Error' });
     }
 };
@@ -42,7 +44,7 @@ export const searchConcepts = async (req: Request, res: Response) => {
         console.log('Search results:', concepts.length, 'concepts found');
         res.status(200).json(concepts);
     } catch (error) {
-        console.error(error);
+        console.error(String(error));
         res.status(500).json({ message: 'Server Error' });
     }
 };
@@ -116,7 +118,7 @@ export const getConceptById = async (req: Request, res: Response) => {
             res.status(404).json({ message: 'Concept not found' });
         }
     } catch (error) {
-        console.error(error);
+        console.error(String(error));
         res.status(500).json({ message: 'Server Error' });
     }
 };
@@ -147,7 +149,7 @@ export const getConceptQuiz = async (req: Request, res: Response) => {
             totalQuestions: quizQuestions.length
         });
     } catch (error) {
-        console.error('Get concept quiz error:', error);
+        console.error(String(error));
         res.status(500).json({ message: 'Server Error' });
     }
 };

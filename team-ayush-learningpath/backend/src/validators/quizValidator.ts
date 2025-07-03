@@ -2,13 +2,12 @@ import { body, validationResult } from 'express-validator';
 import { Request, Response, NextFunction } from 'express';
 
 export const submitQuizRules = () => [
-    // Ensure 'answers' is an array and contains only numbers (the index of the chosen option).
-    body('answers')
-        .isArray({ min: 1 })
-        .withMessage('The answers field must be an array with at least one answer.'),
-    body('answers.*')
+    // Ensure 'score' is a number between 0 and 100
+    body('score')
         .isNumeric()
-        .withMessage('Each answer must be a numeric index.'),
+        .withMessage('Score must be a number.')
+        .isFloat({ min: 0, max: 100 })
+        .withMessage('Score must be between 0 and 100.'),
 ];
 
 export const validate = (req: Request, res: Response, next: NextFunction) => {

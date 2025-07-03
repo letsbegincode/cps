@@ -22,6 +22,16 @@ const userSchema = new Schema<IUser>({
         masteryLevel: { type: Number, default: 0 },
         quizAttempts: [quizAttemptSchema]
     }],
+    // Learning path persistence
+    learningPath: {
+        pathType: { type: String, enum: ['course', 'topic'] },
+        selectedGoal: { type: String },
+        selectedConcept: { type: String },
+        generatedPath: [{ type: Schema.Types.Mixed }],
+        alternativeRoutes: [[{ type: Schema.Types.Mixed }]],
+        selectedRoute: { type: Number, default: 0 },
+        savedAt: { type: Date, default: Date.now }
+    },
     // --- NEW FIELDS FOR PASSWORD RESET ---
     resetPasswordToken: { type: String, select: false },
     resetPasswordExpire: { type: Date, select: false },

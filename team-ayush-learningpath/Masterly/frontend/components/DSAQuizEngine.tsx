@@ -1,11 +1,46 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Clock, Shield, Eye, EyeOff, AlertTriangle, CheckCircle, XCircle, BarChart3, Trophy, Zap, Target, Brain, Code, Cpu, Database, Search, Layers, Users, Award, TrendingUp, Lock, Unlock, AlertCircle, Play, Pause, RotateCcw, Home, Settings, HelpCircle, Sparkles } from 'lucide-react';
 import { apiService, QuizQuestion, ConceptQuiz } from '@/lib/api';
+import { useRouter } from 'next/navigation';
 
 interface DSAQuizEngineProps {
   conceptId?: string | null;
   onClose?: () => void;
 }
+
+const achievementIcons: Record<string, string> = {
+  'Perfect Score': '💯',
+  'Master of Concept': '🥇',
+  'Fast Learner': '🔥',
+  'Improver': '📈',
+};
+
+const achievementDetails: Record<string, { icon: string; title: string; desc: string; color: string }> = {
+  'Perfect Score': {
+    icon: '💯',
+    title: 'Perfect Score',
+    desc: 'Scored 100% on this quiz',
+    color: 'from-pink-500 to-red-500',
+  },
+  'Master of Concept': {
+    icon: '🥇',
+    title: 'Master of Concept',
+    desc: 'Scored 90% or higher',
+    color: 'from-yellow-400 to-yellow-600',
+  },
+  'Fast Learner': {
+    icon: '🔥',
+    title: 'Fast Learner',
+    desc: 'Mastered on the first attempt',
+    color: 'from-orange-500 to-pink-500',
+  },
+  'Improver': {
+    icon: '📈',
+    title: 'Improver',
+    desc: 'Improved your score from last attempt',
+    color: 'from-blue-500 to-green-500',
+  },
+};
 
 const DSAQuizEngine = ({ conceptId, onClose }: DSAQuizEngineProps) => {
   // Core quiz state
@@ -56,6 +91,11 @@ const DSAQuizEngine = ({ conceptId, onClose }: DSAQuizEngineProps) => {
     hesitation: [],
     clickPattern: []
   });
+
+  const [achievements, setAchievements] = useState<string[]>([]);
+  const [newlyUnlocked, setNewlyUnlocked] = useState<string[]>([]);
+
+  const router = useRouter();
 
   // Dynamic DSA Questions with varying difficulty (fallback)
   const generateQuestions = (): QuizQuestion[] => [
@@ -310,10 +350,27 @@ const DSAQuizEngine = ({ conceptId, onClose }: DSAQuizEngineProps) => {
     }, 500);
   };
 
-  const completeQuiz = () => {
+  const completeQuiz = async () => {
     setQuizCompleted(true);
     calculateScore();
     setShowResults(true);
+    
+    // Submit quiz results to backend
+    if (conceptId) {
+      try {
+        const finalScore = Math.round((Object.values(answers).filter((answer, index) => answer === questions[index]?.correct).length / questions.length) * 100);
+        const response = await apiService.submitQuiz(conceptId, finalScore);
+        if (response && response.achievements) {
+          setAchievements(response.achievements);
+        }
+        if (response && response.newlyUnlockedConcepts) {
+          setNewlyUnlocked(response.newlyUnlockedConcepts);
+        }
+        console.log('Quiz results submitted successfully');
+      } catch (error) {
+        console.error('Failed to submit quiz results:', error);
+      }
+    }
   };
 
   const calculateScore = () => {
@@ -737,6 +794,8 @@ const DSAQuizEngine = ({ conceptId, onClose }: DSAQuizEngineProps) => {
   const ResultsPage = () => {
     const correctAnswers = questions.filter((q, index) => answers[index] === q.correct).length;
     const accuracy = (correctAnswers / questions.length) * 100;
+    const masteryThreshold = 75; // percent
+    const isMastered = score >= masteryThreshold;
     
     const getScoreColor = () => {
       if (score >= 80) return 'from-green-500 to-emerald-500';
@@ -766,7 +825,21 @@ const DSAQuizEngine = ({ conceptId, onClose }: DSAQuizEngineProps) => {
               </button>
               </div>
           )}
-          
+          {/* Newly Unlocked Topics */}
+          {newlyUnlocked.length > 0 && (
+            <div className="bg-green-50 dark:bg-green-900/20 rounded-2xl p-6 border border-green-200 dark:border-green-700 mb-8 shadow-xl text-center">
+              <h2 className="text-2xl font-bold text-green-800 dark:text-green-300 mb-2 flex items-center justify-center gap-2">
+                <span className="text-3xl">🎉</span> New Topics Unlocked!
+              </h2>
+              <ul className="flex flex-wrap justify-center gap-4 mt-4">
+                {newlyUnlocked.map((topic, idx) => (
+                  <li key={idx} className="px-4 py-2 bg-white dark:bg-gray-800 rounded-xl shadow text-green-700 dark:text-green-300 font-semibold border border-green-300 dark:border-green-600">
+                    ✅ {topic}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
           <div className="text-center mb-12">
             <div className="flex items-center justify-center mb-6">
               <div className="relative">
@@ -781,6 +854,49 @@ const DSAQuizEngine = ({ conceptId, onClose }: DSAQuizEngineProps) => {
             <h1 className="text-5xl font-bold text-gray-900 dark:text-white mb-4">
               {isDisqualified ? 'Quiz Disqualified' : 'Quiz Complete!'}
             </h1>
+            {/* Mastery Message */}
+            {!isDisqualified && (
+              isMastered ? (
+                <div className="text-green-600 text-2xl font-semibold mb-4">
+                  🎉 Congratulations! You've mastered this concept!
+                </div>
+              ) : (
+                <div className="text-red-500 text-2xl font-semibold mb-4">
+                  ⚠️ You need to revise this concept again.
+                </div>
+              )
+            )}
+            {/* Achievements Section */}
+            {!isDisqualified && achievements.length > 0 && (
+              <div className="text-center mt-4 mb-8">
+                <h2 className="text-2xl font-bold mb-1 text-gray-900 dark:text-white flex items-center justify-center gap-2">
+                  <span className="text-3xl">🏆</span> Achievements Unlocked
+                </h2>
+                <p className="text-gray-500 dark:text-gray-400 mb-6 text-base">You've earned these for your performance in this quiz.</p>
+                <div className="flex flex-wrap justify-center gap-6">
+                  {achievements.map((ach, index) => {
+                    const details = achievementDetails[ach] || {
+                      icon: '🏅',
+                      title: ach,
+                      desc: '',
+                      color: 'from-gray-400 to-gray-600',
+                    };
+                    return (
+                      <div
+                        key={index}
+                        className={`flex flex-col items-center p-5 rounded-2xl shadow-xl bg-gradient-to-br ${details.color} min-w-[180px] max-w-xs transition-transform hover:scale-105`}
+                      >
+                        <div className="w-14 h-14 rounded-full flex items-center justify-center bg-white/80 shadow mb-3 text-3xl">
+                          {details.icon}
+                        </div>
+                        <div className="font-bold text-lg text-gray-900 dark:text-white mb-1">{details.title}</div>
+                        <div className="text-gray-700 dark:text-gray-200 text-sm opacity-80">{details.desc}</div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
             <p className="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
               {isDisqualified 
                 ? 'Too many security violations were detected during the quiz'
@@ -1072,6 +1188,14 @@ const DSAQuizEngine = ({ conceptId, onClose }: DSAQuizEngineProps) => {
               <Home className="w-5 h-5 mr-3 transition-transform group-hover:scale-110" />
               Home
             </button>
+            
+            <button
+              onClick={() => router.push('/learning-paths')}
+              className="group px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl text-white font-bold transition-all duration-300 hover:from-blue-700 hover:to-indigo-700 hover:scale-105 flex items-center shadow-lg hover:shadow-xl"
+            >
+              <Target className="w-5 h-5 mr-3 transition-transform group-hover:scale-110" />
+              Return to Learning Path
+            </button>
           </div>
 
           {/* Detailed Analytics */}
@@ -1193,4 +1317,3 @@ const DSAQuizEngine = ({ conceptId, onClose }: DSAQuizEngineProps) => {
 };
 
 export default DSAQuizEngine;
-                      

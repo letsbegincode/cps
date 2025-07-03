@@ -2,6 +2,7 @@
 import { Request, Response } from 'express';
 import User from '../models/userModel';
 import UserConceptProgress from '../models/userConceptProgress';
+import { getUnlockedConcepts } from '../utils/conceptUnlockUtils';
 
 /**
  * @desc    Get the logged-in user's complete dashboard data.
@@ -38,19 +39,40 @@ export const getDashboard = async (req: Request, res: Response) => {
 export const getUserProgress = async (req: Request, res: Response) => {
     try {
         const { userId } = req.params;
+        // Debug log to ensure id consistency
+        console.log('DEBUG getUserProgress:', {
+          reqUser: req.user,
+          reqUser_id: req.user?._id,
+          reqUserId: req.user?.id,
+          paramUserId: userId
+        });
         
         // Check if the requesting user is accessing their own progress or is an admin
         if (req.user?.id !== userId && req.user?.role !== 'admin') {
             return res.status(403).json({ message: 'Not authorized to access this user\'s progress' });
         }
 
-        const userProgress = await UserConceptProgress.findOne({ userId }).populate('concepts.conceptId', 'title description');
-
+        const userProgress = await UserConceptProgress.findOne({ userId });
         if (!userProgress) {
             return res.status(200).json([]);
         }
 
-        res.status(200).json(userProgress.concepts);
+        // Get unlocked concepts for this user
+        const unlockedConcepts = new Set(await getUnlockedConcepts(userId));
+
+        // For each concept, return locked status
+        const progressWithLock = userProgress.concepts.map((c: any) => ({
+            conceptId: c.conceptId,
+            score: c.score,
+            attempts: c.attempts,
+            lastUpdated: c.lastUpdated,
+            mastered: c.mastered,
+            masteredAt: c.masteredAt,
+            achievements: c.achievements,
+            locked: !unlockedConcepts.has(c.conceptId.toString()),
+        }));
+
+        res.status(200).json(progressWithLock);
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Server Error' });

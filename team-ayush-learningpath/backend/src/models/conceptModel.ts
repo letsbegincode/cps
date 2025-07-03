@@ -120,7 +120,31 @@ const conceptSchema = new Schema<IConcept>({
         type: Schema.Types.ObjectId,
         ref: 'Concept'
     }],
-    Test_Questions: [testQuestionSchema]
+    Test_Questions: [testQuestionSchema],
+    
+    // Article content structure for learning material
+    articleContent: {
+        intro: { type: String, required: false },
+        levels: [{
+            level: { type: String, required: false },
+            sections: [{
+                heading: { type: String, required: false },
+                content: { type: String, required: false },
+                codeExamples: [{
+                    language: { type: String, required: false },
+                    code: { type: String, required: false },
+                    explanation: { type: String, required: false }
+                }],
+                complexityAnalysis: {
+                    timeComplexity: { type: String, required: false },
+                    spaceComplexity: { type: String, required: false },
+                    explanation: { type: String, required: false }
+                },
+                notes: [{ type: String }],
+                imageUrl: { type: String, required: false }
+            }]
+        }]
+    }
 }, {
     timestamps: true
 });

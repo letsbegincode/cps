@@ -1,16 +1,16 @@
 import express from "express";
 import { getRecommendation } from "../controllers/recommendationController";
-// import { protect } from "../middlewares/authMiddleware";
+import { protect } from "../middlewares/authMiddleware";
 
 const router = express.Router();
 
-// Temporarily disabled authentication for testing in Postman
-// router.use(protect);
+// Enable authentication for all recommendation routes
+router.use(protect);
 
 /**
- * @route GET /api/recommendation/:userId/:goalConceptId
+ * @route GET /api/recommendation/:goalConceptId
  * @desc Get personalized shortest path recommendation for a user
  */
-router.get("/:userId/:goalConceptId", getRecommendation);
+router.get("/:goalConceptId", getRecommendation);
 
 export default router;

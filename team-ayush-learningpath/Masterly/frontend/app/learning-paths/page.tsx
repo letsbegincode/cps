@@ -53,6 +53,7 @@ import { apiService, Concept, RecommendationResponse } from "@/lib/api"
 import { useAuth } from "../context/AuthContext"
 import { toast } from "@/hooks/use-toast"
 import { Progress } from "@/components/ui/progress"
+import { useRouter } from 'next/navigation'
 
 interface Topic {
   id: string
@@ -66,6 +67,7 @@ interface Topic {
   estimatedHours: number
   difficulty: "Beginner" | "Intermediate" | "Advanced"
   icon: any
+  iconName?: string
   locked?: boolean
 }
 
@@ -126,6 +128,7 @@ const availableCourses: Course[] = [
 
 export default function CustomPathGenerator() {
   const { user, isAuthenticated, isLoading } = useAuth()
+  const router = useRouter();
   
   // Add debugging to see what's happening
   console.log('Auth state:', { user, isAuthenticated, isLoading });
@@ -144,12 +147,14 @@ export default function CustomPathGenerator() {
   const [userProgress, setUserProgress] = useState<Record<string, number>>({})
   const [selectedTopic, setSelectedTopic] = useState<Topic | null>(null)
   const [showTopicModal, setShowTopicModal] = useState(false)
+  const [refresh, setRefresh] = useState(false);
+  const [lockedConceptInfo, setLockedConceptInfo] = useState<Concept | null>(null);
+  const [conceptsMap, setConceptsMap] = useState<Record<string, Concept>>({});
 
-  // Fetch user progress on component mount
+  // Fetch user progress on component mount and when refresh changes
   useEffect(() => {
     const fetchUserProgress = async () => {
       if (!user) return;
-      
       try {
         const progress = await apiService.getUserProgress(user._id);
         const progressMap: Record<string, number> = {};
@@ -157,12 +162,127 @@ export default function CustomPathGenerator() {
           progressMap[p.conceptId] = p.score;
         });
         setUserProgress(progressMap);
+        // Update all relevant properties for each topic
+        setGeneratedPath(prev => prev.map(topic => {
+          const progressEntry = progress.find(p => p.conceptId === topic.id);
+          return progressEntry
+            ? {
+                ...topic,
+                locked: progressEntry.locked,
+                masteryLevel: (progressEntry.score ?? 0) * 10,
+                isCompleted: (progressEntry.score ?? 0) >= 0.7,
+              }
+            : topic;
+        }));
       } catch (error) {
         console.error('Error fetching user progress:', error);
       }
     };
-
     fetchUserProgress();
+  }, [user, refresh]);
+
+  // Add a handler to refresh learning path when returning from quiz
+  useEffect(() => {
+    const handleVisibility = () => {
+      setRefresh(r => !r);
+    };
+    window.addEventListener('focus', handleVisibility);
+    return () => window.removeEventListener('focus', handleVisibility);
+  }, []);
+
+  // Icon mapping for restoration
+  const iconMap: Record<string, any> = {
+    Target,
+    BookOpen,
+    TrendingUp,
+    Zap,
+    Code,
+    Database,
+    Search,
+    Brain,
+    Globe,
+    Network,
+    Trophy,
+    Server,
+    Cloud,
+    TreePine,
+    ArrowUpDown
+  };
+
+  // Function to restore icon from saved data
+  const restoreIcon = (iconName: string) => {
+    return iconMap[iconName] || Target; // Default to Target if icon not found
+  };
+
+  // Load saved learning path on component mount
+  useEffect(() => {
+    const loadSavedLearningPath = async () => {
+      if (!user) return;
+      
+      try {
+        // First try to load from backend
+        const savedPath = await apiService.getSavedLearningPath();
+        if (savedPath) {
+          console.log('Loading saved learning path from backend:', savedPath);
+          setPathType(savedPath.pathType);
+          setSelectedGoal(savedPath.selectedGoal || "");
+          setSelectedConcept(savedPath.selectedConcept ? { _id: savedPath.selectedConcept } as Concept : null);
+          
+          // Restore icons in generated path
+          const restoredPath = savedPath.generatedPath.map((topic: any) => ({
+            ...topic,
+            icon: typeof topic.icon === 'string' ? restoreIcon(topic.icon) : (topic.iconName ? restoreIcon(topic.iconName) : Target)
+          }));
+          setGeneratedPath(restoredPath);
+          
+          // Restore icons in alternative routes
+          const restoredAlternatives = savedPath.alternativeRoutes.map((route: any[]) => 
+            route.map((topic: any) => ({
+              ...topic,
+              icon: typeof topic.icon === 'string' ? restoreIcon(topic.icon) : (topic.iconName ? restoreIcon(topic.iconName) : Target)
+            }))
+          );
+          setAlternativeRoutes(restoredAlternatives || []);
+          setSelectedRoute(savedPath.selectedRoute || 0);
+          return;
+        }
+      } catch (error) {
+        console.log('No saved learning path in backend, trying localStorage');
+      }
+
+      // Fallback to localStorage
+      try {
+        const savedPath = localStorage.getItem('learningPath');
+        if (savedPath) {
+          const parsedPath = JSON.parse(savedPath);
+          console.log('Loading saved learning path from localStorage:', parsedPath);
+          setPathType(parsedPath.pathType);
+          setSelectedGoal(parsedPath.selectedGoal || "");
+          setSelectedConcept(parsedPath.selectedConcept ? { _id: parsedPath.selectedConcept } as Concept : null);
+          
+          // Restore icons in generated path
+          const restoredPath = parsedPath.generatedPath.map((topic: any) => ({
+            ...topic,
+            icon: typeof topic.icon === 'string' ? restoreIcon(topic.icon) : (topic.iconName ? restoreIcon(topic.iconName) : Target)
+          }));
+          setGeneratedPath(restoredPath);
+          
+          // Restore icons in alternative routes
+          const restoredAlternatives = parsedPath.alternativeRoutes.map((route: any[]) => 
+            route.map((topic: any) => ({
+              ...topic,
+              icon: typeof topic.icon === 'string' ? restoreIcon(topic.icon) : (topic.iconName ? restoreIcon(topic.iconName) : Target)
+            }))
+          );
+          setAlternativeRoutes(restoredAlternatives || []);
+          setSelectedRoute(parsedPath.selectedRoute || 0);
+        }
+      } catch (error) {
+        console.error('Error loading learning path from localStorage:', error);
+      }
+    };
+
+    loadSavedLearningPath();
   }, [user]);
 
   // Search concepts when user types
@@ -196,6 +316,17 @@ export default function CustomPathGenerator() {
     return () => clearTimeout(debounceTimer)
   }, [searchQuery])
 
+  // Fetch all concepts for prerequisite info
+  useEffect(() => {
+    const fetchConcepts = async () => {
+      const allConcepts = await apiService.getAllConcepts();
+      const map: Record<string, Concept> = {};
+      allConcepts.forEach((c) => { map[c._id] = c; });
+      setConceptsMap(map);
+    };
+    fetchConcepts();
+  }, []);
+
   const generateCustomPath = async () => {
     console.log('generateCustomPath called with auth state:', { user, isAuthenticated, isLoading });
     
@@ -228,14 +359,12 @@ export default function CustomPathGenerator() {
     try {
       if (pathType === "topic" && selectedConcept) {
         console.log('Calling recommendation API with:', {
-          userId: user._id,
           goalConceptId: selectedConcept._id,
           currentConceptId: "root"
         });
 
         // Get recommendation for specific topic
         const response = await apiService.getRecommendation(
-          user._id,
           selectedConcept._id,
           "root" // Assuming we start from root concept
         )
@@ -259,6 +388,7 @@ export default function CustomPathGenerator() {
             estimatedHours: 2, // Default estimate - could be enhanced with actual concept data
           difficulty: "Intermediate" as const,
           icon: Target,
+          iconName: "Target", // Add icon name for serialization
           locked: item.locked,
           };
         });
@@ -283,6 +413,7 @@ export default function CustomPathGenerator() {
             estimatedHours: 2,
             difficulty: "Intermediate" as const,
             icon: Target,
+            iconName: "Target", // Add icon name for serialization
             locked: item.locked,
             };
           })
@@ -290,6 +421,39 @@ export default function CustomPathGenerator() {
 
         setAlternativeRoutes(transformedAlternatives)
         setSelectedRoute(0)
+
+        // Save learning path to backend and localStorage
+        // Convert icons to strings for serialization
+        const serializedPath = transformedPath.map(topic => ({
+          ...topic,
+          icon: topic.iconName || "Target" // Save icon name instead of component
+        }));
+        
+        const serializedAlternatives = transformedAlternatives.map(route => 
+          route.map(topic => ({
+            ...topic,
+            icon: topic.iconName || "Target" // Save icon name instead of component
+          }))
+        );
+        
+        const pathData = {
+          pathType,
+          selectedGoal,
+          selectedConcept: selectedConcept._id,
+          generatedPath: serializedPath,
+          alternativeRoutes: serializedAlternatives,
+          selectedRoute: 0
+        };
+
+        try {
+          await apiService.saveLearningPath(pathData);
+          localStorage.setItem('learningPath', JSON.stringify(pathData));
+          console.log('Learning path saved successfully');
+        } catch (error) {
+          console.error('Failed to save learning path:', error);
+          // Fallback to localStorage only
+          localStorage.setItem('learningPath', JSON.stringify(pathData));
+        }
 
         toast({
           title: "Path Generated!",
@@ -314,6 +478,32 @@ export default function CustomPathGenerator() {
         setGeneratedPath(pathWithProgress)
         setAlternativeRoutes([])
         setSelectedRoute(0)
+
+        // Save learning path to backend and localStorage
+        // Convert icons to strings for serialization
+        const serializedPath = pathWithProgress.map(topic => ({
+          ...topic,
+          icon: topic.iconName || "Target" // Save icon name instead of component
+        }));
+        
+        const pathData = {
+          pathType,
+          selectedGoal,
+          selectedConcept: undefined,
+          generatedPath: serializedPath,
+          alternativeRoutes: [],
+          selectedRoute: 0
+        };
+
+        try {
+          await apiService.saveLearningPath(pathData);
+          localStorage.setItem('learningPath', JSON.stringify(pathData));
+          console.log('Learning path saved successfully');
+        } catch (error) {
+          console.error('Failed to save learning path:', error);
+          // Fallback to localStorage only
+          localStorage.setItem('learningPath', JSON.stringify(pathData));
+        }
 
         toast({
           title: "Collaborative Course Path Generated!",
@@ -351,6 +541,7 @@ export default function CustomPathGenerator() {
           estimatedHours: 20,
           difficulty: "Beginner" as const,
           icon: BookOpen,
+          iconName: "BookOpen",
         },
       {
         id: "arrays",
@@ -364,6 +555,7 @@ export default function CustomPathGenerator() {
           estimatedHours: 25,
           difficulty: "Beginner" as const,
         icon: Target,
+        iconName: "Target",
       },
       {
         id: "linked-lists",
@@ -377,20 +569,22 @@ export default function CustomPathGenerator() {
           estimatedHours: 18,
           difficulty: "Beginner" as const,
         icon: TrendingUp,
+        iconName: "TrendingUp",
       },
-      {
+            {
           id: "stacks-queues",
           title: "Stacks & Queues",
           description: "LIFO and FIFO data structures with real-world applications",
         courseId: courseId,
           courseName: course?.title || "DSA",
           masteryLevel: 0,
-        isCompleted: false,
-        isPrerequisite: false,
+          isCompleted: false,
+          isPrerequisite: false,
           estimatedHours: 15,
           difficulty: "Beginner" as const,
-        icon: Zap,
-      },
+          icon: Zap,
+          iconName: "Zap",
+        },
         {
           id: "trees",
           title: "Trees & Binary Trees",
@@ -403,6 +597,7 @@ export default function CustomPathGenerator() {
           estimatedHours: 30,
           difficulty: "Intermediate" as const,
           icon: Target,
+          iconName: "Target",
         },
         {
           id: "graphs",
@@ -416,6 +611,7 @@ export default function CustomPathGenerator() {
           estimatedHours: 35,
           difficulty: "Intermediate" as const,
           icon: Network,
+          iconName: "Network",
         },
         {
           id: "sorting",
@@ -429,6 +625,7 @@ export default function CustomPathGenerator() {
           estimatedHours: 28,
           difficulty: "Intermediate" as const,
           icon: Target,
+          iconName: "Target",
         },
         {
           id: "searching",
@@ -442,6 +639,7 @@ export default function CustomPathGenerator() {
           estimatedHours: 20,
           difficulty: "Intermediate" as const,
           icon: Search,
+          iconName: "Search",
         },
         {
           id: "dynamic-programming",
@@ -455,6 +653,7 @@ export default function CustomPathGenerator() {
           estimatedHours: 40,
           difficulty: "Advanced" as const,
           icon: Brain,
+          iconName: "Brain",
         },
         {
           id: "greedy",
@@ -468,6 +667,7 @@ export default function CustomPathGenerator() {
           estimatedHours: 25,
           difficulty: "Advanced" as const,
           icon: Target,
+          iconName: "Target",
         },
         {
           id: "advanced-data-structures",
@@ -791,6 +991,22 @@ export default function CustomPathGenerator() {
     }
   }
 
+  const handleStartJourney = () => {
+    const currentPath = selectedRoute === 0 ? generatedPath : alternativeRoutes[selectedRoute - 1] || generatedPath;
+    const firstConcept = currentPath.find(
+      (c) => !c.locked && (!c.isCompleted && (c.masteryLevel ?? 0) < 7)
+    );
+    if (firstConcept) {
+      router.push(`/quiz/${firstConcept.id}`);
+    } else {
+      toast({
+        title: "All topics mastered!",
+        description: "You've completed all unlocked topics in this path.",
+        variant: "default",
+      });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
       {/* Header */}
@@ -826,7 +1042,7 @@ export default function CustomPathGenerator() {
       </div>
 
       <div className="max-w-7xl mx-auto p-6">
-        <div className="grid lg:grid-cols-6 gap-8 h-[calc(100vh-200px)]">
+        <div className="grid lg:grid-cols-6 gap-x-8 gap-y-2 h-[calc(100vh-200px)] items-start">
           {/* Configuration Panel - Now wider */}
           <div className="lg:col-span-2 space-y-4 overflow-y-auto">
             <Card className="dark:bg-gray-800/80 dark:border-gray-700 shadow-lg">
@@ -1113,13 +1329,20 @@ export default function CustomPathGenerator() {
 
                 <CardContent className="flex-1 overflow-y-auto px-8">
                   {/* Beautiful Path Visualization with dynamic layout */}
-                  <div className="relative min-h-full py-8">
+                  <div className="relative min-h-full py-2">
                     {/* Start Indicator */}
-                    <div className="flex justify-center mb-8">
-                      <div className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-full shadow-lg">
-                        <Play className="w-4 h-4" />
-                        <span className="font-semibold text-sm">START YOUR JOURNEY</span>
-                      </div>
+                    <div className="flex justify-center mt-2 mb-8">
+                      <button
+                        type="button"
+                        onClick={handleStartJourney}
+                        className="flex items-center space-x-3 px-7 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-full shadow-xl border-2 border-transparent hover:border-green-400 focus:outline-none focus:ring-4 focus:ring-green-300/40 transition-all duration-200 hover:scale-105 hover:shadow-2xl relative overflow-hidden"
+                        style={{ boxShadow: '0 4px 24px 0 rgba(34,197,94,0.15)' }}
+                      >
+                        {/* Glowing effect on hover */}
+                        <span className="absolute inset-0 rounded-full bg-gradient-to-r from-green-400/30 to-emerald-400/20 opacity-0 hover:opacity-100 transition-opacity duration-300 blur-sm z-0" />
+                        <Play className="w-5 h-5 z-10" />
+                        <span className="font-semibold text-base z-10 tracking-wide">START YOUR JOURNEY</span>
+                      </button>
                     </div>
 
                     {/* Dynamic Grid Layout based on path length */}
@@ -1143,7 +1366,10 @@ export default function CustomPathGenerator() {
                           {/* Topic Card - Full width within grid */}
                           <div className="flex justify-center">
                             <div
-                              onClick={() => handleTopicClick(topic)}
+                              onClick={() => {
+                                if (topic.locked) setLockedConceptInfo(conceptsMap[topic.id]);
+                                else handleTopicClick(topic);
+                              }}
                               className="group relative block w-full max-w-sm cursor-pointer"
                             >
                               <div
@@ -1178,10 +1404,13 @@ export default function CustomPathGenerator() {
                                 </div>
 
                                 {/* Content */}
-                                <div className="space-y-3">
+                                <div className="space-y-4">
                                   <div className="flex items-start space-x-3">
                                     <div className="p-2 rounded-lg bg-white/80 dark:bg-gray-700/80 shadow-sm">
-                                      <topic.icon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                                      {typeof topic.icon === 'function' ? 
+                                        React.createElement(topic.icon, { className: "w-5 h-5 text-blue-600 dark:text-blue-400" }) :
+                                        <Target className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                                      }
                                     </div>
                                     <div className="flex-1 min-w-0">
                                       <h3 className="font-bold text-gray-900 dark:text-white text-lg leading-tight">
@@ -1260,11 +1489,32 @@ export default function CustomPathGenerator() {
 
                     {/* Finish Indicator */}
                     <div className="flex justify-center mt-12">
-                      <div className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-600 text-white rounded-full shadow-lg">
-                        <Award className="w-5 h-5" />
-                        <span className="font-semibold">CONGRATULATIONS! PATH COMPLETED</span>
-                        <Sparkles className="w-5 h-5" />
-                      </div>
+                      {(() => {
+                        const completed = generatedPath.filter(topic => topic.isCompleted).length;
+                        const total = generatedPath.length;
+                        const isMastered = total > 0 && completed === total;
+                        return (
+                          <div className="relative flex flex-col items-center w-full max-w-xl">
+                            {/* Professional, soft green border card */}
+                            <div className="relative flex flex-col items-center px-10 py-7 bg-white dark:bg-gray-900 rounded-2xl shadow-xl border border-green-400">
+                              {/* Simple checkmark badge */}
+                              <div className="flex items-center justify-center w-14 h-14 rounded-full bg-green-500 shadow mb-3">
+                                <CheckCircle className="w-8 h-8 text-white" />
+                              </div>
+                              {/* Headline */}
+                              <div className="font-bold text-2xl md:text-3xl text-emerald-700 dark:text-emerald-300 text-center mb-2">
+                                Congratulations! Path Mastered
+                              </div>
+                              {/* Thin static divider bar */}
+                              <div className="w-20 h-1 rounded-full bg-gradient-to-r from-green-400 to-emerald-600 mb-3" />
+                              {/* Motivating subtext */}
+                              <div className="text-base text-gray-600 dark:text-gray-300 text-center">
+                                You've completed every topic in this learning journey.<br />Keep challenging yourself and reach new heights!
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })()}
                     </div>
                   </div>
 
@@ -1462,7 +1712,7 @@ export default function CustomPathGenerator() {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center space-x-2">
-              {selectedTopic?.icon && React.createElement(selectedTopic.icon, { className: "w-5 h-5 text-blue-600" })}
+              {selectedTopic?.icon && typeof selectedTopic.icon === 'function' && React.createElement(selectedTopic.icon, { className: "w-5 h-5 text-blue-600" })}
               <span>{selectedTopic?.title}</span>
             </DialogTitle>
             <DialogDescription>
@@ -1529,6 +1779,35 @@ export default function CustomPathGenerator() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Locked Concept Info Modal */}
+      {lockedConceptInfo && (
+        <Dialog open={!!lockedConceptInfo} onOpenChange={() => setLockedConceptInfo(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>
+                🔒 To unlock "{lockedConceptInfo.title}", master:
+              </DialogTitle>
+              <DialogDescription>
+                {lockedConceptInfo.prerequisites.length > 0 ? (
+                  <ul className="mt-2 list-disc pl-6">
+                    {lockedConceptInfo.prerequisites.map((pr) => (
+                      <li key={pr._id}>
+                        <Link href={`/quiz/${pr._id}`} className="text-blue-600 underline hover:text-blue-800">
+                          {pr.title}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-gray-700 mt-2">This topic has no prerequisites.</p>
+                )}
+              </DialogDescription>
+              <Button className="mt-4" onClick={() => setLockedConceptInfo(null)}>Close</Button>
+            </DialogHeader>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   )
 }

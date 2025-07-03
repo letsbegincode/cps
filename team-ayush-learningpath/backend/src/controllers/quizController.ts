@@ -3,6 +3,7 @@ import Concept from '../models/conceptModel';
 import User from '../models/userModel';
 import UserConceptProgress from "../models/userConceptProgress";
 import { HydratedDocument } from "mongoose";
+import { updateMasteryAndGetUnlocks } from '../utils/conceptUnlockUtils';
 
 /**
  * @desc    Fetches a quiz for a concept, removing answers before sending to the client.
@@ -105,44 +106,122 @@ export const getQuizForConcept = async (req: Request, res: Response) => {
 // --For Quiz Recommendation and Mastery Tracking-- 
 // Interface for request body
 interface SubmitQuizRequestBody {
-  userId: string;
   conceptId: string;
   score: number; // 0–100
 }
 
 export const submitQuiz = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { userId, conceptId, score }: SubmitQuizRequestBody = req.body;
+    // Get authenticated user from middleware
+    if (!req.user) {
+      res.status(401).json({ error: "Authentication required" });
+      return;
+    }
 
-    if (!userId || !conceptId || typeof score !== "number") {
+    // Cast to any to access Mongoose document properties
+    const user = req.user as any;
+    const authenticatedUserId = user._id?.toString();
+    if (!authenticatedUserId) {
+      res.status(401).json({ error: "Invalid user ID" });
+      return;
+    }
+
+    const { conceptId } = req.params; // Get from URL parameter
+    const { score }: { score: number } = req.body; // Get score from request body
+
+    if (!conceptId || typeof score !== "number") {
       res.status(400).json({ error: "Missing or invalid parameters" });
       return;
     }
 
+    console.log("Quiz submission:", { 
+      authenticatedUserId, 
+      conceptId, 
+      score 
+    });
+
     const masteryIncrement = Math.min(score / 100, 1); // Normalize score to 0–1
 
-    const existing = await UserConceptProgress.findOne({ userId, conceptId });
+    // Find the user's progress document
+    let userProgress = await UserConceptProgress.findOne({ userId: authenticatedUserId });
 
-    if (existing) {
-      // Average previous and new score, cap at 1
-      existing.score = Math.min((existing.score + masteryIncrement) / 2, 1);
-      // existing.attempts += 1;
-      // existing.lastUpdated = new Date();
-      await existing.save();
-    } else {
-      // Create new progress record
-      const newProgress: HydratedDocument<any> = new UserConceptProgress({
-        userId,
-        conceptId,
-        score: masteryIncrement,
-        // attempts: 1,
-        // lastUpdated: new Date(),
+    if (!userProgress) {
+      // No progress doc for user, create new
+      userProgress = new UserConceptProgress({
+        userId: authenticatedUserId,
+        concepts: [{
+          conceptId,
+          score: masteryIncrement,
+          attempts: 1,
+          lastUpdated: new Date(),
+          mastered: masteryIncrement >= 0.7,
+          masteredAt: masteryIncrement >= 0.7 ? new Date() : undefined,
+        }],
       });
-
-      await newProgress.save();
+      await userProgress.save();
+      console.log("Created new user progress document for user:", authenticatedUserId);
+      res.status(200).json({ message: "Quiz submitted and mastery updated (new user progress)." });
+      return;
     }
 
-    res.status(200).json({ message: "Quiz submitted and mastery updated." });
+    // Find concept entry in user's progress
+    const conceptEntry = userProgress.concepts.find((c: any) => c.conceptId.toString() === conceptId);
+    const MASTERY_THRESHOLD = 0.7;
+    
+    // --- Achievement logic ---
+    const achievements: string[] = [];
+    const previousScore = conceptEntry ? conceptEntry.score : 0;
+    const attemptCount = conceptEntry ? (conceptEntry.attempts || 0) + 1 : 1;
+    // Score is normalized 0-1
+    if (masteryIncrement === 1) achievements.push('Perfect Score');
+    if (masteryIncrement >= 0.9) achievements.push('Master of Concept');
+    if (masteryIncrement >= 0.75 && attemptCount === 1) achievements.push('Fast Learner');
+    if (masteryIncrement > previousScore && attemptCount > 1) achievements.push('Improver');
+    // (Optional) Add more achievement logic here
+    // --- End achievement logic ---
+
+    if (conceptEntry) {
+      // Average previous and new score, cap at 1
+      conceptEntry.score = Math.min((conceptEntry.score + masteryIncrement) / 2, 1);
+      conceptEntry.attempts = (conceptEntry.attempts || 0) + 1;
+      conceptEntry.lastUpdated = new Date();
+      // Mastery logic
+      if (conceptEntry.score >= MASTERY_THRESHOLD) {
+        if (!conceptEntry.mastered) {
+          conceptEntry.mastered = true;
+          conceptEntry.masteredAt = new Date();
+        }
+      } else {
+        conceptEntry.mastered = false;
+        if (conceptEntry.masteredAt) delete conceptEntry.masteredAt;
+      }
+      // Add achievements (avoid duplicates)
+      conceptEntry.achievements = Array.from(new Set([...(conceptEntry.achievements || []), ...achievements]));
+    } else {
+      // Add new concept progress
+      const newConcept: any = {
+        conceptId,
+        score: masteryIncrement,
+        attempts: 1,
+        lastUpdated: new Date(),
+        mastered: masteryIncrement >= MASTERY_THRESHOLD,
+        masteredAt: masteryIncrement >= MASTERY_THRESHOLD ? new Date() : undefined,
+        achievements,
+      };
+      userProgress.concepts.push(newConcept);
+    }
+    
+    await userProgress.save();
+    console.log("Updated user progress for user:", authenticatedUserId);
+
+    // --- Unlock logic: call updateMasteryAndGetUnlocks and get newly unlocked concept IDs ---
+    const unlockResult = await updateMasteryAndGetUnlocks(authenticatedUserId, conceptId, masteryIncrement);
+    const unlockedIds = unlockResult.unlockedConcepts || [];
+    // Get titles for newly unlocked concepts
+    const unlockedConcepts = await Concept.find({ _id: { $in: unlockedIds } }).select('title');
+    const unlockedTitles = unlockedConcepts.map(c => c.title);
+
+    res.status(200).json({ message: "Quiz submitted and mastery updated.", achievements, newlyUnlockedConcepts: unlockedTitles });
   } catch (error: any) {
     console.error("Error submitting quiz:", error);
     res.status(500).json({ error: "Internal server error", details: error.message });
