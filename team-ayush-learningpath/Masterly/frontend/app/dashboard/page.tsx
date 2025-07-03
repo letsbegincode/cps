@@ -316,7 +316,7 @@ export default function Dashboard() {
                                     <div className="text-sm text-gray-500 dark:text-gray-400">No recent achievements yet.</div>
                                 )}
                                 <Button variant="outline" className="w-full mt-4" size="sm" asChild>
-                                    <Link href="/progress?tab=achievements">View All Achievements</Link>
+                                    <Link href="/profile?tab=achievements">View All Achievements</Link>
                                 </Button>
                             </CardContent>
                         </Card>

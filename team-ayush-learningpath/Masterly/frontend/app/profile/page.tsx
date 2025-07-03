@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -28,22 +28,36 @@ import {
   Linkedin,
   Globe,
 } from "lucide-react"
+import { useAuth } from "@/hooks/useAuth"
 
 export default function ProfilePage() {
+  const { user, isLoading: authLoading } = useAuth()
   const [isEditing, setIsEditing] = useState(false)
   const [profileData, setProfileData] = useState({
-    name: "Ankit Pandey",
-    email: "Ankit.Pandey@example.com",
-    phone: "+91 9234121XXX",
-    location: "Patna, Bihar, India",
-    bio: "Passionate software developer with 3+ years of experience. Currently focusing on mastering data structures, algorithms, and system design.",
-    website: "https://AnkitPandey.dev",
-    github: "AnkitPandey",
-    linkedin: "Ankit-Pandey-dev",
-    joinDate: "January 2024",
+    name: "",
+    email: "",
+    phone: "",
+    location: "",
+    bio: "",
+    website: "",
+    github: "",
+    linkedin: "",
+    joinDate: "",
     timezone: "PST",
     language: "English",
   })
+
+  // Populate from real user data when available
+  useEffect(() => {
+    if (user) {
+      setProfileData((prev) => ({
+        ...prev,
+        name: `${user.firstName || ""} ${user.lastName || ""}`.trim(),
+        email: user.email || "",
+        github: user.githubId || "",
+      }))
+    }
+  }, [user])
 
   const achievements = [
     { title: "First Course Completed", date: "March 2024", icon: Trophy, color: "text-yellow-500" },
@@ -68,11 +82,11 @@ export default function ProfilePage() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 p-6">
       <div className="max-w-6xl mx-auto">
         <Tabs defaultValue="profile" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="profile">Profile</TabsTrigger>
             <TabsTrigger value="achievements">Achievements</TabsTrigger>
             <TabsTrigger value="settings">Settings</TabsTrigger>
-            <TabsTrigger value="billing">Billing</TabsTrigger>
+            {/* <TabsTrigger value="billing">Billing</TabsTrigger> */}
           </TabsList>
 
           <TabsContent value="profile" className="space-y-6">
@@ -135,7 +149,7 @@ export default function ProfilePage() {
                         <Label htmlFor="name">Full Name</Label>
                         <Input
                           id="name"
-                          value={profileData.name}
+                          value={isEditing ? profileData.name : (profileData.name || 'Not set')}
                           onChange={(e) => setProfileData({ ...profileData, name: e.target.value })}
                           disabled={!isEditing}
                         />
@@ -145,7 +159,7 @@ export default function ProfilePage() {
                         <Input
                           id="email"
                           type="email"
-                          value={profileData.email}
+                          value={isEditing ? profileData.email : (profileData.email || 'Not set')}
                           onChange={(e) => setProfileData({ ...profileData, email: e.target.value })}
                           disabled={!isEditing}
                         />
@@ -154,7 +168,7 @@ export default function ProfilePage() {
                         <Label htmlFor="phone">Phone</Label>
                         <Input
                           id="phone"
-                          value={profileData.phone}
+                          value={isEditing ? profileData.phone : (profileData.phone || 'Not set')}
                           onChange={(e) => setProfileData({ ...profileData, phone: e.target.value })}
                           disabled={!isEditing}
                         />
@@ -163,7 +177,7 @@ export default function ProfilePage() {
                         <Label htmlFor="location">Location</Label>
                         <Input
                           id="location"
-                          value={profileData.location}
+                          value={isEditing ? profileData.location : (profileData.location || 'Not set')}
                           onChange={(e) => setProfileData({ ...profileData, location: e.target.value })}
                           disabled={!isEditing}
                         />
@@ -174,7 +188,7 @@ export default function ProfilePage() {
                       <Label htmlFor="bio">Bio</Label>
                       <Textarea
                         id="bio"
-                        value={profileData.bio}
+                        value={isEditing ? profileData.bio : (profileData.bio || 'Not set')}
                         onChange={(e) => setProfileData({ ...profileData, bio: e.target.value })}
                         disabled={!isEditing}
                         rows={3}
@@ -192,7 +206,7 @@ export default function ProfilePage() {
                           </Label>
                           <Input
                             id="website"
-                            value={profileData.website}
+                            value={isEditing ? profileData.website : (profileData.website || 'Not set')}
                             onChange={(e) => setProfileData({ ...profileData, website: e.target.value })}
                             disabled={!isEditing}
                           />
@@ -204,7 +218,7 @@ export default function ProfilePage() {
                           </Label>
                           <Input
                             id="github"
-                            value={profileData.github}
+                            value={isEditing ? profileData.github : (profileData.github || 'Not set')}
                             onChange={(e) => setProfileData({ ...profileData, github: e.target.value })}
                             disabled={!isEditing}
                             placeholder="username"
@@ -217,7 +231,7 @@ export default function ProfilePage() {
                           </Label>
                           <Input
                             id="linkedin"
-                            value={profileData.linkedin}
+                            value={isEditing ? profileData.linkedin : (profileData.linkedin || 'Not set')}
                             onChange={(e) => setProfileData({ ...profileData, linkedin: e.target.value })}
                             disabled={!isEditing}
                             placeholder="username"
@@ -448,80 +462,7 @@ export default function ProfilePage() {
             </div>
           </TabsContent>
 
-          <TabsContent value="billing" className="space-y-6">
-            <div className="grid lg:grid-cols-2 gap-6">
-              <Card className="dark:bg-gray-800/80 dark:border-gray-700">
-                <CardHeader>
-                  <CardTitle className="flex items-center text-gray-900 dark:text-white">
-                    <CreditCard className="w-5 h-5 mr-2" />
-                    Current Plan
-                  </CardTitle>
-                  <CardDescription className="text-gray-600 dark:text-gray-300">
-                    Manage your subscription
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="p-4 border rounded-lg bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950 dark:to-purple-950">
-                    <h3 className="font-semibold text-lg text-gray-900 dark:text-white">Premium Plan</h3>
-                    <p className="text-2xl font-bold text-gray-900 dark:text-white">$29.99/month</p>
-                    <p className="text-sm text-muted-foreground">Billed monthly</p>
-                  </div>
-
-                  <div className="space-y-2">
-                    <h4 className="font-medium text-gray-900 dark:text-white">Plan Features:</h4>
-                    <ul className="text-sm space-y-1 text-muted-foreground">
-                      <li>• Unlimited course access</li>
-                      <li>• Personalized learning paths</li>
-                      <li>• Advanced analytics</li>
-                      <li>• Priority support</li>
-                      <li>• Offline content download</li>
-                    </ul>
-                  </div>
-
-                  <div className="flex space-x-2">
-                    <Button variant="outline" className="flex-1">
-                      Change Plan
-                    </Button>
-                    <Button variant="destructive" className="flex-1">
-                      Cancel
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="dark:bg-gray-800/80 dark:border-gray-700">
-                <CardHeader>
-                  <CardTitle className="text-gray-900 dark:text-white">Billing History</CardTitle>
-                  <CardDescription className="text-gray-600 dark:text-gray-300">
-                    Your recent transactions
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    {[
-                      { date: "Dec 1, 2024", amount: "$29.99", status: "Paid" },
-                      { date: "Nov 1, 2024", amount: "$29.99", status: "Paid" },
-                      { date: "Oct 1, 2024", amount: "$29.99", status: "Paid" },
-                      { date: "Sep 1, 2024", amount: "$29.99", status: "Paid" },
-                    ].map((transaction, index) => (
-                      <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
-                        <div>
-                          <p className="font-medium text-gray-900 dark:text-white">{transaction.date}</p>
-                          <p className="text-sm text-muted-foreground">Premium Plan</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="font-medium text-gray-900 dark:text-white">{transaction.amount}</p>
-                          <Badge variant="outline" className="text-green-600 border-green-600">
-                            {transaction.status}
-                          </Badge>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
+          {/* Billing tab and content removed as requested */}
         </Tabs>
       </div>
     </div>
