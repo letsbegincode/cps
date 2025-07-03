@@ -213,7 +213,7 @@ export default function Dashboard() {
                                 <CardDescription>Pick up where you left off</CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-4">
-                                {analytics.currentCourseProgress && analytics.currentCourseProgress.length > 0 ? (
+                                {analytics && Array.isArray(analytics.currentCourseProgress) && analytics.currentCourseProgress.length > 0 ? (
                                     analytics.currentCourseProgress.map((course: { courseName: string; progress: number; nextTopic: string; concepts: string }, index: number) => (
                                     <div
                                         key={index}
