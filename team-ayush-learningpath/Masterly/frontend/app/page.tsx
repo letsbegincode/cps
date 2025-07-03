@@ -1,5 +1,3 @@
-"use client"
-
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -9,24 +7,6 @@ import Image from "next/image"
 import { ThemeToggle } from "@/components/theme-toggle"
 
 export default function LandingPage() {
-  // Function to handle email contact
-  const handleContactUs = () => {
-    const email = 'careers@masterly.com';
-    const subject = 'Contact Us - Masterly Platform';
-    const body = 'Hello Masterly Team,\n\nI would like to get in touch regarding:\n\n';
-    
-    // Try Gmail web interface first
-    const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${email}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-    
-    // Try to open Gmail web interface
-    const newWindow = window.open(gmailUrl, '_blank');
-    
-    // Fallback to mailto if Gmail doesn't open
-    if (!newWindow) {
-      window.location.href = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-    }
-  };
-
   const courses = [
     {
       title: "Data Structures & Algorithms",
@@ -393,12 +373,9 @@ export default function LandingPage() {
                   </Link>
                 </li>
                 <li>
-                  <button 
-                    onClick={handleContactUs}
-                    className="hover:text-white transition-colors text-left"
-                  >
+                  <Link href="/help" className="hover:text-white transition-colors">
                     Contact Us
-                  </button>
+                  </Link>
                 </li>
                 <li>
                   <Link href="/dashboard" className="hover:text-white transition-colors">
