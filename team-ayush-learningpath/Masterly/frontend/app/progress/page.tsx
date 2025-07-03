@@ -24,49 +24,94 @@ import {
   Radar,
 } from "recharts"
 import { TrendingUp, Clock, Brain, Calendar, Star, CheckCircle } from "lucide-react"
+import { useEffect, useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function ProgressPage() {
-  const weeklyProgress = [
-    { day: "Mon", concepts: 3, time: 2.5, quizzes: 1 },
-    { day: "Tue", concepts: 5, time: 3.2, quizzes: 2 },
-    { day: "Wed", concepts: 2, time: 1.8, quizzes: 1 },
-    { day: "Thu", concepts: 4, time: 2.9, quizzes: 3 },
-    { day: "Fri", concepts: 6, time: 4.1, quizzes: 2 },
-    { day: "Sat", concepts: 3, time: 2.2, quizzes: 1 },
-    { day: "Sun", concepts: 4, time: 3.0, quizzes: 2 },
-  ]
+  const { user, isLoading: authLoading } = useAuth();
+  const [analytics, setAnalytics] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const monthlyProgress = [
-    { month: "Aug", score: 65, concepts: 45 },
-    { month: "Sep", score: 72, concepts: 58 },
-    { month: "Oct", score: 78, concepts: 67 },
-    { month: "Nov", score: 85, concepts: 72 },
-    { month: "Dec", score: 89, concepts: 78 },
-  ]
+  useEffect(() => {
+    if (!user || authLoading) return;
+    setLoading(true);
+    setError(null);
+    const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
+    fetch(`${API_BASE}/users/${user._id}/analytics`, { credentials: "include" })
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch analytics");
+        return res.json();
+      })
+      .then((data) => {
+        setAnalytics(data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        setError(err.message);
+        setLoading(false);
+      });
+  }, [user, authLoading]);
 
-  const skillDistribution = [
-    { name: "Data Structures", value: 85, color: "#3b82f6" },
-    { name: "Algorithms", value: 78, color: "#10b981" },
-    { name: "System Design", value: 65, color: "#f59e0b" },
-    { name: "Machine Learning", value: 45, color: "#ef4444" },
-    { name: "Web Development", value: 92, color: "#8b5cf6" },
-  ]
+  // Use dynamic weekly activity from analytics if available
+  const weeklyProgress = analytics && analytics.weeklyActivity ? analytics.weeklyActivity : [
+    { day: "Mon", concepts: 0, time: 0, quizzes: 0 },
+    { day: "Tue", concepts: 0, time: 0, quizzes: 0 },
+    { day: "Wed", concepts: 0, time: 0, quizzes: 0 },
+    { day: "Thu", concepts: 0, time: 0, quizzes: 0 },
+    { day: "Fri", concepts: 0, time: 0, quizzes: 0 },
+    { day: "Sat", concepts: 0, time: 0, quizzes: 0 },
+    { day: "Sun", concepts: 0, time: 0, quizzes: 0 },
+  ];
 
-  const radarData = [
-    { subject: "Problem Solving", A: 85, fullMark: 100 },
-    { subject: "Code Quality", A: 78, fullMark: 100 },
-    { subject: "Speed", A: 65, fullMark: 100 },
-    { subject: "Debugging", A: 82, fullMark: 100 },
-    { subject: "Testing", A: 70, fullMark: 100 },
-    { subject: "Documentation", A: 75, fullMark: 100 },
-  ]
+  // Use dynamic monthly progress from analytics if available
+  const monthlyProgress = analytics && analytics.monthlyProgress ? analytics.monthlyProgress : [
+    { month: "Aug", score: 0, concepts: 0 },
+    { month: "Sep", score: 0, concepts: 0 },
+    { month: "Oct", score: 0, concepts: 0 },
+    { month: "Nov", score: 0, concepts: 0 },
+    { month: "Dec", score: 0, concepts: 0 },
+  ];
 
-  const learningStats = [
-    { label: "Total Study Time", value: "156h 30m", icon: Clock, color: "text-blue-600" },
-    { label: "Concepts Mastered", value: "234", icon: CheckCircle, color: "text-green-600" },
-    { label: "Quizzes Completed", value: "89", icon: Brain, color: "text-purple-600" },
-    { label: "Average Score", value: "87%", icon: Star, color: "text-yellow-600" },
-  ]
+  // Use dynamic skill proficiency from analytics if available, filter out 0% skills
+  const skillDistribution = analytics && analytics.skillProficiency ? analytics.skillProficiency.filter((s: { value: number }) => s.value > 0) : [];
+
+  // Use dynamic performance analysis from analytics if available
+  const radarData = analytics && analytics.performanceAnalysis
+    ? analytics.performanceAnalysis.map((item: { subject: string; value: number }) => ({ subject: item.subject, A: item.value, fullMark: 100 }))
+    : [
+      { subject: "Problem Solving", A: 85, fullMark: 100 },
+      { subject: "Code Quality", A: 78, fullMark: 100 },
+      { subject: "Speed", A: 65, fullMark: 100 },
+      { subject: "Debugging", A: 82, fullMark: 100 },
+      { subject: "Testing", A: 70, fullMark: 100 },
+      { subject: "Documentation", A: 75, fullMark: 100 },
+    ];
+
+  // Use dynamic quiz performance trends from analytics if available
+  const quizPerformanceTrends = analytics && analytics.quizPerformanceTrends ? analytics.quizPerformanceTrends : [
+    { quiz: "Arrays & Strings", score: 0, date: "-", difficulty: "Unknown" },
+    { quiz: "Linked Lists", score: 0, date: "-", difficulty: "Unknown" },
+    { quiz: "Trees & Graphs", score: 0, date: "-", difficulty: "Unknown" },
+    { quiz: "Dynamic Programming", score: 0, date: "-", difficulty: "Unknown" },
+    { quiz: "Sorting Algorithms", score: 0, date: "-", difficulty: "Unknown" },
+  ];
+
+  // Use dynamic current course progress from analytics if available
+  const currentCourseProgress = analytics && analytics.currentCourseProgress ? analytics.currentCourseProgress : [
+    { courseName: "Data Structures & Algorithms", progress: 0, concepts: "0/0", nextTopic: "-" },
+    { courseName: "System Design", progress: 0, concepts: "0/0", nextTopic: "-" },
+    { courseName: "Machine Learning", progress: 0, concepts: "0/0", nextTopic: "-" },
+  ];
+
+  // Use dynamic recommended focus areas from analytics if available
+  const recommendedFocusAreas = analytics && analytics.recommendedFocusAreas ? analytics.recommendedFocusAreas : [];
+
+  function formatTime(mins: number) {
+    const h = Math.floor(mins / 60);
+    const m = mins % 60;
+    return `${h}h ${m}m`;
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 p-6">
@@ -81,23 +126,62 @@ export default function ProgressPage() {
 
         {/* Stats Overview */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          {learningStats.map((stat, index) => (
-            <Card key={index} className="dark:bg-gray-800/80 dark:border-gray-700">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-gray-900 dark:text-white">{stat.label}</CardTitle>
-                <stat.icon className={`h-4 w-4 ${stat.color}`} />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-gray-900 dark:text-white">{stat.value}</div>
-                <p className="text-xs text-muted-foreground text-gray-600 dark:text-gray-300">
-                  {index === 0 && "+12h this week"}
-                  {index === 1 && "+18 this week"}
-                  {index === 2 && "+7 this week"}
-                  {index === 3 && "+3% this month"}
-                </p>
-              </CardContent>
-            </Card>
-          ))}
+          {loading || authLoading ? (
+            <div className="col-span-4 text-center text-gray-600 dark:text-gray-300">Loading analytics...</div>
+          ) : error ? (
+            <div className="col-span-4 text-center text-red-500">{error}</div>
+          ) : analytics ? (
+            <>
+              <Card className="dark:bg-gray-800/80 dark:border-gray-700">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium text-gray-900 dark:text-white">Total Study Time</CardTitle>
+                  <Clock className="h-4 w-4 text-blue-600" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-gray-900 dark:text-white">{formatTime(analytics.totalStudyTime)}</div>
+                  <p className="text-xs text-muted-foreground text-gray-600 dark:text-gray-300">
+                    +{formatTime(analytics.studyTimeThisWeek)} this week
+                  </p>
+                </CardContent>
+              </Card>
+              <Card className="dark:bg-gray-800/80 dark:border-gray-700">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium text-gray-900 dark:text-white">Concepts Mastered</CardTitle>
+                  <CheckCircle className="h-4 w-4 text-green-600" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-gray-900 dark:text-white">{analytics.conceptsMasteredTotal}</div>
+                  <p className="text-xs text-muted-foreground text-gray-600 dark:text-gray-300">
+                    +{analytics.conceptsMasteredThisWeek} this week
+                  </p>
+                </CardContent>
+              </Card>
+              <Card className="dark:bg-gray-800/80 dark:border-gray-700">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium text-gray-900 dark:text-white">Quizzes Completed</CardTitle>
+                  <Brain className="h-4 w-4 text-purple-600" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-gray-900 dark:text-white">{analytics.quizzesCompletedTotal}</div>
+                  <p className="text-xs text-muted-foreground text-gray-600 dark:text-gray-300">
+                    +{analytics.quizzesCompletedThisWeek} this week
+                  </p>
+                </CardContent>
+              </Card>
+              <Card className="dark:bg-gray-800/80 dark:border-gray-700">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium text-gray-900 dark:text-white">Average Score</CardTitle>
+                  <Star className="h-4 w-4 text-yellow-600" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-gray-900 dark:text-white">{analytics.avgScoreMonth}%</div>
+                  <p className="text-xs text-muted-foreground text-gray-600 dark:text-gray-300">
+                    Updated this month
+                  </p>
+                </CardContent>
+              </Card>
+            </>
+          ) : null}
         </div>
 
         <Tabs defaultValue="overview" className="space-y-6">
@@ -190,14 +274,10 @@ export default function ProgressPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
-                {[
-                  { name: "Data Structures & Algorithms", progress: 75, concepts: "34/45", nextTopic: "Binary Trees" },
-                  { name: "System Design", progress: 45, concepts: "14/32", nextTopic: "Load Balancing" },
-                  { name: "Machine Learning", progress: 20, concepts: "12/58", nextTopic: "Linear Regression" },
-                ].map((course, index) => (
+                {currentCourseProgress.map((course: { courseName: string; progress: number; concepts: string; nextTopic: string }, index: number) => (
                   <div key={index} className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <h4 className="font-medium text-gray-900 dark:text-white">{course.name}</h4>
+                      <h4 className="font-medium text-gray-900 dark:text-white">{course.courseName}</h4>
                       <Badge variant="outline">{course.progress}%</Badge>
                     </div>
                     <Progress value={course.progress} className="h-2" />
@@ -257,13 +337,7 @@ export default function ProgressPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {[
-                      { quiz: "Arrays & Strings", score: 92, date: "2 days ago", difficulty: "Medium" },
-                      { quiz: "Linked Lists", score: 88, date: "5 days ago", difficulty: "Easy" },
-                      { quiz: "Trees & Graphs", score: 76, date: "1 week ago", difficulty: "Hard" },
-                      { quiz: "Dynamic Programming", score: 84, date: "2 weeks ago", difficulty: "Hard" },
-                      { quiz: "Sorting Algorithms", score: 95, date: "3 weeks ago", difficulty: "Medium" },
-                    ].map((quiz, index) => (
+                    {quizPerformanceTrends.map((quiz: { quiz: string; score: number; date: string; difficulty: string }, index: number) => (
                       <div
                         key={index}
                         className="flex items-center justify-between p-4 border rounded-lg dark:border-gray-700"
@@ -274,12 +348,14 @@ export default function ProgressPage() {
                         </div>
                         <div className="flex items-center space-x-3">
                           <Badge
-                            variant={
-                              quiz.difficulty === "Easy"
-                                ? "secondary"
-                                : quiz.difficulty === "Medium"
-                                  ? "default"
-                                  : "destructive"
+                            className={
+                              quiz.difficulty.toLowerCase() === "basic"
+                                ? "bg-green-100 text-green-800 border-green-300"
+                                : quiz.difficulty.toLowerCase() === "intermediate"
+                                ? "bg-yellow-100 text-yellow-800 border-yellow-300"
+                                : quiz.difficulty.toLowerCase() === "advanced"
+                                ? "bg-red-100 text-red-800 border-red-300"
+                                : "bg-gray-100 text-gray-800 border-gray-300"
                             }
                           >
                             {quiz.difficulty}
@@ -325,8 +401,8 @@ export default function ProgressPage() {
                           dataKey="value"
                           label={({ name, value }) => `${name}: ${value}%`}
                         >
-                          {skillDistribution.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.color} />
+                          {skillDistribution.map((skill: { name: string; value: number; color: string }, index: number) => (
+                            <Cell key={`cell-${index}`} fill={skill.color} />
                           ))}
                         </Pie>
                         <ChartTooltip content={<ChartTooltipContent />} />
@@ -345,7 +421,7 @@ export default function ProgressPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  {skillDistribution.map((skill, index) => (
+                  {skillDistribution.map((skill: { name: string; value: number; color: string }, index: number) => (
                     <div key={index} className="space-y-2">
                       <div className="flex items-center justify-between">
                         <span className="font-medium text-gray-900 dark:text-white">{skill.name}</span>
@@ -371,42 +447,25 @@ export default function ProgressPage() {
               </CardHeader>
               <CardContent>
                 <div className="grid md:grid-cols-3 gap-4">
-                  {[
-                    {
-                      area: "Machine Learning",
-                      reason: "Lowest proficiency score",
-                      priority: "High",
-                      color: "border-red-200 bg-red-50 dark:bg-red-950 dark:border-red-800",
-                    },
-                    {
-                      area: "System Design",
-                      reason: "Important for interviews",
-                      priority: "Medium",
-                      color: "border-yellow-200 bg-yellow-50 dark:bg-yellow-950 dark:border-yellow-800",
-                    },
-                    {
-                      area: "Advanced Algorithms",
-                      reason: "Next logical step",
-                      priority: "Low",
-                      color: "border-blue-200 bg-blue-50 dark:bg-blue-950 dark:border-blue-800",
-                    },
-                  ].map((item, index) => (
-                    <div key={index} className={`p-4 rounded-lg border ${item.color}`}>
-                      <h4 className="font-medium mb-2 text-gray-900 dark:text-white">{item.area}</h4>
+                  {recommendedFocusAreas.map((area: { name: string; priority: string }, index: number) => (
+                    <div key={index} className="p-4 rounded-lg border border-blue-200 bg-blue-50 dark:bg-blue-950 dark:border-blue-800">
+                      <h4 className="font-medium mb-2 text-gray-900 dark:text-white flex items-center">
+                        {area.name}
+                        <Badge
+                          className={
+                            area.priority === "High"
+                              ? "ml-2 bg-red-100 text-red-800 border-red-300"
+                              : area.priority === "Medium"
+                              ? "ml-2 bg-yellow-100 text-yellow-800 border-yellow-300"
+                              : "ml-2 bg-blue-100 text-blue-800 border-blue-300"
+                          }
+                        >
+                          {`${area.priority} Priority`}
+                        </Badge>
+                      </h4>
                       <p className="text-sm text-muted-foreground text-gray-600 dark:text-gray-300 mb-3">
-                        {item.reason}
+                        Not yet started
                       </p>
-                      <Badge
-                        variant={
-                          item.priority === "High"
-                            ? "destructive"
-                            : item.priority === "Medium"
-                              ? "default"
-                              : "secondary"
-                        }
-                      >
-                        {item.priority} Priority
-                      </Badge>
                     </div>
                   ))}
                 </div>

@@ -1007,6 +1007,9 @@ export default function CustomPathGenerator() {
     }
   };
 
+  const allMastered = generatedPath.length > 0 && generatedPath.every(topic => topic.isCompleted);
+  const progress100 = generatedPath.length > 0 && Math.round((generatedPath.filter(topic => topic.isCompleted).length / generatedPath.length) * 100) === 100;
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
       {/* Header */}
@@ -1489,32 +1492,24 @@ export default function CustomPathGenerator() {
 
                     {/* Finish Indicator */}
                     <div className="flex justify-center mt-12">
-                      {(() => {
-                        const completed = generatedPath.filter(topic => topic.isCompleted).length;
-                        const total = generatedPath.length;
-                        const isMastered = total > 0 && completed === total;
-                        return (
-                          <div className="relative flex flex-col items-center w-full max-w-xl">
-                            {/* Professional, soft green border card */}
-                            <div className="relative flex flex-col items-center px-10 py-7 bg-white dark:bg-gray-900 rounded-2xl shadow-xl border border-green-400">
-                              {/* Simple checkmark badge */}
-                              <div className="flex items-center justify-center w-14 h-14 rounded-full bg-green-500 shadow mb-3">
-                                <CheckCircle className="w-8 h-8 text-white" />
-                              </div>
-                              {/* Headline */}
-                              <div className="font-bold text-2xl md:text-3xl text-emerald-700 dark:text-emerald-300 text-center mb-2">
-                                Congratulations! Path Mastered
-                              </div>
-                              {/* Thin static divider bar */}
-                              <div className="w-20 h-1 rounded-full bg-gradient-to-r from-green-400 to-emerald-600 mb-3" />
-                              {/* Motivating subtext */}
-                              <div className="text-base text-gray-600 dark:text-gray-300 text-center">
-                                You've completed every topic in this learning journey.<br />Keep challenging yourself and reach new heights!
-                              </div>
-                            </div>
+                      {allMastered && progress100 && (
+                        <div className="flex flex-col items-center justify-center py-8">
+                          {/* Simple checkmark badge */}
+                          <div className="flex items-center justify-center w-14 h-14 rounded-full bg-green-500 shadow mb-3">
+                            <CheckCircle className="w-8 h-8 text-white" />
                           </div>
-                        );
-                      })()}
+                          {/* Headline */}
+                          <div className="font-bold text-2xl md:text-3xl text-emerald-700 dark:text-emerald-300 text-center mb-2">
+                            Congratulations! Path Mastered
+                          </div>
+                          {/* Thin static divider bar */}
+                          <div className="w-20 h-1 rounded-full bg-gradient-to-r from-green-400 to-emerald-600 mb-3" />
+                          {/* Motivating subtext */}
+                          <div className="text-base text-gray-600 dark:text-gray-300 text-center">
+                            You've completed every topic in this learning journey.<br />Keep challenging yourself and reach new heights!
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
 
