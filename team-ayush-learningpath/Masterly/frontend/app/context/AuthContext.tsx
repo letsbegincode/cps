@@ -12,6 +12,7 @@ interface User {
     lastName: string;
     email: string;
     role: 'user' | 'admin';
+    githubId?: string;
 }
 
 // Define the shape of the context's value

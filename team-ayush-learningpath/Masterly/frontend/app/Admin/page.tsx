@@ -176,16 +176,16 @@ export default function AdminDashboard() {
       {/* Navbar */}
       <nav className="border-b bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
-              <BookOpen className="w-7 h-7 text-white" />
-            </div>
-            <span className="text-3xl font-extrabold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent flex items-center gap-2 tracking-tight">
-              Masterly
-              <Badge className="ml-3 bg-purple-100 text-purple-700 text-xs font-semibold px-2 py-1 rounded scale-90">
+          <div className="flex items-center space-x-3">
+            <img src="/placeholder-logo.svg" alt="Masterly" className="h-10 w-auto" />
+            <div className="flex items-center gap-2">
+              <span className="text-3xl font-extrabold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent tracking-tight">
                 Admin Portal
+              </span>
+              <Badge className="ml-3 bg-purple-100 text-purple-700 text-xs font-semibold px-2 py-1 rounded scale-90">
+                Admin
               </Badge>
-            </span>
+            </div>
           </div>
           <div className="flex items-center gap-4">
             {/* Home icon button (bigger) */}

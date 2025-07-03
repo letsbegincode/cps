@@ -101,4 +101,8 @@ export interface IUser extends Document {
     resetPasswordExpire?: Date;
     isModified: (field: string) => boolean;
     getResetPasswordToken: () => string;
+    studySessions?: {
+        date: Date;
+        durationMinutes: number;
+    }[];
 }

@@ -35,6 +35,10 @@ const userSchema = new Schema<IUser>({
     // --- NEW FIELDS FOR PASSWORD RESET ---
     resetPasswordToken: { type: String, select: false },
     resetPasswordExpire: { type: Date, select: false },
+    studySessions: [{
+        date: { type: Date, required: true },
+        durationMinutes: { type: Number, required: true }
+    }],
 }, { timestamps: true });
 
 // Hash password before saving

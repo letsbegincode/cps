@@ -900,7 +900,7 @@ const DSAQuizEngine = ({ conceptId, onClose }: DSAQuizEngineProps) => {
             <p className="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
               {isDisqualified 
                 ? 'Too many security violations were detected during the quiz'
-                : 'Congratulations! Here are your detailed performance results and insights'
+                : 'Here are your detailed performance results and insights'
               }
             </p>
           </div>

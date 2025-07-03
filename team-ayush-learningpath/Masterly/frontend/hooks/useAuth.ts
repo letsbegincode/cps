@@ -2,7 +2,7 @@
 
 import { useContext } from 'react';
 // --- Updated to use the correct AuthContext ---
-import { AuthContext } from '../lib/auth-context';
+import { AuthContext } from '../app/context/AuthContext';
 
 export const useAuth = () => {
     const context = useContext(AuthContext);
