@@ -50,7 +50,7 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import { apiService, Concept, RecommendationResponse } from "@/lib/api"
-import { useAuth } from "../context/AuthContext"
+import { useAuthStore } from "@/lib/auth"
 import { toast } from "@/hooks/use-toast"
 import { Progress } from "@/components/ui/progress"
 import { useRouter } from 'next/navigation'
@@ -127,11 +127,11 @@ const availableCourses: Course[] = [
 ]
 
 export default function CustomPathGenerator() {
-  const { user, isAuthenticated, isLoading } = useAuth()
+  const { user, isAuthenticated } = useAuthStore()
   const router = useRouter();
   
   // Add debugging to see what's happening
-  console.log('Auth state:', { user, isAuthenticated, isLoading });
+  console.log('Auth state:', { user, isAuthenticated });
   
   const [selectedGoal, setSelectedGoal] = useState<string>("")
   const [searchQuery, setSearchQuery] = useState("")
@@ -158,13 +158,13 @@ export default function CustomPathGenerator() {
       try {
         const progress = await apiService.getUserProgress(user._id);
         const progressMap: Record<string, number> = {};
-        progress.forEach(p => {
+        progress.forEach((p: any) => {
           progressMap[p.conceptId] = p.score;
         });
         setUserProgress(progressMap);
         // Update all relevant properties for each topic
         setGeneratedPath(prev => prev.map(topic => {
-          const progressEntry = progress.find(p => p.conceptId === topic.id);
+          const progressEntry = progress.find((p: any) => p.conceptId === topic.id);
           return progressEntry
             ? {
                 ...topic,
@@ -328,9 +328,9 @@ export default function CustomPathGenerator() {
   }, []);
 
   const generateCustomPath = async () => {
-    console.log('generateCustomPath called with auth state:', { user, isAuthenticated, isLoading });
+    console.log('generateCustomPath called with auth state:', { user, isAuthenticated });
     
-    if (isLoading) {
+    if (!user) {
       toast({
         title: "Loading",
         description: "Please wait while we check your authentication status.",
@@ -372,7 +372,7 @@ export default function CustomPathGenerator() {
         console.log('Recommendation response:', response);
 
         // Transform the API response to match our Topic interface
-        const transformedPath = response.bestPath.detailedPath.map((item, index) => {
+        const transformedPath = response.bestPath.detailedPath.map((item: any, index: number) => {
           const masteryLevel = userProgress[item.conceptId] || 0;
           const isCompleted = masteryLevel >= 0.7; // Consider completed if mastery >= 70%
           
@@ -396,8 +396,8 @@ export default function CustomPathGenerator() {
         setGeneratedPath(transformedPath)
 
         // Transform alternative paths
-        const transformedAlternatives = response.allPaths.slice(1).map(path => 
-          path.detailedPath.map((item, index) => {
+        const transformedAlternatives = response.allPaths.slice(1).map((path: any) => 
+          path.detailedPath.map((item: any, index: number) => {
             const masteryLevel = userProgress[item.conceptId] || 0;
             const isCompleted = masteryLevel >= 0.7;
             
@@ -464,7 +464,7 @@ export default function CustomPathGenerator() {
         const courseTopics = generateCollaborativeCoursePath(selectedGoal)
         
         // Apply user progress to the collaborative path
-        const pathWithProgress = courseTopics.map(topic => {
+        const pathWithProgress = courseTopics.map((topic: any) => {
           const masteryLevel = userProgress[topic.id] || 0;
           const isCompleted = masteryLevel >= 0.7; // Consider completed if mastery >= 70%
           

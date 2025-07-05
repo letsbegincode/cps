@@ -1,7 +1,18 @@
 "use client"
 
-import { BookOpen, Home, Brain, Trophy, FileText, User, Settings, BarChart3, HelpCircle } from "lucide-react"
+import {
+  BookOpen,
+  Home,
+  Brain,
+  Trophy,
+  FileText,
+  User,
+  Settings,
+  BarChart3,
+  HelpCircle,
+} from "lucide-react"
 import Link from "next/link"
+import { usePathname } from "next/navigation"
 
 import {
   Sidebar,
@@ -18,6 +29,7 @@ import {
 } from "@/components/ui/sidebar"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { useAuthStore } from "@/lib/auth"
 
 const menuItems = [
   {
@@ -71,6 +83,31 @@ const accountItems = [
 ]
 
 export function AppSidebar() {
+  // ✅ Hook must be inside component
+  const { user, isAuthenticated } = useAuthStore()
+  const pathname = usePathname()
+  
+  console.log("🔍 AppSidebar User Data:", {
+    user,
+    isAuthenticated,
+    profile: user?.profile,
+    firstName: user?.profile?.firstName,
+    lastName: user?.profile?.lastName,
+    fullName: user?.profile?.fullName,
+    email: user?.email
+  })
+
+  // Function to check if a menu item is active
+  const isActive = (url: string) => {
+    if (url === "/dashboard") {
+      return pathname === "/dashboard"
+    }
+    if (url === "/progress?tab=achievements") {
+      return pathname === "/progress" && pathname.includes("tab=achievements")
+    }
+    return pathname.startsWith(url)
+  }
+
   return (
     <Sidebar>
       <SidebarHeader className="border-b border-sidebar-border">
@@ -91,16 +128,22 @@ export function AppSidebar() {
           <SidebarGroupLabel>Learning</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {menuItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <Link href={item.url}>
-                      <item.icon className="w-4 h-4" />
-                      <span>{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              {menuItems.map((item) => {
+                const active = isActive(item.url)
+                return (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton 
+                      asChild 
+                      className={active ? "bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-r-2 border-blue-500" : ""}
+                    >
+                      <Link href={item.url}>
+                        <item.icon className="w-4 h-4" />
+                        <span>{item.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                )
+              })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -109,16 +152,22 @@ export function AppSidebar() {
           <SidebarGroupLabel>Account</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {accountItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <Link href={item.url}>
-                      <item.icon className="w-4 h-4" />
-                      <span>{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              {accountItems.map((item) => {
+                const active = isActive(item.url)
+                return (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton 
+                      asChild
+                      className={active ? "bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-r-2 border-blue-500" : ""}
+                    >
+                      <Link href={item.url}>
+                        <item.icon className="w-4 h-4" />
+                        <span>{item.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                )
+              })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -128,22 +177,33 @@ export function AppSidebar() {
         <div className="flex items-center justify-between p-2">
           <ThemeToggle />
         </div>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild>
-              <Link href="/profile" className="flex items-center space-x-3 p-2">
-                <Avatar className="w-8 h-8">
-                  <AvatarImage src="/placeholder.svg?height=32&width=32" />
-                  <AvatarFallback>AJ</AvatarFallback>
-                </Avatar>
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium">Ayush Singh</div>
-                  <div className="text-xs text-muted-foreground">Premium Member</div>
-                </div>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
+
+        {/* ✅ Show user full name & membership */}
+        {isAuthenticated && user ? (
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild>
+                <Link href="/profile" className="flex items-center space-x-3 p-2">
+                  <Avatar className="w-8 h-8">
+                    <AvatarImage src="/placeholder.svg?height=32&width=32" />
+                    <AvatarFallback>
+                      {user.profile?.firstName?.[0] || user.profile?.displayName?.[0] || user.email?.[0] || 'U'}
+                      {user.profile?.lastName?.[0] || ''}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium">
+                      {user.profile?.fullName || user.profile?.displayName || user.email?.split('@')[0] || 'User'}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {user.subscription?.plan === "premium" ? "Premium Member" : "Free Member"}
+                    </div>
+                  </div>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        ) : null}
       </SidebarFooter>
 
       <SidebarRail />

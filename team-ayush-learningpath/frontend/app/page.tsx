@@ -3,28 +3,81 @@
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { BookOpen, Brain, Target, TrendingUp, Users, ArrowRight, Play, Star, CheckCircle } from "lucide-react"
+import { BookOpen, Brain, Target, TrendingUp, Users, ArrowRight, Play, Star, CheckCircle, LogOut } from 'lucide-react'
 import Link from "next/link"
 import Image from "next/image"
 import { ThemeToggle } from "@/components/theme-toggle"
-import { useAuth } from "./context/AuthContext"
+import { useAuthStore } from "@/lib/auth"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 export default function LandingPage() {
-  // --- This hook now correctly gets the user's login status and data ---
-  const { user, isAuthenticated, isLoading } = useAuth();
+  const { user, isAuthenticated, logout } = useAuthStore()
 
-  // Your existing hardcoded data
+  const handleLogout = () => {
+    logout()
+  }
+
   const courses = [
-    { title: "Data Structures & Algorithms", description: "Master the fundamentals with 200+ problems", level: "Beginner to Advanced", duration: "8 weeks", students: "50K+", rating: 4.8, image: "/placeholder.svg?height=200&width=300", concepts: 45, },
-    { title: "System Design", description: "Learn to design scalable systems", level: "Intermediate", duration: "6 weeks", students: "30K+", rating: 4.9, image: "/placeholder.svg?height=200&width=300", concepts: 32, },
-    { title: "Machine Learning", description: "From basics to advanced ML algorithms", level: "Intermediate", duration: "10 weeks", students: "25K+", rating: 4.7, image: "/placeholder.svg?height=200&width=300", concepts: 58, },
+    {
+      title: "Data Structures & Algorithms",
+      description: "Master the fundamentals with 200+ problems",
+      level: "Beginner to Advanced",
+      duration: "8 weeks",
+      students: "50K+",
+      rating: 4.8,
+      image: "/placeholder.svg?height=200&width=300",
+      concepts: 45,
+    },
+    {
+      title: "System Design",
+      description: "Learn to design scalable systems",
+      level: "Intermediate",
+      duration: "6 weeks",
+      students: "30K+",
+      rating: 4.9,
+      image: "/placeholder.svg?height=200&width=300",
+      concepts: 32,
+    },
+    {
+      title: "Machine Learning",
+      description: "From basics to advanced ML algorithms",
+      level: "Intermediate",
+      duration: "10 weeks",
+      students: "25K+",
+      rating: 4.7,
+      image: "/placeholder.svg?height=200&width=300",
+      concepts: 58,
+    },
   ]
+
   const features = [
-    { icon: Brain, title: "AI-Powered Learning Paths", description: "Get personalized learning recommendations based on your current knowledge and goals" },
-    { icon: Target, title: "Adaptive Assessments", description: "Dynamic quizzes that adapt to your learning pace and identify knowledge gaps" },
-    { icon: TrendingUp, title: "Progress Tracking", description: "Visual progress tracking with detailed analytics and performance insights" },
-    { icon: Users, title: "Peer Learning", description: "Connect with fellow learners and participate in study groups and discussions" },
+    {
+      icon: Brain,
+      title: "AI-Powered Learning Paths",
+      description: "Get personalized learning recommendations based on your current knowledge and goals",
+    },
+    {
+      icon: Target,
+      title: "Adaptive Assessments",
+      description: "Dynamic quizzes that adapt to your learning pace and identify knowledge gaps",
+    },
+    {
+      icon: TrendingUp,
+      title: "Progress Tracking",
+      description: "Visual progress tracking with detailed analytics and performance insights",
+    },
+    {
+      icon: Users,
+      title: "Peer Learning",
+      description: "Connect with fellow learners and participate in study groups and discussions",
+    },
   ]
 
   return (
@@ -41,30 +94,108 @@ export default function LandingPage() {
             </span>
           </div>
           <nav className="hidden md:flex items-center space-x-8">
-            <Link href="#courses" className="text-gray-600 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400">Courses</Link>
-            <Link href="#features" className="text-gray-600 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400">Features</Link>
-            <Link href="#pricing" className="text-gray-600 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400">Pricing</Link>
+            <Link
+              href="#courses"
+              className="text-gray-600 hover:text-blue-600 transition-colors dark:text-gray-300 dark:hover:text-blue-400"
+            >
+              Courses
+            </Link>
+            <Link
+              href="#features"
+              className="text-gray-600 hover:text-blue-600 transition-colors dark:text-gray-300 dark:hover:text-blue-400"
+            >
+              Features
+            </Link>
+            <Link
+              href="#pricing"
+              className="text-gray-600 hover:text-blue-600 transition-colors dark:text-gray-300 dark:hover:text-blue-400"
+            >
+              Pricing
+            </Link>
             <ThemeToggle />
-            <div className="flex items-center space-x-4">
-              {/* --- This is the simplified conditional rendering block --- */}
-              {isLoading ? (
-                <div className="w-36 h-10 bg-gray-200 dark:bg-gray-700 rounded-md animate-pulse" />
-              ) : isAuthenticated && user ? (
-                <Link href="/dashboard" className="flex items-center space-x-3 group">
-                  <Avatar>
-                    <AvatarImage src="/placeholder.svg?height=40&width=40" />
-                    <AvatarFallback>{user.firstName?.[0]}{user.lastName?.[0]}</AvatarFallback>
-                  </Avatar>
-                  <div className="text-right">
-                    <div className="font-semibold text-sm group-hover:text-blue-600 dark:group-hover:text-blue-400">{user.firstName}</div>
+
+            {isAuthenticated && user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage
+                        src={
+                          user?.profile?.avatar && user.profile.avatar !== "null"
+                            ? user.profile.avatar
+                            : ""
+                        }
+                        alt="User avatar"
+                      />
+                      <AvatarFallback className="bg-muted flex items-center justify-center">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          fill="currentColor"
+                          className="w-5 h-5 text-muted-foreground"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M18.685 19.097A9.723 9.723 0 0 0 21.75 12c0-5.385-4.365-9.75-9.75-9.75S2.25 6.615 2.25 12a9.723 9.723 0 0 0 3.065 7.097A9.716 9.716 0 0 0 12 21.75a9.716 9.716 0 0 0 6.685-2.653Zm-12.54-1.285A7.486 7.486 0 0 1 12 15a7.486 7.486 0 0 1 5.855 2.812A8.224 8.224 0 0 1 12 20.25a8.224 8.224 0 0 1-5.855-2.438ZM15.75 9a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                      </AvatarFallback>
+                    </Avatar>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56" align="end" forceMount>
+                  <div className="flex items-center justify-start gap-2 p-2">
+                    <div className="flex flex-col space-y-1 leading-none">
+                      <p className="font-medium">{user.profile?.fullName || user.profile?.displayName || user.email?.split('@')[0] || 'User'}</p>
+                      <p className="w-[200px] truncate text-sm text-muted-foreground">
+                        {user.email}
+                      </p>
+                    </div>
                   </div>
-                </Link>
-              ) : (
-                <Button variant="outline" asChild>
-                  <Link href="/login">Sign In / Sign Up</Link>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link href="/dashboard">Dashboard</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/profile">Profile</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/settings">Settings</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleLogout}>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Log out</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline">
+                      Sign In
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-48" align="end">
+                    <DropdownMenuItem asChild>
+                      <Link href="/login" className="flex items-center">
+                        👤 User Login
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/admin/login" className="flex items-center">
+                        👨‍💼 Admin Login
+                      </Link>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                <Button asChild>
+                  <Link href="/signup">Get Started</Link>
                 </Button>
-              )}
-            </div>
+              </>
+            )}
           </nav>
         </div>
       </header>
@@ -74,19 +205,40 @@ export default function LandingPage() {
         <div className="container mx-auto text-center">
           <div className="max-w-4xl mx-auto">
             <Badge className="mb-4 bg-blue-100 text-blue-700 hover:bg-blue-100">🚀 AI-Powered Learning Platform</Badge>
-            <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent leading-tight">Master Skills with<br />Personalized Learning</h1>
-            <p className="text-xl text-gray-600 dark:text-gray-300 mb-8 max-w-2xl mx-auto leading-relaxed">Experience adaptive learning that evolves with you. Get personalized paths, track progress visually, and master concepts through interactive quizzes and real-world projects.</p>
+            <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent leading-tight">
+              Master Skills with
+              <br />
+              Personalized Learning
+            </h1>
+            <p className="text-xl text-gray-600 dark:text-gray-300 mb-8 max-w-2xl mx-auto leading-relaxed">
+              Experience adaptive learning that evolves with you. Get personalized paths, track progress visually, and
+              master concepts through interactive quizzes and real-world projects.
+            </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-              <Button size="lg" className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700" asChild>
-                <Link href={isAuthenticated ? "/dashboard" : "/login"}>
-                  Start Learning <ArrowRight className="ml-2 w-4 h-4" />
-                </Link>
-              </Button>
-              <Button size="lg" variant="outline" className="group" asChild>
-                <a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ" target="_blank" rel="noopener noreferrer">
-                  <Play className="mr-2 w-4 h-4 group-hover:scale-110 transition-transform" />
-                  Watch Demo
-                </a>
+              {isAuthenticated ? (
+                <Button
+                  size="lg"
+                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                  asChild
+                >
+                  <Link href="/dashboard">
+                    Continue Learning <ArrowRight className="ml-2 w-4 h-4" />
+                  </Link>
+                </Button>
+              ) : (
+                <Button
+                  size="lg"
+                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                  asChild
+                >
+                  <Link href="/signup">
+                    Start Learning <ArrowRight className="ml-2 w-4 h-4" />
+                  </Link>
+                </Button>
+              )}
+              <Button size="lg" variant="outline" className="group">
+                <Play className="mr-2 w-4 h-4 group-hover:scale-110 transition-transform" />
+                Watch Demo
               </Button>
             </div>
 
@@ -256,7 +408,9 @@ export default function LandingPage() {
                     <span>📖 {course.concepts} concepts</span>
                   </div>
                   <Button className="w-full" asChild>
-                    <Link href={isAuthenticated ? "/dashboard" : "/login"}>Start Learning</Link>
+                    <Link href={isAuthenticated ? "/dashboard" : "/signup"}>
+                      {isAuthenticated ? "Continue Learning" : "Start Learning"}
+                    </Link>
                   </Button>
                 </CardContent>
               </Card>
@@ -269,21 +423,31 @@ export default function LandingPage() {
       <section className="py-20 px-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white">
         <div className="container mx-auto text-center">
           <h2 className="text-4xl font-bold mb-4">Ready to Transform Your Learning?</h2>
-          <p className="text-xl mb-8 opacity-90 max-w-2xl mx-auto">Join thousands of learners who have accelerated their careers with personalized learning paths</p>
+          <p className="text-xl mb-8 opacity-90 max-w-2xl mx-auto">
+            Join thousands of learners who have accelerated their careers with personalized learning paths
+          </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" variant="secondary" asChild>
-              <Link href="/signup">
-                Start Free Trial <ArrowRight className="ml-2 w-4 h-4" />
-              </Link>
-            </Button>
-            <Button size="lg" variant="outline" className="border-white text-gray-400 hover:bg-white hover:text-blue-600" asChild>
-              <a href="mailto:demo@masterly.com">Schedule Demo</a>
+            {isAuthenticated ? (
+              <Button size="lg" variant="secondary" asChild>
+                <Link href="/dashboard">
+                  Go to Dashboard <ArrowRight className="ml-2 w-4 h-4" />
+                </Link>
+              </Button>
+            ) : (
+              <Button size="lg" variant="secondary" asChild>
+                <Link href="/signup">
+                  Start Free Trial <ArrowRight className="ml-2 w-4 h-4" />
+                </Link>
+              </Button>
+            )}
+            <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-blue-600">
+              Schedule Demo
             </Button>
           </div>
         </div>
       </section>
 
-     {/* Footer */}
+      {/* Footer */}
       <footer className="bg-gray-900 text-white py-12 px-4">
         <div className="container mx-auto">
           <div className="grid md:grid-cols-4 gap-8">

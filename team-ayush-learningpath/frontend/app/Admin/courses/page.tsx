@@ -1,273 +1,253 @@
 "use client"
 
-import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Search, Filter, Edit, Trash2, Eye, Users, Clock, Star, MoreHorizontal } from "lucide-react"
-import Link from "next/link"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+  BookOpen,
+  Plus,
+  Edit,
+  Trash2,
+  Eye,
+  Users,
+  Clock,
+  Star,
+  TrendingUp,
+  Target,
+  Calendar,
+  AlertCircle,
+} from "lucide-react"
 
-export default function AdminCourses() {
-  const [searchTerm, setSearchTerm] = useState("")
-  const [filterStatus, setFilterStatus] = useState("all")
-
-  const courses = [
-    {
-      id: "1",
-      title: "Data Structures & Algorithms",
-      category: "Computer Science",
-      difficulty: "Intermediate",
-      students: 1247,
-      rating: 4.8,
-      status: "published",
-      lastUpdated: "2024-01-15",
-      concepts: 45,
-      duration: "40 hours",
-    },
-    {
-      id: "2",
-      title: "System Design Fundamentals",
-      category: "Software Engineering",
-      difficulty: "Advanced",
-      students: 892,
-      rating: 4.9,
-      status: "published",
-      lastUpdated: "2024-01-12",
-      concepts: 32,
-      duration: "35 hours",
-    },
-    {
-      id: "3",
-      title: "Machine Learning Basics",
-      category: "AI/ML",
-      difficulty: "Beginner",
-      students: 2156,
-      rating: 4.7,
-      status: "draft",
-      lastUpdated: "2024-01-10",
-      concepts: 58,
-      duration: "50 hours",
-    },
-    {
-      id: "4",
-      title: "React Advanced Patterns",
-      category: "Web Development",
-      difficulty: "Advanced",
-      students: 634,
-      rating: 4.6,
-      status: "published",
-      lastUpdated: "2024-01-08",
-      concepts: 28,
-      duration: "25 hours",
-    },
-  ]
-
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "published":
-        return <Badge className="bg-green-100 text-green-800">Published</Badge>
-      case "draft":
-        return <Badge variant="secondary">Draft</Badge>
-      case "archived":
-        return <Badge variant="outline">Archived</Badge>
-      default:
-        return <Badge variant="secondary">{status}</Badge>
-    }
-  }
-
-  const getDifficultyBadge = (difficulty: string) => {
-    const colors = {
-      Beginner: "bg-blue-100 text-blue-800",
-      Intermediate: "bg-yellow-100 text-yellow-800",
-      Advanced: "bg-red-100 text-red-800",
-    }
-    return <Badge className={colors[difficulty as keyof typeof colors]}>{difficulty}</Badge>
-  }
-
+export default function CourseManagementPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Course Management</h1>
-          <p className="text-gray-600 dark:text-gray-300">Create and manage your courses</p>
+          <p className="text-gray-600 dark:text-gray-300">
+            Manage courses, content, and learning materials
+          </p>
         </div>
-        <Button asChild>
-          <Link href="/admin/courses/new">
-            <Plus className="w-4 h-4 mr-2" />
-            Create Course
-          </Link>
+        <Button className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700">
+          <Plus className="w-4 h-4 mr-2" />
+          Create Course
         </Button>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card>
+      <div className="grid md:grid-cols-4 gap-6">
+        <Card className="dark:bg-gray-800/80 dark:border-gray-700">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Courses</CardTitle>
-            <Eye className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-300">
+              Total Courses
+            </CardTitle>
+            <BookOpen className="h-4 w-4 text-blue-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">156</div>
-            <p className="text-xs text-muted-foreground">+12 from last month</p>
+            <div className="text-2xl font-bold text-gray-900 dark:text-white">
+              24
+            </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="dark:bg-gray-800/80 dark:border-gray-700">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Published</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-300">
+              Active Courses
+            </CardTitle>
+            <Target className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">142</div>
-            <p className="text-xs text-muted-foreground">91% of total</p>
+            <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+              18
+            </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="dark:bg-gray-800/80 dark:border-gray-700">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Draft</CardTitle>
-            <Edit className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-300">
+              Total Enrollments
+            </CardTitle>
+            <Users className="h-4 w-4 text-purple-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">14</div>
-            <p className="text-xs text-muted-foreground">9% of total</p>
+            <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+              1,247
+            </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="dark:bg-gray-800/80 dark:border-gray-700">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Avg Rating</CardTitle>
-            <Star className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-300">
+              Avg. Rating
+            </CardTitle>
+            <Star className="h-4 w-4 text-yellow-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">4.7</div>
-            <p className="text-xs text-muted-foreground">+0.2 from last month</p>
+            <div className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
+              4.8
+            </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Filters and Search */}
-      <Card>
+      {/* Coming Soon Message */}
+      <Card className="dark:bg-gray-800/80 dark:border-gray-700">
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>All Courses</CardTitle>
-              <CardDescription>Manage your course catalog</CardDescription>
-            </div>
-            <div className="flex items-center space-x-4">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <Input
-                  placeholder="Search courses..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 w-64"
-                />
-              </div>
-              <Select value={filterStatus} onValueChange={setFilterStatus}>
-                <SelectTrigger className="w-40">
-                  <Filter className="w-4 h-4 mr-2" />
-                  <SelectValue placeholder="Filter by status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="published">Published</SelectItem>
-                  <SelectItem value="draft">Draft</SelectItem>
-                  <SelectItem value="archived">Archived</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+          <CardTitle className="flex items-center text-gray-900 dark:text-white">
+            <AlertCircle className="w-5 h-5 mr-2 text-orange-500" />
+            Course Management Coming Soon
+          </CardTitle>
+          <CardDescription className="text-gray-600 dark:text-gray-300">
+            This section is under development and will be available soon
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Course</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead>Difficulty</TableHead>
-                <TableHead>Students</TableHead>
-                <TableHead>Rating</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Last Updated</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {courses.map((course) => (
-                <TableRow key={course.id}>
-                  <TableCell>
-                    <div>
-                      <div className="font-medium">{course.title}</div>
-                      <div className="text-sm text-gray-500">
-                        {course.concepts} concepts • {course.duration}
-                      </div>
+          <div className="text-center py-12">
+            <BookOpen className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+              Course Management Features
+            </h3>
+            <p className="text-gray-600 dark:text-gray-300 mb-6 max-w-2xl mx-auto">
+              Soon you'll be able to create, edit, and manage courses with advanced features including:
+            </p>
+            
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-4xl mx-auto">
+              <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+                <div className="flex items-center space-x-3 mb-2">
+                  <Plus className="w-5 h-5 text-blue-500" />
+                  <h4 className="font-semibold text-gray-900 dark:text-white">Course Creation</h4>
+                </div>
+                <p className="text-sm text-gray-600 dark:text-gray-300">
+                  Create new courses with rich content, videos, and interactive elements
+                </p>
+              </div>
+              
+              <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+                <div className="flex items-center space-x-3 mb-2">
+                  <Edit className="w-5 h-5 text-green-500" />
+                  <h4 className="font-semibold text-gray-900 dark:text-white">Content Management</h4>
+                </div>
+                <p className="text-sm text-gray-600 dark:text-gray-300">
+                  Edit course content, add lessons, and manage learning materials
+                </p>
+              </div>
+              
+              <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+                <div className="flex items-center space-x-3 mb-2">
+                  <Users className="w-5 h-5 text-purple-500" />
+                  <h4 className="font-semibold text-gray-900 dark:text-white">Student Management</h4>
+                </div>
+                <p className="text-sm text-gray-600 dark:text-gray-300">
+                  Track student progress, manage enrollments, and view analytics
+                </p>
+              </div>
+              
+              <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+                <div className="flex items-center space-x-3 mb-2">
+                  <TrendingUp className="w-5 h-5 text-orange-500" />
+                  <h4 className="font-semibold text-gray-900 dark:text-white">Analytics</h4>
+                </div>
+                <p className="text-sm text-gray-600 dark:text-gray-300">
+                  View detailed analytics and performance metrics for each course
+                </p>
+              </div>
+              
+              <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+                <div className="flex items-center space-x-3 mb-2">
+                  <Star className="w-5 h-5 text-yellow-500" />
+                  <h4 className="font-semibold text-gray-900 dark:text-white">Reviews & Ratings</h4>
+                </div>
+                <p className="text-sm text-gray-600 dark:text-gray-300">
+                  Manage student reviews and course ratings
+                </p>
+              </div>
+              
+              <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+                <div className="flex items-center space-x-3 mb-2">
+                  <Calendar className="w-5 h-5 text-red-500" />
+                  <h4 className="font-semibold text-gray-900 dark:text-white">Scheduling</h4>
+                </div>
+                <p className="text-sm text-gray-600 dark:text-gray-300">
+                  Schedule course releases and manage availability
+                </p>
+              </div>
+            </div>
+            
+            <div className="mt-8">
+              <Button variant="outline" className="mr-4">
+                <Eye className="w-4 h-4 mr-2" />
+                View Demo
+              </Button>
+              <Button>
+                <BookOpen className="w-4 h-4 mr-2" />
+                Get Notified
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Placeholder Course List */}
+      <Card className="dark:bg-gray-800/80 dark:border-gray-700">
+        <CardHeader>
+          <CardTitle>Recent Courses</CardTitle>
+          <CardDescription>
+            Sample course data for demonstration
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {[
+              { title: "Introduction to React", students: 156, rating: 4.8, status: "active" },
+              { title: "Advanced JavaScript", students: 89, rating: 4.9, status: "active" },
+              { title: "Python for Beginners", students: 234, rating: 4.7, status: "active" },
+              { title: "Data Science Fundamentals", students: 67, rating: 4.6, status: "draft" },
+            ].map((course, index) => (
+              <div
+                key={index}
+                className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg"
+              >
+                <div className="flex items-center space-x-4">
+                  <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg flex items-center justify-center">
+                    <BookOpen className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900 dark:text-white">
+                      {course.title}
+                    </h3>
+                    <div className="flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-300">
+                      <span className="flex items-center">
+                        <Users className="w-4 h-4 mr-1" />
+                        {course.students} students
+                      </span>
+                      <span className="flex items-center">
+                        <Star className="w-4 h-4 mr-1" />
+                        {course.rating}
+                      </span>
+                      <Badge className={course.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}>
+                        {course.status}
+                      </Badge>
                     </div>
-                  </TableCell>
-                  <TableCell>{course.category}</TableCell>
-                  <TableCell>{getDifficultyBadge(course.difficulty)}</TableCell>
-                  <TableCell>
-                    <div className="flex items-center">
-                      <Users className="w-4 h-4 mr-1 text-gray-400" />
-                      {course.students.toLocaleString()}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center">
-                      <Star className="w-4 h-4 mr-1 text-yellow-400 fill-current" />
-                      {course.rating}
-                    </div>
-                  </TableCell>
-                  <TableCell>{getStatusBadge(course.status)}</TableCell>
-                  <TableCell>
-                    <div className="flex items-center text-sm text-gray-500">
-                      <Clock className="w-4 h-4 mr-1" />
-                      {course.lastUpdated}
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem asChild>
-                          <Link href={`/admin/courses/${course.id}`}>
-                            <Eye className="w-4 h-4 mr-2" />
-                            View Details
-                          </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                          <Link href={`/admin/courses/${course.id}/edit`}>
-                            <Edit className="w-4 h-4 mr-2" />
-                            Edit Course
-                          </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-red-600">
-                          <Trash2 className="w-4 h-4 mr-2" />
-                          Delete Course
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+                  </div>
+                </div>
+                <div className="flex space-x-2">
+                  <Button variant="ghost" size="sm">
+                    <Eye className="w-4 h-4" />
+                  </Button>
+                  <Button variant="ghost" size="sm">
+                    <Edit className="w-4 h-4" />
+                  </Button>
+                  <Button variant="ghost" size="sm">
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
         </CardContent>
       </Card>
     </div>

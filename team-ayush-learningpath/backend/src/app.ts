@@ -17,6 +17,7 @@ import adminRoutes from './routes/adminRoutes';
 import quizRoutes from './routes/quizRoutes';
 import recommendationRoutes from './routes/recommendation.routes';
 import learningPathRoutes from './routes/learningPathRoutes';
+import courseRoutes from './routes/courseRoutes';
 
 const app: Express = express();
 
@@ -39,6 +40,7 @@ app.use(passport.initialize());
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/concepts', conceptRoutes);
+app.use('/api/courses', courseRoutes);
 // app.use('/api/quizzes', quizRoutes);
 app.use('/api/admin', adminRoutes);
 app.use("/api/quiz", quizRoutes);

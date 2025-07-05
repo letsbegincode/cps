@@ -7,6 +7,7 @@ import {
     createConcept,
     updateConcept,
     deleteConcept,
+    getEmergencyContacts,
 } from '../controllers/adminController';
 import {
     registerAdmin,
@@ -91,6 +92,10 @@ router.get('/emergency-contacts', async (req, res) => {
         res.status(500).json({ message: "Failed to fetch contacts." });
     }
 });
+
+// User Emergency Contacts (admin only)
+router.get('/user-emergency-contacts', getEmergencyContacts);
+
 router.patch('/emergency-contacts/:id/status', async (req, res) => {
     try {
         const { status } = req.body;
@@ -118,6 +123,95 @@ router.get('/emergency-contacts-count', async (req, res) => {
         res.json({ count });
     } catch (e) {
         res.status(500).json({ message: "Failed to fetch count." });
+    }
+});
+
+// Dashboard stats endpoint
+router.get('/dashboard-stats', async (req, res) => {
+    try {
+        const [totalUsers, emergencyContacts, courses] = await Promise.all([
+            User.countDocuments({}),
+            EmergencyContact.find({}),
+            // For now, we'll use a mock course count since we don't have a Course model yet
+            Promise.resolve([])
+        ]);
+
+        const pendingRequests = emergencyContacts.filter(contact => contact.status === 'pending').length;
+        const totalContacts = emergencyContacts.length;
+
+        // Calculate user growth (mock for now)
+        const userGrowth = 12; // In a real app, you'd calculate this from historical data
+
+        // System health (mock for now)
+        const systemHealth = 98;
+
+        // Course completion (mock for now)
+        const courseCompletion = 18;
+
+        res.json({
+            totalUsers,
+            activeCourses: courses.length,
+            pendingRequests,
+            systemHealth,
+            userGrowth,
+            courseCompletion,
+            totalContacts
+        });
+    } catch (error) {
+        console.error('Dashboard stats error:', error);
+        res.status(500).json({ message: "Failed to fetch dashboard stats" });
+    }
+});
+
+// Recent activities endpoint
+router.get('/recent-activities', async (req, res) => {
+    try {
+        const activities = [];
+        
+        // Get recent emergency contacts
+        const recentContacts = await EmergencyContact.find()
+            .sort({ createdAt: -1 })
+            .limit(3);
+        
+        recentContacts.forEach(contact => {
+            activities.push({
+                id: contact._id.toString(),
+                type: 'emergency',
+                action: `Help request ${contact.status}`,
+                user: contact.email,
+                time: new Date(contact.createdAt).toLocaleString(),
+                status: contact.status === 'pending' ? 'warning' : 
+                       contact.status === 'successful' ? 'success' : 'info'
+            });
+        });
+
+        // Add system activities (mock for now)
+        activities.push({
+            id: 'system-1',
+            type: 'system',
+            action: 'System backup completed',
+            user: 'System',
+            time: new Date().toLocaleString(),
+            status: 'success'
+        });
+
+        // Add user login activity (mock for now)
+        activities.push({
+            id: 'user-1',
+            type: 'user',
+            action: 'Admin login',
+            user: 'admin@masterly.com',
+            time: new Date().toLocaleString(),
+            status: 'info'
+        });
+
+        // Sort by time and limit to 5
+        activities.sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
+        
+        res.json(activities.slice(0, 5));
+    } catch (error) {
+        console.error('Recent activities error:', error);
+        res.status(500).json({ message: "Failed to fetch recent activities" });
     }
 });
 
@@ -151,6 +245,17 @@ router.put('/todos', async (req, res) => {
         res.json({ todos: admin.todos });
     } catch (e) {
         res.status(500).json({ message: "Failed to update todos." });
+    }
+});
+
+// Get all todos
+router.get('/todos', async (req, res) => {
+    try {
+        const admin = await Admin.findById(req.user?._id);
+        if (!admin) return res.status(401).json({ message: "Not authorized" });
+        res.json({ todos: admin.todos || [] });
+    } catch (e) {
+        res.status(500).json({ message: "Failed to fetch todos." });
     }
 });
 
