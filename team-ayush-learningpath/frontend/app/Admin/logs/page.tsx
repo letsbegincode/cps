@@ -52,106 +52,95 @@ export default function SystemLogsPage() {
   const [filterSeverity, setFilterSeverity] = useState<string>("all")
   const [selectedLog, setSelectedLog] = useState<SystemLog | null>(null)
   const [showLogModal, setShowLogModal] = useState(false)
+  const [stats, setStats] = useState({
+    total: 0,
+    errors: 0,
+    warnings: 0,
+    authEvents: 0
+  })
 
-  // Mock data for demonstration
-  const mockLogs: SystemLog[] = [
-    {
-      _id: "1",
-      userId: "user1",
-      userEmail: "john@example.com",
-      action: "User Login",
-      category: "auth",
-      details: "User successfully logged in via email/password",
-      ipAddress: "192.168.1.100",
-      userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-      timestamp: new Date(Date.now() - 1000 * 60 * 5).toISOString(),
-      severity: "success"
-    },
-    {
-      _id: "2",
-      userId: "user2",
-      userEmail: "jane@example.com",
-      action: "Course Enrollment",
-      category: "course",
-      details: "User enrolled in 'Advanced JavaScript' course",
-      ipAddress: "192.168.1.101",
-      userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
-      timestamp: new Date(Date.now() - 1000 * 60 * 15).toISOString(),
-      severity: "info"
-    },
-    {
-      _id: "3",
-      userId: "user3",
-      userEmail: "admin@masterly.com",
-      action: "User Registration",
-      category: "user",
-      details: "New user registered with email: newuser@example.com",
-      ipAddress: "192.168.1.102",
-      userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-      timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
-      severity: "info"
-    },
-    {
-      _id: "4",
-      action: "System Maintenance",
-      category: "system",
-      details: "Database backup completed successfully",
-      timestamp: new Date(Date.now() - 1000 * 60 * 60).toISOString(),
-      severity: "success"
-    },
-    {
-      _id: "5",
-      userId: "user4",
-      userEmail: "user@example.com",
-      action: "Failed Login Attempt",
-      category: "auth",
-      details: "Multiple failed login attempts detected",
-      ipAddress: "192.168.1.103",
-      userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-      timestamp: new Date(Date.now() - 1000 * 60 * 120).toISOString(),
-      severity: "warning"
-    },
-    {
-      _id: "6",
-      userId: "admin1",
-      userEmail: "admin@masterly.com",
-      action: "User Suspended",
-      category: "admin",
-      details: "User account suspended for violation of terms",
-      ipAddress: "192.168.1.104",
-      userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
-      timestamp: new Date(Date.now() - 1000 * 60 * 180).toISOString(),
-      severity: "warning"
-    },
-    {
-      _id: "7",
-      action: "Database Error",
-      category: "system",
-      details: "Connection timeout to MongoDB cluster",
-      timestamp: new Date(Date.now() - 1000 * 60 * 240).toISOString(),
-      severity: "error"
-    },
-    {
-      _id: "8",
-      userId: "user5",
-      userEmail: "student@example.com",
-      action: "Course Completion",
-      category: "course",
-      details: "User completed 'Introduction to React' course with 95% score",
-      ipAddress: "192.168.1.105",
-      userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-      timestamp: new Date(Date.now() - 1000 * 60 * 300).toISOString(),
-      severity: "success"
-    }
-  ]
+
 
   useEffect(() => {
-    // Simulate API call
-    setTimeout(() => {
-      setLogs(mockLogs)
-      setLoading(false)
-    }, 1000)
+    fetchLogs()
   }, [])
+
+  const fetchLogs = async () => {
+    try {
+      setLoading(true)
+      setError("")
+      
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/logs`, {
+        credentials: "include",
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setLogs(data.logs || [])
+        
+        // Update stats if available
+        if (data.stats) {
+          setStats(data.stats)
+        }
+      } else {
+        setError("Failed to fetch system logs")
+      }
+    } catch (err: any) {
+      setError("Failed to fetch system logs")
+      console.error("Error fetching logs:", err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const exportLogs = async () => {
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/logs/export`, {
+        credentials: "include",
+      })
+
+      if (response.ok) {
+        const blob = await response.blob()
+        const url = window.URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = `system-logs-${new Date().toISOString().split('T')[0]}.json`
+        document.body.appendChild(a)
+        a.click()
+        window.URL.revokeObjectURL(url)
+        document.body.removeChild(a)
+      } else {
+        setError("Failed to export logs")
+      }
+    } catch (err: any) {
+      setError("Failed to export logs")
+      console.error("Error exporting logs:", err)
+    }
+  }
+
+  const clearOldLogs = async () => {
+    if (!confirm('Are you sure you want to clear old logs? This action cannot be undone.')) {
+      return
+    }
+
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/logs/clear`, {
+        method: 'DELETE',
+        credentials: "include",
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        alert(`Successfully cleared ${data.deletedCount} old logs`)
+        fetchLogs() // Refresh the logs
+      } else {
+        setError("Failed to clear old logs")
+      }
+    } catch (err: any) {
+      setError("Failed to clear old logs")
+      console.error("Error clearing logs:", err)
+    }
+  }
 
   const filteredLogs = logs.filter((log) => {
     const matchesSearch = 
@@ -165,10 +154,10 @@ export default function SystemLogsPage() {
     return matchesSearch && matchesCategory && matchesSeverity
   })
 
-  const totalLogs = logs.length
-  const errorLogs = logs.filter(log => log.severity === 'error').length
-  const warningLogs = logs.filter(log => log.severity === 'warning').length
-  const authLogs = logs.filter(log => log.category === 'auth').length
+  const totalLogs = stats.total || logs.length
+  const errorLogs = stats.errors || logs.filter(log => log.severity === 'error').length
+  const warningLogs = stats.warnings || logs.filter(log => log.severity === 'warning').length
+  const authLogs = stats.authEvents || logs.filter(log => log.category === 'auth').length
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleString("en-US", {
@@ -237,11 +226,11 @@ export default function SystemLogsPage() {
           </p>
         </div>
         <div className="flex space-x-2">
-          <Button variant="outline">
+          <Button variant="outline" onClick={exportLogs}>
             <Download className="w-4 h-4 mr-2" />
             Export Logs
           </Button>
-          <Button variant="outline">
+          <Button variant="outline" onClick={clearOldLogs}>
             <Trash2 className="w-4 h-4 mr-2" />
             Clear Old Logs
           </Button>
@@ -346,7 +335,7 @@ export default function SystemLogsPage() {
                 <option value="info">Info</option>
                 <option value="success">Success</option>
               </select>
-              <Button variant="outline">
+              <Button variant="outline" onClick={fetchLogs}>
                 <RefreshCw className="w-4 h-4" />
               </Button>
             </div>
@@ -378,8 +367,17 @@ export default function SystemLogsPage() {
                   No logs found
                 </h3>
                 <p className="text-gray-600 dark:text-gray-300">
-                  {searchTerm ? "No logs match your search criteria." : "No system logs available."}
+                  {searchTerm ? "No logs match your search criteria." : "No system logs available. Try running the test script to generate sample logs."}
                 </p>
+                {!searchTerm && (
+                  <Button 
+                    variant="outline" 
+                    className="mt-4"
+                    onClick={() => window.open('/admin/logs', '_blank')}
+                  >
+                    Refresh Page
+                  </Button>
+                )}
               </div>
             ) : (
               filteredLogs.map((log) => (

@@ -10,4 +10,5 @@ export { default as UserProgress, IUserProgress } from './userProgressModel';
 export { default as Concept } from './conceptModel';
 export { default as Admin } from './adminModel';
 export { default as EmergencyContact } from './emergencyContactModel';
-export { default as Response } from './responseModel'; 
+export { default as Response } from './responseModel';
+export { default as SystemLog, ISystemLog } from './systemLogModel'; 

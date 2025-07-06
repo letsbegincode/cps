@@ -5,6 +5,7 @@ import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import User from '../models/userModel';
 import Admin from '../models/adminModel'; // <-- Make sure this import is present
+import logger from '../utils/logger';
 import { IUser } from '../types';
 import { sendEmail } from '../utils/sendEmail'; // <-- THIS IS THE MISSING IMPORT
 
@@ -174,12 +175,14 @@ export const registerUser = async (req: Request, res: Response) => {
 export const loginUser = async (req: Request, res: Response) => {
     const { email, password } = req.body;
     try {
+        await logger.auth('Login Attempt', `Login attempt for email: ${email}`, req);
         console.log('Login attempt for email:', email);
         
         const user = await User.findOne({ email }).select('+password');
         console.log('User found:', !!user);
         
         if (!user) {
+            await logger.warning('Login Failed', `User not found for email: ${email}`, 'auth', req);
             console.log('❌ User not found');
             return res.status(401).json({ message: 'Invalid credentials' });
         }
@@ -199,10 +202,12 @@ export const loginUser = async (req: Request, res: Response) => {
         console.log('Password comparison result:', isPasswordValid);
         
         if (!isPasswordValid) {
+            await logger.warning('Login Failed', `Invalid password for email: ${email}`, 'auth', req);
             console.log('❌ Password does not match');
             return res.status(401).json({ message: 'Invalid credentials' });
         }
         
+        await logger.success('Login Successful', `User logged in successfully: ${email}`, 'auth', req);
         console.log('✅ Login successful');
         generateTokenAndSetCookie(res, (user as any)._id.toString());
         res.status(200).json({ 

@@ -20,6 +20,7 @@ import { conceptValidationRules, validate } from '../validators/conceptValidator
 import Admin from '../models/adminModel';
 import EmergencyContact from '../models/emergencyContactModel';
 import User from '../models/userModel';
+import Concept from '../models/conceptModel';
 
 const router = Router();
 
@@ -129,28 +130,31 @@ router.get('/emergency-contacts-count', async (req, res) => {
 // Dashboard stats endpoint
 router.get('/dashboard-stats', async (req, res) => {
     try {
-        const [totalUsers, emergencyContacts, courses] = await Promise.all([
+        // Get real data from database
+        const [totalUsers, emergencyContacts, concepts] = await Promise.all([
             User.countDocuments({}),
             EmergencyContact.find({}),
-            // For now, we'll use a mock course count since we don't have a Course model yet
-            Promise.resolve([])
+            Concept.countDocuments({})
         ]);
 
-        const pendingRequests = emergencyContacts.filter(contact => contact.status === 'pending').length;
+        const pendingRequests = emergencyContacts.filter((contact: any) => contact.status === 'pending').length;
         const totalContacts = emergencyContacts.length;
 
-        // Calculate user growth (mock for now)
-        const userGrowth = 12; // In a real app, you'd calculate this from historical data
+        // Calculate user growth (users created in last 30 days)
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        const recentUsers = await User.countDocuments({ createdAt: { $gte: thirtyDaysAgo } });
+        const userGrowth = totalUsers > 0 ? Math.round((recentUsers / totalUsers) * 100) : 0;
 
-        // System health (mock for now)
+        // System health (simplified for now)
         const systemHealth = 98;
 
-        // Course completion (mock for now)
-        const courseCompletion = 18;
+        // Course completion (simplified for now)
+        const courseCompletion = concepts;
 
         res.json({
             totalUsers,
-            activeCourses: courses.length,
+            activeCourses: concepts,
             pendingRequests,
             systemHealth,
             userGrowth,
@@ -166,14 +170,14 @@ router.get('/dashboard-stats', async (req, res) => {
 // Recent activities endpoint
 router.get('/recent-activities', async (req, res) => {
     try {
-        const activities = [];
+        const activities: any[] = [];
         
         // Get recent emergency contacts
         const recentContacts = await EmergencyContact.find()
             .sort({ createdAt: -1 })
             .limit(3);
         
-        recentContacts.forEach(contact => {
+        recentContacts.forEach((contact: any) => {
             activities.push({
                 id: contact._id.toString(),
                 type: 'emergency',
@@ -185,7 +189,24 @@ router.get('/recent-activities', async (req, res) => {
             });
         });
 
-        // Add system activities (mock for now)
+        // Get recent user registrations
+        const recentUsers = await User.find()
+            .sort({ createdAt: -1 })
+            .limit(3)
+            .select('firstName lastName email createdAt');
+
+        recentUsers.forEach((user: any) => {
+            activities.push({
+                id: user._id.toString(),
+                type: 'user',
+                action: 'New user registered',
+                user: `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email,
+                time: new Date(user.createdAt).toLocaleString(),
+                status: 'success'
+            });
+        });
+
+        // Add system activity
         activities.push({
             id: 'system-1',
             type: 'system',
@@ -195,20 +216,10 @@ router.get('/recent-activities', async (req, res) => {
             status: 'success'
         });
 
-        // Add user login activity (mock for now)
-        activities.push({
-            id: 'user-1',
-            type: 'user',
-            action: 'Admin login',
-            user: 'admin@masterly.com',
-            time: new Date().toLocaleString(),
-            status: 'info'
-        });
-
-        // Sort by time and limit to 5
+        // Sort by time and limit to 6
         activities.sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
         
-        res.json(activities.slice(0, 5));
+        res.json(activities.slice(0, 6));
     } catch (error) {
         console.error('Recent activities error:', error);
         res.status(500).json({ message: "Failed to fetch recent activities" });
