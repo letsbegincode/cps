@@ -1,0 +1,613 @@
+[
+  {
+  "_id": {
+    "$oid": "685fc69504baeb1d731511c7"
+  },
+  "title": "Data Structures & Algorithms",
+    "slug": "data-structures-algorithms",
+    "description": "Master the fundamentals of data structures and algorithms with hands-on practice and real-world examples. Learn essential concepts for coding interviews and software development.",
+    "shortDescription": "Master DSA with comprehensive coverage of algorithms and data structures",
+  "thumbnail": "https://i.ytimg.com/vi/Qmt0QwzEmh0/maxresdefault.jpg",
+  "instructor": {
+    "id": {
+      "$oid": "685fc69404baeb1d731511c0"
+    },
+    "name": "Rohit Negi",
+      "bio": "I am Rohit Negi who graduated from IIT Guwahati and got Highest Placement in India in 2021. I got AIR 202 in GATE CSE in 2020.",
+      "avatar": "https://example.com/rohit-negi-avatar.jpg",
+      "socialLinks": [
+        {
+          "platform": "linkedin",
+          "url": "https://linkedin.com/in/rohit-negi"
+        },
+        {
+          "platform": "github",
+          "url": "https://github.com/rohitnegi"
+        }
+      ]
+  },
+  "category": "Programming",
+  "subcategory": "Data Structures",
+  "level": "Beginner to Advanced",
+  "tags": [
+    "algorithms",
+    "data-structures",
+    "coding-interview",
+      "c++",
+      "java",
+      "python"
+  ],
+  "topics": [
+    {
+        "_id": {
+          "$oid": "685fc69504baeb1d731511c8"
+        },
+        "title": "Fundamentals",
+        "description": "Core programming concepts and basic data structures",
+      "order": 1,
+      "icon": "target",
+        "estimatedHours": 8,
+        "useReferencedConcepts": true,
+        "concepts": [],
+        "conceptReferences": [
+          {
+            "_id": {
+              "$oid": "507f1f77bcf86cd799439011"
+            },
+            "conceptId": {
+              "$oid": "507f1f77bcf86cd799439012"
+            },
+          "order": 1,
+            "isRequired": true,
+            "estimatedTime": "2h 30m",
+            "difficulty": "Easy"
+          },
+          {
+            "_id": {
+              "$oid": "507f1f77bcf86cd799439013"
+            },
+            "conceptId": {
+              "$oid": "507f1f77bcf86cd799439014"
+            },
+            "order": 2,
+            "isRequired": true,
+            "estimatedTime": "2h 0m",
+            "difficulty": "Easy"
+          },
+          {
+              "_id": {
+              "$oid": "507f1f77bcf86cd799439015"
+            },
+            "conceptId": {
+              "$oid": "507f1f77bcf86cd799439016"
+            },
+            "order": 3,
+            "isRequired": true,
+            "estimatedTime": "3h 0m",
+            "difficulty": "Medium"
+          }
+        ]
+      },
+      {
+        "_id": {
+          "$oid": "685fc69504baeb1d731511c9"
+        },
+        "title": "Advanced Data Structures",
+        "description": "Complex data structures and their implementations",
+        "order": 2,
+        "icon": "database",
+        "estimatedHours": 12,
+        "useReferencedConcepts": true,
+        "concepts": [],
+        "conceptReferences": [
+          {
+            "_id": {
+              "$oid": "507f1f77bcf86cd799439017"
+            },
+            "conceptId": {
+              "$oid": "507f1f77bcf86cd799439018"
+            },
+              "order": 1,
+            "isRequired": true,
+            "estimatedTime": "4h 0m",
+            "difficulty": "Medium"
+          },
+          {
+              "_id": {
+              "$oid": "507f1f77bcf86cd799439019"
+            },
+            "conceptId": {
+              "$oid": "507f1f77bcf86cd799439020"
+            },
+            "order": 2,
+            "isRequired": true,
+            "estimatedTime": "5h 0m",
+            "difficulty": "Hard"
+          },
+          {
+                  "_id": {
+              "$oid": "507f1f77bcf86cd799439021"
+            },
+            "conceptId": {
+              "$oid": "507f1f77bcf86cd799439022"
+            },
+            "order": 3,
+            "isRequired": true,
+            "estimatedTime": "3h 0m",
+            "difficulty": "Medium"
+          }
+        ]
+      },
+      {
+              "_id": {
+          "$oid": "685fc69504baeb1d731511ca"
+        },
+        "title": "Algorithms",
+        "description": "Essential algorithms and problem-solving techniques",
+        "order": 3,
+        "icon": "brain",
+        "estimatedHours": 15,
+        "useReferencedConcepts": true,
+        "concepts": [],
+        "conceptReferences": [
+          {
+                "_id": {
+              "$oid": "507f1f77bcf86cd799439023"
+            },
+            "conceptId": {
+              "$oid": "507f1f77bcf86cd799439024"
+            },
+            "order": 1,
+            "isRequired": true,
+            "estimatedTime": "4h 0m",
+            "difficulty": "Medium"
+          },
+          {
+            "_id": {
+              "$oid": "507f1f77bcf86cd799439025"
+            },
+            "conceptId": {
+              "$oid": "507f1f77bcf86cd799439026"
+            },
+            "order": 2,
+            "isRequired": true,
+            "estimatedTime": "3h 0m",
+            "difficulty": "Easy"
+          },
+          {
+          "_id": {
+              "$oid": "507f1f77bcf86cd799439027"
+            },
+            "conceptId": {
+              "$oid": "507f1f77bcf86cd799439028"
+            },
+            "order": 3,
+            "isRequired": true,
+            "estimatedTime": "6h 0m",
+            "difficulty": "Hard"
+          }
+        ]
+    }
+  ],
+  "pricing": {
+    "type": "paid",
+    "price": 99,
+    "currency": "USD",
+    "discountPrice": 79,
+    "originalPrice": "100"
+  },
+  "stats": {
+      "totalStudents": 0,
+      "totalRatings": 0,
+      "averageRating": 0,
+      "totalReviews": 0,
+      "completionRate": 0,
+      "totalDuration": 0,
+      "totalConcepts": 0,
+      "totalVideos": 0,
+      "totalArticles": 0,
+      "totalProblems": 0,
+      "totalQuizzes": 0
+  },
+  "requirements": [
+      "Basic programming knowledge in any language",
+      "Understanding of basic mathematics",
+      "Familiarity with control structures (if/else, loops)"
+  ],
+  "learningOutcomes": [
+      "Master fundamental data structures (arrays, linked lists, trees, graphs)",
+      "Implement and analyze sorting and searching algorithms",
+      "Solve complex algorithmic problems efficiently",
+      "Understand time and space complexity analysis",
+      "Prepare for technical coding interviews"
+  ],
+  "targetAudience": [
+    "Software engineering students",
+      "Junior developers preparing for interviews",
+      "Computer science students",
+      "Self-taught programmers"
+  ],
+  "status": "published",
+  "publishedAt": {
+    "$date": "2025-06-28T10:40:21.514Z"
+  },
+  "seo": {
+      "keywords": [
+        "data structures",
+        "algorithms",
+        "coding interview",
+        "programming",
+        "computer science"
+      ]
+    },
+    "isPublic": true,
+    "comingSoon": false,
+    "isActive": true,
+  "createdAt": {
+    "$date": "2025-06-28T10:40:21.518Z"
+  },
+  "updatedAt": {
+    "$date": "2025-07-02T09:55:35.581Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "685fc69504baeb1d731511c8"
+    },
+    "title": "Python Programming",
+    "slug": "python-programming",
+    "description": "Learn Python programming from basics to advanced concepts. Master Python syntax, data structures, object-oriented programming, and real-world applications.",
+    "shortDescription": "Complete Python programming course from beginner to advanced",
+    "thumbnail": "https://i.ytimg.com/vi/kqtD5dpn9C8/maxresdefault.jpg",
+    "instructor": {
+      "id": {
+        "$oid": "685fc69404baeb1d731511c1"
+      },
+      "name": "Sarah Chen",
+      "bio": "Senior Python Developer with 8+ years of experience. Former Google engineer and author of 'Python for Data Science'.",
+      "avatar": "https://example.com/sarah-chen-avatar.jpg",
+      "socialLinks": [
+        {
+          "platform": "linkedin",
+          "url": "https://linkedin.com/in/sarah-chen"
+        },
+        {
+          "platform": "github",
+          "url": "https://github.com/sarahchen"
+        }
+      ]
+    },
+    "category": "Programming",
+    "subcategory": "Python",
+    "level": "Beginner to Advanced",
+    "tags": [
+      "python",
+      "programming",
+      "web-development",
+      "data-science",
+      "automation"
+    ],
+    "topics": [
+      {
+        "_id": {
+          "$oid": "685fc69504baeb1d731511cb"
+        },
+        "title": "Python Basics",
+        "description": "Introduction to Python programming fundamentals",
+        "order": 1,
+        "icon": "code",
+        "estimatedHours": 6,
+        "useReferencedConcepts": true,
+        "concepts": [],
+        "conceptReferences": [
+          {
+            "_id": {
+              "$oid": "507f1f77bcf86cd799439029"
+            },
+            "conceptId": {
+              "$oid": "507f1f77bcf86cd799439030"
+            },
+            "order": 1,
+            "isRequired": true,
+            "estimatedTime": "1h 30m",
+            "difficulty": "Easy"
+          },
+          {
+            "_id": {
+              "$oid": "507f1f77bcf86cd799439031"
+            },
+            "conceptId": {
+              "$oid": "507f1f77bcf86cd799439032"
+            },
+            "order": 2,
+            "isRequired": true,
+            "estimatedTime": "1h 0m",
+            "difficulty": "Easy"
+          },
+          {
+            "_id": {
+              "$oid": "507f1f77bcf86cd799439033"
+            },
+            "conceptId": {
+              "$oid": "507f1f77bcf86cd799439034"
+            },
+            "order": 3,
+            "isRequired": true,
+            "estimatedTime": "2h 0m",
+            "difficulty": "Easy"
+          },
+          {
+            "_id": {
+              "$oid": "507f1f77bcf86cd799439035"
+            },
+            "conceptId": {
+              "$oid": "507f1f77bcf86cd799439036"
+            },
+            "order": 4,
+            "isRequired": true,
+            "estimatedTime": "1h 30m",
+            "difficulty": "Easy"
+          }
+        ]
+      },
+      {
+        "_id": {
+          "$oid": "685fc69504baeb1d731511cc"
+        },
+        "title": "Data Structures in Python",
+        "description": "Python-specific data structures and collections",
+        "order": 2,
+        "icon": "database",
+        "estimatedHours": 8,
+        "useReferencedConcepts": true,
+        "concepts": [],
+        "conceptReferences": [
+          {
+            "_id": {
+              "$oid": "507f1f77bcf86cd799439037"
+            },
+            "conceptId": {
+              "$oid": "507f1f77bcf86cd799439038"
+            },
+            "order": 1,
+            "isRequired": true,
+            "estimatedTime": "2h 0m",
+            "difficulty": "Easy"
+          },
+          {
+            "_id": {
+              "$oid": "507f1f77bcf86cd799439039"
+            },
+            "conceptId": {
+              "$oid": "507f1f77bcf86cd799439040"
+            },
+            "order": 2,
+            "isRequired": true,
+            "estimatedTime": "2h 0m",
+            "difficulty": "Easy"
+          },
+          {
+            "_id": {
+              "$oid": "507f1f77bcf86cd799439041"
+            },
+            "conceptId": {
+              "$oid": "507f1f77bcf86cd799439042"
+            },
+            "order": 3,
+            "isRequired": true,
+            "estimatedTime": "1h 30m",
+            "difficulty": "Easy"
+          },
+          {
+            "_id": {
+              "$oid": "507f1f77bcf86cd799439043"
+            },
+            "conceptId": {
+              "$oid": "507f1f77bcf86cd799439044"
+            },
+            "order": 4,
+            "isRequired": true,
+            "estimatedTime": "1h 0m",
+            "difficulty": "Easy"
+          },
+          {
+            "_id": {
+              "$oid": "507f1f77bcf86cd799439045"
+            },
+            "conceptId": {
+              "$oid": "507f1f77bcf86cd799439046"
+            },
+            "order": 5,
+            "isRequired": true,
+            "estimatedTime": "1h 30m",
+            "difficulty": "Medium"
+          }
+        ]
+      },
+      {
+        "_id": {
+          "$oid": "685fc69504baeb1d731511cd"
+        },
+        "title": "Object-Oriented Programming",
+        "description": "Classes, objects, inheritance, and polymorphism in Python",
+        "order": 3,
+        "icon": "layers",
+        "estimatedHours": 10,
+        "useReferencedConcepts": true,
+        "concepts": [],
+        "conceptReferences": [
+          {
+            "_id": {
+              "$oid": "507f1f77bcf86cd799439047"
+            },
+            "conceptId": {
+              "$oid": "507f1f77bcf86cd799439048"
+            },
+            "order": 1,
+            "isRequired": true,
+            "estimatedTime": "3h 0m",
+            "difficulty": "Medium"
+          },
+          {
+            "_id": {
+              "$oid": "507f1f77bcf86cd799439049"
+            },
+            "conceptId": {
+              "$oid": "507f1f77bcf86cd799439050"
+            },
+            "order": 2,
+            "isRequired": true,
+            "estimatedTime": "2h 30m",
+            "difficulty": "Medium"
+          },
+          {
+            "_id": {
+              "$oid": "507f1f77bcf86cd799439051"
+            },
+            "conceptId": {
+              "$oid": "507f1f77bcf86cd799439052"
+            },
+            "order": 3,
+            "isRequired": true,
+            "estimatedTime": "2h 0m",
+            "difficulty": "Medium"
+          },
+          {
+            "_id": {
+              "$oid": "507f1f77bcf86cd799439053"
+            },
+            "conceptId": {
+              "$oid": "507f1f77bcf86cd799439054"
+            },
+            "order": 4,
+            "isRequired": true,
+            "estimatedTime": "2h 30m",
+            "difficulty": "Medium"
+          }
+        ]
+      },
+      {
+        "_id": {
+          "$oid": "685fc69504baeb1d731511ce"
+        },
+        "title": "Advanced Python",
+        "description": "Advanced Python concepts and best practices",
+        "order": 4,
+        "icon": "zap",
+        "estimatedHours": 12,
+        "useReferencedConcepts": true,
+        "concepts": [],
+        "conceptReferences": [
+          {
+            "_id": {
+              "$oid": "507f1f77bcf86cd799439055"
+            },
+            "conceptId": {
+              "$oid": "507f1f77bcf86cd799439056"
+            },
+            "order": 1,
+            "isRequired": true,
+            "estimatedTime": "3h 0m",
+            "difficulty": "Hard"
+          },
+          {
+            "_id": {
+              "$oid": "507f1f77bcf86cd799439057"
+            },
+            "conceptId": {
+              "$oid": "507f1f77bcf86cd799439058"
+            },
+            "order": 2,
+            "isRequired": true,
+            "estimatedTime": "2h 30m",
+            "difficulty": "Hard"
+          },
+          {
+            "_id": {
+              "$oid": "507f1f77bcf86cd799439059"
+            },
+            "conceptId": {
+              "$oid": "507f1f77bcf86cd799439060"
+            },
+            "order": 3,
+            "isRequired": true,
+            "estimatedTime": "2h 0m",
+            "difficulty": "Hard"
+          },
+          {
+            "_id": {
+              "$oid": "507f1f77bcf86cd799439061"
+            },
+            "conceptId": {
+              "$oid": "507f1f77bcf86cd799439062"
+            },
+            "order": 4,
+            "isRequired": true,
+            "estimatedTime": "4h 30m",
+            "difficulty": "Hard"
+          }
+        ]
+      }
+    ],
+    "pricing": {
+      "type": "paid",
+      "price": 89,
+      "currency": "USD",
+      "discountPrice": 69,
+      "originalPrice": "90"
+    },
+    "stats": {
+      "totalStudents": 0,
+      "totalRatings": 0,
+      "averageRating": 0,
+      "totalReviews": 0,
+      "completionRate": 0,
+      "totalDuration": 0,
+      "totalConcepts": 0,
+      "totalVideos": 0,
+      "totalArticles": 0,
+      "totalProblems": 0,
+      "totalQuizzes": 0
+    },
+    "requirements": [
+      "Basic computer literacy",
+      "No prior programming experience required",
+      "Willingness to learn and practice"
+    ],
+    "learningOutcomes": [
+      "Master Python syntax and core concepts",
+      "Build real-world applications using Python",
+      "Understand object-oriented programming principles",
+      "Work with Python data structures and collections",
+      "Implement advanced Python features and best practices"
+    ],
+    "targetAudience": [
+      "Complete beginners to programming",
+      "Students learning their first programming language",
+      "Professionals wanting to learn Python",
+      "Anyone interested in web development or data science"
+    ],
+    "status": "published",
+    "publishedAt": {
+      "$date": "2025-06-30T14:20:15.123Z"
+    },
+    "seo": {
+      "keywords": [
+        "python",
+        "programming",
+        "learn python",
+        "python tutorial",
+        "python for beginners"
+      ]
+    },
+  "isPublic": true,
+  "comingSoon": false,
+    "isActive": true,
+    "createdAt": {
+      "$date": "2025-06-30T14:20:15.123Z"
+    },
+    "updatedAt": {
+      "$date": "2025-07-02T10:15:42.789Z"
+    }
+  }
+]
