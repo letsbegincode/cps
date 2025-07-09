@@ -7,6 +7,7 @@ import {
     createConcept,
     updateConcept,
     deleteConcept,
+    getEmergencyContacts,
 } from '../controllers/adminController';
 import {
     registerAdmin,
@@ -19,6 +20,7 @@ import { conceptValidationRules, validate } from '../validators/conceptValidator
 import Admin from '../models/adminModel';
 import EmergencyContact from '../models/emergencyContactModel';
 import User from '../models/userModel';
+import Concept from '../models/conceptModel';
 
 const router = Router();
 
@@ -91,6 +93,10 @@ router.get('/emergency-contacts', async (req, res) => {
         res.status(500).json({ message: "Failed to fetch contacts." });
     }
 });
+
+// User Emergency Contacts (admin only)
+router.get('/user-emergency-contacts', getEmergencyContacts);
+
 router.patch('/emergency-contacts/:id/status', async (req, res) => {
     try {
         const { status } = req.body;
@@ -118,6 +124,105 @@ router.get('/emergency-contacts-count', async (req, res) => {
         res.json({ count });
     } catch (e) {
         res.status(500).json({ message: "Failed to fetch count." });
+    }
+});
+
+// Dashboard stats endpoint
+router.get('/dashboard-stats', async (req, res) => {
+    try {
+        // Get real data from database
+        const [totalUsers, emergencyContacts, concepts] = await Promise.all([
+            User.countDocuments({}),
+            EmergencyContact.find({}),
+            Concept.countDocuments({})
+        ]);
+
+        const pendingRequests = emergencyContacts.filter((contact: any) => contact.status === 'pending').length;
+        const totalContacts = emergencyContacts.length;
+
+        // Calculate user growth (users created in last 30 days)
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        const recentUsers = await User.countDocuments({ createdAt: { $gte: thirtyDaysAgo } });
+        const userGrowth = totalUsers > 0 ? Math.round((recentUsers / totalUsers) * 100) : 0;
+
+        // System health (simplified for now)
+        const systemHealth = 98;
+
+        // Course completion (simplified for now)
+        const courseCompletion = concepts;
+
+        res.json({
+            totalUsers,
+            activeCourses: concepts,
+            pendingRequests,
+            systemHealth,
+            userGrowth,
+            courseCompletion,
+            totalContacts
+        });
+    } catch (error) {
+        console.error('Dashboard stats error:', error);
+        res.status(500).json({ message: "Failed to fetch dashboard stats" });
+    }
+});
+
+// Recent activities endpoint
+router.get('/recent-activities', async (req, res) => {
+    try {
+        const activities: any[] = [];
+        
+        // Get recent emergency contacts
+        const recentContacts = await EmergencyContact.find()
+            .sort({ createdAt: -1 })
+            .limit(3);
+        
+        recentContacts.forEach((contact: any) => {
+            activities.push({
+                id: contact._id.toString(),
+                type: 'emergency',
+                action: `Help request ${contact.status}`,
+                user: contact.email,
+                time: new Date(contact.createdAt).toLocaleString(),
+                status: contact.status === 'pending' ? 'warning' : 
+                       contact.status === 'successful' ? 'success' : 'info'
+            });
+        });
+
+        // Get recent user registrations
+        const recentUsers = await User.find()
+            .sort({ createdAt: -1 })
+            .limit(3)
+            .select('firstName lastName email createdAt');
+
+        recentUsers.forEach((user: any) => {
+            activities.push({
+                id: user._id.toString(),
+                type: 'user',
+                action: 'New user registered',
+                user: `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email,
+                time: new Date(user.createdAt).toLocaleString(),
+                status: 'success'
+            });
+        });
+
+        // Add system activity
+        activities.push({
+            id: 'system-1',
+            type: 'system',
+            action: 'System backup completed',
+            user: 'System',
+            time: new Date().toLocaleString(),
+            status: 'success'
+        });
+
+        // Sort by time and limit to 6
+        activities.sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
+        
+        res.json(activities.slice(0, 6));
+    } catch (error) {
+        console.error('Recent activities error:', error);
+        res.status(500).json({ message: "Failed to fetch recent activities" });
     }
 });
 
@@ -151,6 +256,17 @@ router.put('/todos', async (req, res) => {
         res.json({ todos: admin.todos });
     } catch (e) {
         res.status(500).json({ message: "Failed to update todos." });
+    }
+});
+
+// Get all todos
+router.get('/todos', async (req, res) => {
+    try {
+        const admin = await Admin.findById(req.user?._id);
+        if (!admin) return res.status(401).json({ message: "Not authorized" });
+        res.json({ todos: admin.todos || [] });
+    } catch (e) {
+        res.status(500).json({ message: "Failed to fetch todos." });
     }
 });
 

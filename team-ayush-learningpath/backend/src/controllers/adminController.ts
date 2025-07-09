@@ -170,3 +170,49 @@ export const getAllConcepts = async (req: Request, res: Response) => {
         res.status(500).json({ message: 'Server error' });
     }
 };
+
+/**
+ * @desc    Get all users with emergency contacts (admin only)
+ * @route   GET /api/admin/emergency-contacts
+ * @access  Private/Admin
+ */
+export const getEmergencyContacts = async (req: Request, res: Response) => {
+    try {
+        const page = parseInt(req.query.page as string) || 1;
+        const limit = parseInt(req.query.limit as string) || 10;
+        const skip = (page - 1) * limit;
+
+        // Find users who have emergency contact information
+        const [totalUsers, users] = await Promise.all([
+            User.countDocuments({ 'profile.emergencyContact': { $exists: true, $ne: null } }),
+            User.find({ 'profile.emergencyContact': { $exists: true, $ne: null } })
+                .select('email profile.firstName profile.lastName profile.emergencyContact createdAt')
+                .limit(limit)
+                .skip(skip)
+                .sort({ createdAt: -1 })
+        ]);
+
+        // Format the response
+        const formattedUsers = users.map(user => ({
+            _id: user._id,
+            email: user.email,
+            fullName: `${user.profile?.firstName || ''} ${user.profile?.lastName || ''}`.trim() || 'N/A',
+            emergencyContact: user.profile?.emergencyContact,
+            createdAt: user.createdAt
+        }));
+
+        res.status(200).json({
+            success: true,
+            count: formattedUsers.length,
+            pagination: {
+                currentPage: page,
+                totalPages: Math.ceil(totalUsers / limit),
+                totalUsers: totalUsers
+            },
+            data: formattedUsers
+        });
+    } catch (error) {
+        console.error('Get emergency contacts error:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
