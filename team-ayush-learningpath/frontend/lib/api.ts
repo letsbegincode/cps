@@ -364,9 +364,22 @@ class ApiClient {
   }
 
   // Course Learning APIs
-  async getCourseLearning(courseId: string): Promise<any> {
-    return this.request(`/learning/courses/${courseId}/sequential`)
+  async getCourseLearning(courseId: string, page: number = 1): Promise<any> {
+    return this.request(`/learning/courses/${courseId}/sequential?page=${page}&limit=5`)
   }
+
+  async getConceptProgress(conceptId: string, courseId: string): Promise<any> {
+    return this.request(`/learning/concepts/${conceptId}/progress?courseId=${courseId}`)
+  }
+
+  async resetConceptProgress(conceptId: string, courseId: string): Promise<any> {
+    return this.request(`/learning/concepts/${conceptId}/reset-progress`, {
+      method: 'POST',
+      body: JSON.stringify({ courseId })
+    })
+  }
+
+
 }
 
 export const apiClient = new ApiClient(API_BASE_URL)

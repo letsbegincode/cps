@@ -44,24 +44,9 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
     if (!courseData || !courseData.course?._id) return;
     setStartLearningLoading(true);
     try {
-      let response = await apiClient.getCourseLearning(courseData.course._id);
-      console.log('StartLearning response:', response);
-      if (response.success && Array.isArray(response.data.sequentialConcepts)) {
-        const nextConcept = response.data.sequentialConcepts.find(
-          (c: any) => c.isUnlocked && c.status !== "completed"
-        );
-        if (nextConcept) {
-          console.log('Routing to:', `/courses/${courseData.course._id}/concepts/${nextConcept._id}`);
-          router.push(`/courses/${courseData.course._id}/concepts/${nextConcept._id}`);
-        } else if (response.data.sequentialConcepts.length > 0) {
-          console.log('Routing to first concept:', `/courses/${courseData.course._id}/concepts/${response.data.sequentialConcepts[0]._id}`);
-          router.push(`/courses/${courseData.course._id}/concepts/${response.data.sequentialConcepts[0]._id}`);
-        } else {
-          console.log('No concepts to route to.');
-        }
-      } else {
-        console.log('No sequentialConcepts or response not successful.');
-      }
+      // Route to static learning page immediately
+      console.log('Routing to static learning page:', `/courses/${courseData.course._id}/learn`);
+      router.push(`/courses/${courseData.course._id}/learn`);
     } catch (err) {
       console.error('StartLearning error:', err);
     } finally {

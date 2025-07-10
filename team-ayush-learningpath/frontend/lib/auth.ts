@@ -174,6 +174,7 @@ export const useAuthStore = create<AuthState>()(
           // If we have a token, use it
           if (token) {
             apiClient.setToken(token)
+            console.log('🔑 Using token for /auth/me:', token)
             const response = await apiClient.getCurrentUser()
             console.log("📨 /auth/me response:", response)
       
@@ -208,42 +209,46 @@ export const useAuthStore = create<AuthState>()(
                 isAuthenticated: true,
                 isLoading: false,
               })
+              // Remove any stale token
+              if (typeof window !== 'undefined') {
+                localStorage.removeItem('auth_token')
+              }
               return
             }
           }
           
           console.warn("❌ No valid authentication found")
           set({ isLoading: false })
+          // Always clear token and redirect if no valid auth
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem('auth_token')
+            set({
+              user: null,
+              token: null,
+              isAuthenticated: false,
+              isLoading: false,
+            })
+            const currentPath = window.location.pathname;
+            if (!currentPath.startsWith('/login')) {
+              window.location.href = `/login?redirect=${encodeURIComponent(currentPath)}`
+            }
+          }
           
         } catch (error: any) {
           console.error("❌ checkAuth error:", error)
-          
-          // Only clear auth if it's a definitive auth error
-          if (error.message?.includes('expired') || error.message?.includes('invalid')) {
-            console.log("🔄 Token expired, clearing auth state...")
-            try {
-              // Clear the expired token
-              if (typeof window !== 'undefined') {
-                localStorage.removeItem('auth_token')
-              }
-              set({
-                user: null,
-                token: null,
-                isAuthenticated: false,
-                isLoading: false,
-              })
-              // Redirect to login with current page as redirect
-              if (typeof window !== 'undefined') {
-                window.location.href = `/login?redirect=${encodeURIComponent(window.location.pathname)}`
-              }
-            } catch (refreshError) {
-              console.error("❌ Token refresh failed:", refreshError)
-              get().logout()
+          // Always clear auth if it's a definitive auth error
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem('auth_token')
+            set({
+              user: null,
+              token: null,
+              isAuthenticated: false,
+              isLoading: false,
+            })
+            const currentPath = window.location.pathname;
+            if (!currentPath.startsWith('/login')) {
+              window.location.href = `/login?redirect=${encodeURIComponent(currentPath)}`
             }
-          } else {
-            // For other errors, don't immediately logout - might be network issues
-            console.log("⚠️ Auth check failed but not clearing state:", error.message)
-            set({ isLoading: false })
           }
         }
       },

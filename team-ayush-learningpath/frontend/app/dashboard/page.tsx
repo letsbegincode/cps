@@ -212,13 +212,13 @@ export default function Dashboard() {
           setDashboardData(response.data)
         setLastUpdated(new Date())
       } else {
-        throw new Error(response.message || 'Failed to fetch dashboard data')
+        throw new Error('Failed to fetch dashboard data')
         }
-    } catch (err: any) {
+    } catch (err: unknown) {
         console.error("Dashboard loading failed:", err)
       toast({
         title: "Error",
-        description: err.message || "Failed to load dashboard data",
+        description: err instanceof Error ? err.message : "Failed to load dashboard data",
         variant: "destructive",
       })
       } finally {
@@ -745,7 +745,7 @@ export default function Dashboard() {
                 <div className="space-y-4">
                   {dashboardData.recommendedCourses && dashboardData.recommendedCourses.length > 0 ? (
                     dashboardData.recommendedCourses.slice(0, 2).map((course, index) => (
-                      <div key={index} className="flex items-center space-x-4 p-3 rounded-lg bg-white/50 dark:bg-gray-700/50">
+                      <div key={index} className="flex items-center space-x-4 p-3 rounded-lg bg-white/80 border border-gray-200 dark:bg-gray-800/90 dark:border-gray-700">
                         <img
                           src={course.thumbnail || "/placeholder.svg"}
                           alt={course.title}

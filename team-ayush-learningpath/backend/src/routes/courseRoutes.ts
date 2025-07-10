@@ -399,9 +399,7 @@ router.put("/:id/progress", authenticateToken, async (req: Request, res: Respons
       userProgress.addTimeSpent(timeSpent, conceptId, topicId);
     }
 
-    // Update streak
-    userProgress.updateStreak();
-
+    userProgress.lastAccessedAt = new Date();
     await userProgress.save();
 
     res.json({
@@ -419,6 +417,193 @@ router.put("/:id/progress", authenticateToken, async (req: Request, res: Respons
     });
   }
 });
+
+// @route   GET /api/courses/:id/past-learning
+// @desc    Get user's past learning (completed concepts) with test scores
+// @access  Private
+router.get("/:id/past-learning", authenticateToken, async (req: Request, res: Response) => {
+  try {
+    const courseId = req.params.id;
+    const userId = (req.user as IUser)._id;
+
+    // Find course
+    const course = await Course.findById(courseId);
+    if (!course) {
+      return res.status(404).json({
+        success: false,
+        message: "Course not found",
+      });
+    }
+
+    // Get user progress
+    const userProgress = await UserProgress.findOne({
+      userId,
+      courseId,
+    });
+
+    if (!userProgress) {
+      return res.status(404).json({
+        success: false,
+        message: "No progress found for this course",
+      });
+    }
+
+    // Get all concepts from course
+    const allConcepts = course.concepts || [];
+    
+    // Filter completed concepts and add test scores
+    const completedConcepts = allConcepts
+      .map((concept: any) => {
+        const conceptProgress = userProgress.concepts.find(
+          (c: any) => c.conceptId.toString() === (concept.conceptId || concept._id).toString()
+        );
+        
+        if (conceptProgress && conceptProgress.status === 'completed') {
+          return {
+            _id: concept.conceptId || concept._id,
+            title: concept.title,
+            description: concept.description,
+            complexity: concept.difficulty === 'Easy' ? 1 : concept.difficulty === 'Medium' ? 3 : 5,
+            estLearningTimeHours: concept.estimatedTime ? parseFloat(concept.estimatedTime) : 1,
+            masteryScore: conceptProgress.masteryScore || 0,
+            finalTestScore: conceptProgress.finalTestScore || null,
+            completedAt: conceptProgress.lastAccessedAt,
+            timeSpent: conceptProgress.timeSpent || 0,
+            attempts: conceptProgress.attempts || 0
+          };
+        }
+        return null;
+      })
+      .filter(Boolean)
+      .sort((a: any, b: any) => new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime());
+
+    res.json({
+      success: true,
+      data: {
+        completedConcepts,
+        totalCompleted: completedConcepts.length,
+        averageScore: completedConcepts.length > 0 
+          ? completedConcepts.reduce((sum: number, c: any) => sum + (c.finalTestScore || 0), 0) / completedConcepts.length
+          : 0
+      },
+    });
+  } catch (error) {
+    console.error("Get past learning error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch past learning",
+    });
+  }
+});
+
+// @route   GET /api/courses/:id/future-paths
+// @desc    Get user's future learning paths (remaining concepts)
+// @access  Private
+router.get("/:id/future-paths", authenticateToken, async (req: Request, res: Response) => {
+  try {
+    const courseId = req.params.id;
+    const userId = (req.user as IUser)._id;
+
+    // Find course
+    const course = await Course.findById(courseId);
+    if (!course) {
+      return res.status(404).json({
+        success: false,
+        message: "Course not found",
+      });
+    }
+
+    // Get user progress
+    const userProgress = await UserProgress.findOne({
+      userId,
+      courseId,
+    });
+
+    if (!userProgress) {
+      return res.status(404).json({
+        success: false,
+        message: "No progress found for this course",
+      });
+    }
+
+    // Get all concepts from course
+    const allConcepts = course.concepts || [];
+    
+    // Filter remaining concepts
+    const remainingConcepts = allConcepts
+      .map((concept: any) => {
+        const conceptProgress = userProgress.concepts.find(
+          (c: any) => c.conceptId.toString() === (concept.conceptId || concept._id).toString()
+        );
+        
+        if (!conceptProgress || conceptProgress.status !== 'completed') {
+          const isUnlocked = !conceptProgress || conceptProgress.status === 'in_progress' || 
+            (conceptProgress.status === 'not_started' && this.checkPrerequisites(concept, userProgress));
+          
+          return {
+            _id: concept.conceptId || concept._id,
+            title: concept.title,
+            description: concept.description,
+            complexity: concept.difficulty === 'Easy' ? 1 : concept.difficulty === 'Medium' ? 3 : 5,
+            estLearningTimeHours: concept.estimatedTime ? parseFloat(concept.estimatedTime) : 1,
+            prerequisites: concept.prerequisites || [],
+            isUnlocked,
+            status: conceptProgress?.status || 'not_started',
+            estimatedCompletionTime: this.calculateEstimatedCompletionTime(concept, userProgress)
+          };
+        }
+        return null;
+      })
+      .filter(Boolean)
+      .sort((a: any, b: any) => {
+        // Sort by unlock status first, then by complexity
+        if (a.isUnlocked !== b.isUnlocked) {
+          return a.isUnlocked ? -1 : 1;
+        }
+        return a.complexity - b.complexity;
+      });
+
+    res.json({
+      success: true,
+      data: {
+        remainingConcepts,
+        totalRemaining: remainingConcepts.length,
+        unlockedCount: remainingConcepts.filter((c: any) => c.isUnlocked).length,
+        estimatedTotalTime: remainingConcepts.reduce((sum: number, c: any) => sum + c.estLearningTimeHours, 0)
+      },
+    });
+  } catch (error) {
+    console.error("Get future paths error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch future paths",
+    });
+  }
+});
+
+// Helper function to check prerequisites
+const checkPrerequisites = (concept: any, userProgress: any) => {
+  if (!concept.prerequisites || concept.prerequisites.length === 0) {
+    return true;
+  }
+  
+  return concept.prerequisites.every((prereqId: string) => {
+    const prereqProgress = userProgress.concepts.find(
+      (c: any) => c.conceptId.toString() === prereqId
+    );
+    return prereqProgress && prereqProgress.status === 'completed';
+  });
+};
+
+// Helper function to calculate estimated completion time
+const calculateEstimatedCompletionTime = (concept: any, userProgress: any) => {
+  const baseTime = concept.estimatedTime ? parseFloat(concept.estimatedTime) : 1;
+  const userAvgTime = userProgress.concepts.length > 0 
+    ? userProgress.concepts.reduce((sum: number, c: any) => sum + (c.timeSpent || 0), 0) / userProgress.concepts.length
+    : baseTime;
+  
+  return Math.max(baseTime, userAvgTime);
+};
 
 // @route   POST /api/courses/:id/review
 // @desc    Add a review to a course

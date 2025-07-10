@@ -59,29 +59,10 @@ interface SidebarItem {
   isNew?: boolean
 }
 
-export function AppSidebar() {
+// Accept dashboardData as a prop
+export function AppSidebar({ dashboardData }: { dashboardData: DashboardData | null }) {
   const { user, isAuthenticated } = useAuthStore()
   const pathname = usePathname()
-  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-
-  useEffect(() => {
-    const fetchDashboardData = async () => {
-      if (!user) return
-      try {
-        const response = await apiClient.getDashboardData()
-        if (response.success) {
-          setDashboardData(response.data)
-        }
-      } catch (error) {
-        console.error("Failed to fetch dashboard data:", error)
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    fetchDashboardData()
-  }, [user])
 
   // Function to check if a menu item is active
   const isActive = (url: string) => {

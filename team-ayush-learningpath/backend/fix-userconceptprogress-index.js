@@ -1,50 +1,58 @@
 const mongoose = require('mongoose');
+require('dotenv').config();
 
-async function fixIndex() {
+async function fixUserConceptProgressIndexes() {
   try {
-    // Connect to MongoDB Atlas (same as the running server)
-    await mongoose.connect('mongodb+srv://ayush:ayush123@cluster0.xfvgvpo.mongodb.net/test?retryWrites=true&w=majority');
-    
+    // Connect to MongoDB
+    await mongoose.connect(process.env.MONGO_URI);
     console.log('Connected to MongoDB');
-    
-    // Get the collection
+
     const db = mongoose.connection.db;
     const collection = db.collection('userconceptprogresses');
-    
-    // List all indexes
+
+    // Drop all existing indexes except _id
+    console.log('Dropping existing indexes...');
     const indexes = await collection.indexes();
-    console.log('Current indexes:', indexes);
-    
-    // Drop the problematic index on userId only
-    try {
-      await collection.dropIndex('userId_1');
-      console.log('Successfully dropped userId_1 index');
-    } catch (err) {
-      console.log('Index userId_1 not found or already dropped:', err.message);
+    for (const index of indexes) {
+      if (index.name !== '_id_') {
+        console.log(`Dropping index: ${index.name}`);
+        await collection.dropIndex(index.name);
+      }
     }
+
+    // Create the correct indexes
+    console.log('Creating correct indexes...');
     
-    // Ensure the compound index exists
-    try {
-      await collection.createIndex(
-        { userId: 1, conceptId: 1, courseId: 1 }, 
-        { unique: true, name: 'userId_conceptId_courseId_unique' }
-      );
-      console.log('Created compound unique index');
-    } catch (err) {
-      console.log('Compound index already exists or error:', err.message);
-    }
+    // Compound unique index for userId, conceptId, courseId
+    await collection.createIndex(
+      { userId: 1, conceptId: 1, courseId: 1 }, 
+      { unique: true, name: 'userId_conceptId_courseId_unique' }
+    );
+    console.log('Created compound unique index: userId_conceptId_courseId_unique');
+
+    // Index for userId and courseId queries
+    await collection.createIndex(
+      { userId: 1, courseId: 1 }, 
+      { name: 'userId_courseId' }
+    );
+    console.log('Created index: userId_courseId');
+
+    // Index for conceptId queries
+    await collection.createIndex(
+      { conceptId: 1 }, 
+      { name: 'conceptId' }
+    );
+    console.log('Created index: conceptId');
+
+    console.log('✅ All indexes fixed successfully!');
     
-    // Create other indexes
-    try {
-      await collection.createIndex({ userId: 1, courseId: 1 });
-      await collection.createIndex({ conceptId: 1 });
-      console.log('Created additional indexes');
-    } catch (err) {
-      console.log('Additional indexes already exist or error:', err.message);
-    }
-    
-    console.log('All indexes fixed successfully');
-    
+    // List final indexes
+    const finalIndexes = await collection.indexes();
+    console.log('\nFinal indexes:');
+    finalIndexes.forEach(index => {
+      console.log(`- ${index.name}: ${JSON.stringify(index.key)}`);
+    });
+
   } catch (error) {
     console.error('Error fixing indexes:', error);
   } finally {
@@ -53,4 +61,4 @@ async function fixIndex() {
   }
 }
 
-fixIndex(); 
+fixUserConceptProgressIndexes(); 

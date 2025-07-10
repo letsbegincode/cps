@@ -1,101 +1,101 @@
 [
   {
-    "_id": {
-      "$oid": "685fc69504baeb1d731511c7"
+  "_id": {
+    "$oid": "685fc69504baeb1d731511c7"
+  },
+  "title": "Data Structures & Algorithms",
+  "slug": "data-structures-algorithms",
+  "description": "Master the fundamentals of data structures and algorithms with hands-on practice and real-world examples. Learn essential concepts for coding interviews and software development.",
+  "shortDescription": "Master DSA with comprehensive coverage of algorithms and data structures",
+  "thumbnail": "https://i.ytimg.com/vi/Qmt0QwzEmh0/maxresdefault.jpg",
+  "instructor": {
+    "id": {
+      "$oid": "685fc69404baeb1d731511c0"
     },
-    "title": "Data Structures & Algorithms",
-    "slug": "data-structures-algorithms",
-    "description": "Master the fundamentals of data structures and algorithms with hands-on practice and real-world examples. Learn essential concepts for coding interviews and software development.",
-    "shortDescription": "Master DSA with comprehensive coverage of algorithms and data structures",
-    "thumbnail": "https://i.ytimg.com/vi/Qmt0QwzEmh0/maxresdefault.jpg",
-    "instructor": {
-      "id": {
-        "$oid": "685fc69404baeb1d731511c0"
+    "name": "Rohit Negi",
+    "bio": "I am Rohit Negi who graduated from IIT Guwahati and got Highest Placement in India in 2021. I got AIR 202 in GATE CSE in 2020.",
+    "avatar": "https://example.com/rohit-negi-avatar.jpg",
+    "socialLinks": [
+      {
+        "platform": "linkedin",
+        "url": "https://linkedin.com/in/rohit-negi"
       },
-      "name": "Rohit Negi",
-      "bio": "I am Rohit Negi who graduated from IIT Guwahati and got Highest Placement in India in 2021. I got AIR 202 in GATE CSE in 2020.",
-      "avatar": "https://example.com/rohit-negi-avatar.jpg",
-      "socialLinks": [
-        {
-          "platform": "linkedin",
-          "url": "https://linkedin.com/in/rohit-negi"
-        },
-        {
-          "platform": "github",
-          "url": "https://github.com/rohitnegi"
-        }
-      ]
-    },
-    "category": "Programming",
-    "subcategory": "Data Structures",
-    "level": "Beginner to Advanced",
-    "tags": [
+      {
+        "platform": "github",
+        "url": "https://github.com/rohitnegi"
+      }
+    ]
+  },
+  "category": "Programming",
+  "subcategory": "Data Structures",
+  "level": "Beginner to Advanced",
+  "tags": [
+    "algorithms",
+    "data-structures",
+    "coding-interview",
+    "c++",
+    "java",
+    "python"
+  ],
+  "pricing": {
+    "type": "paid",
+    "price": 99,
+    "currency": "USD",
+    "discountPrice": 79,
+    "originalPrice": "100"
+  },
+  "stats": {
+    "totalStudents": 0,
+    "totalRatings": 0,
+    "averageRating": 0,
+    "totalReviews": 0,
+    "completionRate": 0,
+    "totalDuration": 35,
+    "totalConcepts": 9,
+    "totalVideos": 0,
+    "totalArticles": 0,
+    "totalProblems": 0,
+    "totalQuizzes": 0
+  },
+  "requirements": [
+    "Basic programming knowledge in any language",
+    "Understanding of basic mathematics",
+    "Familiarity with control structures (if/else, loops)"
+  ],
+  "learningOutcomes": [
+    "Master fundamental data structures (arrays, linked lists, trees, graphs)",
+    "Implement and analyze sorting and searching algorithms",
+    "Solve complex algorithmic problems efficiently",
+    "Understand time and space complexity analysis",
+    "Prepare for technical coding interviews"
+  ],
+  "targetAudience": [
+    "Software engineering students",
+    "Junior developers preparing for interviews",
+    "Computer science students",
+    "Self-taught programmers"
+  ],
+  "status": "published",
+  "publishedAt": {
+    "$date": "2025-06-28T10:40:21.514Z"
+  },
+  "seo": {
+    "keywords": [
+      "data structures",
       "algorithms",
-      "data-structures",
-      "coding-interview",
-      "c++",
-      "java",
-      "python"
-    ],
-    "pricing": {
-      "type": "paid",
-      "price": 99,
-      "currency": "USD",
-      "discountPrice": 79,
-      "originalPrice": "100"
-    },
-    "stats": {
-      "totalStudents": 0,
-      "totalRatings": 0,
-      "averageRating": 0,
-      "totalReviews": 0,
-      "completionRate": 0,
-      "totalDuration": 35,
-      "totalConcepts": 9,
-      "totalVideos": 0,
-      "totalArticles": 0,
-      "totalProblems": 0,
-      "totalQuizzes": 0
-    },
-    "requirements": [
-      "Basic programming knowledge in any language",
-      "Understanding of basic mathematics",
-      "Familiarity with control structures (if/else, loops)"
-    ],
-    "learningOutcomes": [
-      "Master fundamental data structures (arrays, linked lists, trees, graphs)",
-      "Implement and analyze sorting and searching algorithms",
-      "Solve complex algorithmic problems efficiently",
-      "Understand time and space complexity analysis",
-      "Prepare for technical coding interviews"
-    ],
-    "targetAudience": [
-      "Software engineering students",
-      "Junior developers preparing for interviews",
-      "Computer science students",
-      "Self-taught programmers"
-    ],
-    "status": "published",
-    "publishedAt": {
-      "$date": "2025-06-28T10:40:21.514Z"
-    },
-    "seo": {
-      "keywords": [
-        "data structures",
-        "algorithms",
-        "coding interview",
-        "programming",
-        "computer science"
-      ]
-    },
-    "isPublic": true,
-    "comingSoon": false,
-    "isActive": true,
-    "createdAt": {
-      "$date": "2025-06-28T10:40:21.518Z"
-    },
-    "updatedAt": {
-      "$date": "2025-07-02T09:55:35.581Z"
+      "coding interview",
+      "programming",
+      "computer science"
+    ]
+  },
+  "isPublic": true,
+  "comingSoon": false,
+  "isActive": true,
+  "createdAt": {
+    "$date": "2025-06-28T10:40:21.518Z"
+  },
+  "updatedAt": {
+    "$date": "2025-07-02T09:55:35.581Z"
     },
     "entryConceptIds": [
       "686e7be67e20de1e720bfda8"
@@ -777,103 +777,103 @@
         "title": "Debugging Techniques"
       }
     ]
+},
+{
+  "_id": {
+    "$oid": "685fc69504baeb1d731511c8"
   },
-  {
-    "_id": {
-      "$oid": "685fc69504baeb1d731511c8"
+  "title": "Python Programming",
+  "slug": "python-programming",
+  "description": "Learn Python programming from basics to advanced concepts. Master Python syntax, data structures, object-oriented programming, and real-world applications.",
+  "shortDescription": "Complete Python programming course from beginner to advanced",
+  "thumbnail": "https://i.ytimg.com/vi/kqtD5dpn9C8/maxresdefault.jpg",
+  "instructor": {
+    "id": {
+      "$oid": "685fc69404baeb1d731511c1"
     },
-    "title": "Python Programming",
-    "slug": "python-programming",
-    "description": "Learn Python programming from basics to advanced concepts. Master Python syntax, data structures, object-oriented programming, and real-world applications.",
-    "shortDescription": "Complete Python programming course from beginner to advanced",
-    "thumbnail": "https://i.ytimg.com/vi/kqtD5dpn9C8/maxresdefault.jpg",
-    "instructor": {
-      "id": {
-        "$oid": "685fc69404baeb1d731511c1"
+    "name": "Sarah Chen",
+    "bio": "Senior Python Developer with 8+ years of experience. Former Google engineer and author of 'Python for Data Science'.",
+    "avatar": "https://example.com/sarah-chen-avatar.jpg",
+    "socialLinks": [
+      {
+        "platform": "linkedin",
+        "url": "https://linkedin.com/in/sarah-chen"
       },
-      "name": "Sarah Chen",
-      "bio": "Senior Python Developer with 8+ years of experience. Former Google engineer and author of 'Python for Data Science'.",
-      "avatar": "https://example.com/sarah-chen-avatar.jpg",
-      "socialLinks": [
-        {
-          "platform": "linkedin",
-          "url": "https://linkedin.com/in/sarah-chen"
-        },
-        {
-          "platform": "github",
-          "url": "https://github.com/sarahchen"
-        }
-      ]
-    },
-    "category": "Programming",
-    "subcategory": "Python",
-    "level": "Beginner to Advanced",
-    "tags": [
+      {
+        "platform": "github",
+        "url": "https://github.com/sarahchen"
+      }
+    ]
+  },
+  "category": "Programming",
+  "subcategory": "Python",
+  "level": "Beginner to Advanced",
+  "tags": [
+    "python",
+    "programming",
+    "web-development",
+    "data-science",
+    "automation"
+  ],
+  "pricing": {
+    "type": "paid",
+    "price": 89,
+    "currency": "USD",
+    "discountPrice": 69,
+    "originalPrice": "90"
+  },
+  "stats": {
+    "totalStudents": 0,
+    "totalRatings": 0,
+    "averageRating": 0,
+    "totalReviews": 0,
+    "completionRate": 0,
+    "totalDuration": 0,
+    "totalConcepts": 0,
+    "totalVideos": 0,
+    "totalArticles": 0,
+    "totalProblems": 0,
+    "totalQuizzes": 0
+  },
+  "requirements": [
+    "Basic computer literacy",
+    "No prior programming experience required",
+    "Willingness to learn and practice"
+  ],
+  "learningOutcomes": [
+    "Master Python syntax and core concepts",
+    "Build real-world applications using Python",
+    "Understand object-oriented programming principles",
+    "Work with Python data structures and collections",
+    "Implement advanced Python features and best practices"
+  ],
+  "targetAudience": [
+    "Complete beginners to programming",
+    "Students learning their first programming language",
+    "Professionals wanting to learn Python",
+    "Anyone interested in web development or data science"
+  ],
+  "status": "published",
+  "publishedAt": {
+    "$date": "2025-06-30T14:20:15.123Z"
+  },
+  "seo": {
+    "keywords": [
       "python",
       "programming",
-      "web-development",
-      "data-science",
-      "automation"
-    ],
-    "pricing": {
-      "type": "paid",
-      "price": 89,
-      "currency": "USD",
-      "discountPrice": 69,
-      "originalPrice": "90"
-    },
-    "stats": {
-      "totalStudents": 0,
-      "totalRatings": 0,
-      "averageRating": 0,
-      "totalReviews": 0,
-      "completionRate": 0,
-      "totalDuration": 0,
-      "totalConcepts": 0,
-      "totalVideos": 0,
-      "totalArticles": 0,
-      "totalProblems": 0,
-      "totalQuizzes": 0
-    },
-    "requirements": [
-      "Basic computer literacy",
-      "No prior programming experience required",
-      "Willingness to learn and practice"
-    ],
-    "learningOutcomes": [
-      "Master Python syntax and core concepts",
-      "Build real-world applications using Python",
-      "Understand object-oriented programming principles",
-      "Work with Python data structures and collections",
-      "Implement advanced Python features and best practices"
-    ],
-    "targetAudience": [
-      "Complete beginners to programming",
-      "Students learning their first programming language",
-      "Professionals wanting to learn Python",
-      "Anyone interested in web development or data science"
-    ],
-    "status": "published",
-    "publishedAt": {
-      "$date": "2025-06-30T14:20:15.123Z"
-    },
-    "seo": {
-      "keywords": [
-        "python",
-        "programming",
-        "learn python",
-        "python tutorial",
-        "python for beginners"
-      ]
-    },
-    "isPublic": true,
-    "comingSoon": false,
-    "isActive": true,
-    "createdAt": {
-      "$date": "2025-06-30T14:20:15.123Z"
-    },
-    "updatedAt": {
-      "$date": "2025-07-02T10:15:42.789Z"
+      "learn python",
+      "python tutorial",
+      "python for beginners"
+    ]
+  },
+  "isPublic": true,
+  "comingSoon": false,
+  "isActive": true,
+  "createdAt": {
+    "$date": "2025-06-30T14:20:15.123Z"
+  },
+  "updatedAt": {
+    "$date": "2025-07-02T10:15:42.789Z"
     },
     "entryConceptIds": [
       "variables"

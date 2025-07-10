@@ -74,44 +74,44 @@ export default function ConceptLearningPage({ params }: ConceptLearningPageProps
   return (
     <div className="max-w-3xl mx-auto py-8 px-4">
       <Card className="mb-8">
-        <CardHeader>
+                <CardHeader>
           <CardTitle className="text-2xl font-bold flex items-center gap-2">
             {concept?.title}
-          </CardTitle>
-        </CardHeader>
+                  </CardTitle>
+                </CardHeader>
         <CardContent>
           <div className="text-lg text-gray-700 mb-4">{concept?.description}</div>
           <div className="flex items-center gap-4 mb-2">
             <Progress value={progress?.masteryScore} className="h-2 w-40" />
             <span className="text-sm text-gray-600">{progress?.masteryScore}% Mastery</span>
             {progress?.status === "completed" && <CheckCircle className="w-5 h-5 text-green-500" />}
-          </div>
-        </CardContent>
-      </Card>
+                  </div>
+                </CardContent>
+              </Card>
       {/* Step 1: Video */}
       {concept?.contentBlocks?.some((b: any) => b.type === "video") && (
         <Card className="mb-6">
-          <CardHeader>
+                <CardHeader>
             <CardTitle className="flex items-center gap-2"><Video className="w-5 h-5" /> Video Tutorial</CardTitle>
-          </CardHeader>
-          <CardContent>
+                </CardHeader>
+                <CardContent>
             <div className="aspect-video bg-gray-100 rounded-lg flex items-center justify-center">
-              <iframe
+                      <iframe
                 src={concept.contentBlocks.find((b: any) => b.type === "video")?.data}
-                className="w-full h-full rounded-lg"
-                allowFullScreen
+                        className="w-full h-full rounded-lg"
+                        allowFullScreen
                 onLoad={() => setContentViewed(true)}
-              />
-            </div>
-          </CardContent>
-        </Card>
-      )}
+                      />
+                  </div>
+                </CardContent>
+              </Card>
+            )}
       {/* Step 2: Article/Notes */}
       {concept?.articleContent && (
         <Card className="mb-6">
-          <CardHeader>
+                <CardHeader>
             <CardTitle className="flex items-center gap-2"><FileText className="w-5 h-5" /> Article Content</CardTitle>
-          </CardHeader>
+                </CardHeader>
           <CardContent>
             <div className="prose max-w-none" onMouseEnter={() => setContentViewed(true)}>
               {concept.articleContent.intro && <div className="mb-4">{concept.articleContent.intro}</div>}
@@ -124,23 +124,23 @@ export default function ConceptLearningPage({ params }: ConceptLearningPageProps
                       {section.content && <div>{section.content}</div>}
                     </div>
                   ))}
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+                        </div>
+                      ))}
+                    </div>
+                </CardContent>
+              </Card>
+            )}
       {/* Step 3: Quiz */}
       {questions.length > 0 && (
         <Card className="mb-6">
-          <CardHeader>
+                <CardHeader>
             <CardTitle className="flex items-center gap-2"><Trophy className="w-5 h-5" /> Concept Quiz</CardTitle>
-          </CardHeader>
+                </CardHeader>
           <CardContent>
             {!quizStarted ? (
               <Button onClick={() => setQuizStarted(true)} disabled={!contentViewed} className="mb-4">
-                Start Quiz
-              </Button>
+                    Start Quiz
+                  </Button>
             ) : !quizSubmitted ? (
               <div>
                 {questions.map((q: any, idx: number) => (
@@ -149,37 +149,37 @@ export default function ConceptLearningPage({ params }: ConceptLearningPageProps
                     <div className="flex flex-col gap-2">
                       {q.options.map((opt: string, oidx: number) => (
                         <label key={oidx} className="flex items-center gap-2">
-                          <input
-                            type="radio"
+                                <input
+                                  type="radio"
                             name={`q${idx}`}
                             checked={quizAnswers[idx] === oidx}
                             onChange={() => handleQuizAnswer(idx, oidx)}
-                          />
+                                />
                           {opt}
-                        </label>
+                              </label>
+                            ))}
+                          </div>
+                        </div>
                       ))}
-                    </div>
-                  </div>
-                ))}
                 <Button onClick={submitQuiz} className="mt-2">Submit Quiz</Button>
-              </div>
+                      </div>
             ) : (
               <div className="text-center">
                 <div className="text-3xl font-bold mb-2">Score: {quizScore}%</div>
                 <div className="mb-4">{quizScore && quizScore >= 80 ? "Congratulations! You mastered this concept!" : "Keep practicing to master this concept."}</div>
                 <Button onClick={() => { setQuizStarted(false); setQuizSubmitted(false); setQuizScore(null); }}>Retake Quiz</Button>
-              </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
             )}
-          </CardContent>
-        </Card>
-      )}
       {/* Navigation */}
       <div className="flex justify-between mt-8">
         {navigation?.prevConcept && (
           <Button variant="outline" onClick={() => router.push(`/courses/${params.id}/concepts/${navigation.prevConcept}`)}>
             <ChevronLeft className="w-4 h-4" /> Previous
           </Button>
-        )}
+                )}
         {navigation?.nextConcept && (
           <Button onClick={() => router.push(`/courses/${params.id}/concepts/${navigation.nextConcept}`)}>
             Next <ChevronRight className="w-4 h-4" />
@@ -188,4 +188,4 @@ export default function ConceptLearningPage({ params }: ConceptLearningPageProps
       </div>
     </div>
   );
-} 
+}
