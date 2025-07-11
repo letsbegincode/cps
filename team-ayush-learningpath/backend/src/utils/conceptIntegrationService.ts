@@ -32,8 +32,14 @@ export class ConceptIntegrationService {
     try {
       // Get all existing DSA concepts
       const dsaConcepts = await Concept.find({
-        category: { $regex: /dsa|data.*structure|algorithm/i }
-      }).sort({ order: 1 });
+        // category: { $regex: /dsa|data.*structure|algorithm/i }
+        // The Concept schema does not have category, so filter by title/description
+        $or: [
+          { title: { $regex: /dsa|data.*structure|algorithm|array|string|linked list|stack|queue|tree|graph|dynamic programming/i } },
+          { description: { $regex: /dsa|data.*structure|algorithm|array|string|linked list|stack|queue|tree|graph|dynamic programming/i } }
+        ]
+      });
+      // .sort({ order: 1 }); // No order field in schema
 
       // Group concepts by topics
       const topics: TopicWithReferences[] = [
@@ -101,8 +107,10 @@ export class ConceptIntegrationService {
             conceptId: concept._id,
             order: index + 1,
             isRequired: true,
-            estimatedTime: `${Math.ceil(concept.estLearningTimeHours || 1)}h`,
-            difficulty: this.mapComplexityToDifficulty(concept.complexity || 3)
+            // No estLearningTimeHours in schema, fallback to 1
+            estimatedTime: `1h`,
+            // No complexity in schema, fallback to 'Medium'
+            difficulty: 'Medium'
           });
         }
       });
@@ -188,11 +196,12 @@ export class ConceptIntegrationService {
         message: "DSA course created successfully with existing concepts"
       };
 
-    } catch (error) {
-      console.error("Error creating DSA course:", error);
+    } catch (error: unknown) {
+      const errMsg = (error as Error).message || String(error);
+      console.error(errMsg);
       return {
         success: false,
-        error: error.message
+        error: errMsg
       };
     }
   }
@@ -230,15 +239,15 @@ export class ConceptIntegrationService {
       const course = await Course.findById(topicId);
       if (!course) return [];
 
-      const topic = course.topics.find(t => t._id.toString() === topicId);
+      const topic = (course as any).topics.find((t: any) => t._id.toString() === topicId);
       if (!topic || !topic.useReferencedConcepts) return [];
 
-      const conceptIds = topic.conceptReferences.map(ref => ref.conceptId);
+      const conceptIds = (topic as any).conceptReferences.map((ref: any) => ref.conceptId);
       const concepts = await Concept.find({ _id: { $in: conceptIds } });
 
       // Merge concept data with reference data
-      return topic.conceptReferences.map(ref => {
-        const concept = concepts.find(c => c._id.toString() === ref.conceptId.toString());
+      return (topic as any).conceptReferences.map((ref: any) => {
+        const concept = concepts.find((c: any) => c._id.toString() === ref.conceptId.toString());
         return {
           ...concept?.toObject(),
           order: ref.order,
@@ -248,10 +257,11 @@ export class ConceptIntegrationService {
           title: ref.customTitle || concept?.title,
           description: ref.customDescription || concept?.description
         };
-      }).sort((a, b) => a.order - b.order);
+      }).sort((a: any, b: any) => a.order - b.order);
 
-    } catch (error) {
-      console.error("Error getting concepts for topic:", error);
+    } catch (error: unknown) {
+      const errMsg = (error as Error).message || String(error);
+      console.error(errMsg);
       return [];
     }
   }
@@ -266,8 +276,9 @@ export class ConceptIntegrationService {
         .sort({ category: 1, title: 1 });
 
       return concepts;
-    } catch (error) {
-      console.error("Error getting available concepts:", error);
+    } catch (error: unknown) {
+      const errMsg = (error as Error).message || String(error);
+      console.error(errMsg);
       return [];
     }
   }

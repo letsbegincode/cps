@@ -4,10 +4,9 @@ import Course from '../models/courseModel';
 import Concept from '../models/conceptModel';
 import UserProgress from '../models/userProgressModel';
 import UserConceptProgress from '../models/userConceptProgress';
-import { IUser } from '../models/userModel';
 
 interface AuthenticatedRequest extends Request {
-  user?: IUser;
+  user?: any;
 }
 
 export class CourseLearningController {
@@ -476,16 +475,18 @@ export class CourseLearningController {
       });
 
       if (!conceptProgress) {
-        // Return default progress if none exists
-        conceptProgress = {
-          descriptionRead: false,
-          videoWatched: false,
-          quizPassed: false,
-          attempts: 0,
-          status: 'not_started',
-          masteryScore: 0,
-          timeSpent: 0
-        };
+        return res.json({
+          success: true,
+          data: {
+            descriptionRead: false,
+            videoWatched: false,
+            quizPassed: false,
+            attempts: 0,
+            status: 'not_started',
+            masteryScore: 0,
+            timeSpent: 0
+          }
+        });
       }
 
       res.json({
