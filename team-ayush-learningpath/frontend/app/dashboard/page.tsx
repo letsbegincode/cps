@@ -14,6 +14,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { useToast } from "@/hooks/use-toast"
 import type { DashboardData } from "@/lib/types/dashboard"
 import AuthGuard from "@/components/auth-guard"
+import { apiClient } from "@/lib/api";
 
 
 // --- Helpers and mock data ---
@@ -143,47 +144,24 @@ export default function Dashboard() {
     }
   }, [hasHydrated, isLoading, user, router])
 
-  // Fetch dashboard data (mocked for now)
+  // Fetch dashboard data from backend
   useEffect(() => {
     if (user) {
       setDashboardLoading(true)
-      // Simulate API call
-      setTimeout(() => {
-        setDashboardData({
-          user: {
-            id: user?.email || 'user@example.com',
-            name: user?.profile?.fullName || user?.profile?.displayName || user?.email?.split('@')[0] || 'User',
-            email: user?.email || 'user@example.com',
-            avatar: user?.profile?.avatar || '',
-            level: 'Beginner',
-            plan: 'Free',
-            joinDate: '2023-01-01',
-            lastActive: new Date().toISOString(),
-          },
-          stats: {
-            coursesEnrolled: 3,
-            completedConcepts: 42,
-            completionRate: 85,
-            currentStreak: 7,
-            totalTimeSpent: 120,
-            averageMasteryScore: 92,
-            totalQuizAttempts: 34,
-            inProgressConcepts: 5,
-            totalConcepts: 100,
-            coursesCompleted: 1,
-            courseProgress: {},
-          },
-          learningPaths: [],
-          recentActivity: [],
-          achievements: [],
-          recommendedCourses: [],
-          upcomingDeadlines: [],
-        })
-        setLastUpdated(new Date())
+      apiClient.getDashboardData().then((res) => {
+        if (res.success) {
+          setDashboardData(res.data)
+          setLastUpdated(new Date())
+        } else {
+          toast({ title: "Failed to load dashboard data", description: "Unknown error", variant: "destructive" })
+        }
         setDashboardLoading(false)
-      }, 1000)
+      }).catch((err) => {
+        toast({ title: "Failed to load dashboard data", description: err.message || "Unknown error", variant: "destructive" })
+        setDashboardLoading(false)
+      })
     }
-  }, [user])
+  }, [user, toast])
 
   // Show spinner while hydrating, loading, or not authenticated
   if (!hasHydrated || isLoading || !user) {
@@ -200,70 +178,10 @@ export default function Dashboard() {
   // Show loading skeleton while dashboard data is loading
   if (dashboardLoading || !dashboardData) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-        <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-b px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="space-y-2">
-              <Skeleton className="h-8 w-64" />
-              <Skeleton className="h-4 w-48" />
-            </div>
-            <div className="flex items-center space-x-4">
-              <Skeleton className="h-10 w-40" />
-              <Skeleton className="h-10 w-10 rounded-full" />
-            </div>
-          </div>
-        </div>
-        <div className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            {[...Array(4)].map((_, i) => (
-              <Card key={i} className="dark:bg-gray-800/80 dark:border-gray-700">
-                <CardHeader className="pb-2">
-                  <Skeleton className="h-4 w-24" />
-                </CardHeader>
-                <CardContent>
-                  <Skeleton className="h-8 w-16 mb-2" />
-                  <Skeleton className="h-3 w-32" />
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 space-y-6">
-              {[...Array(3)].map((_, i) => (
-                <Card key={i} className="dark:bg-gray-800/80 dark:border-gray-700">
-                  <CardHeader>
-                    <Skeleton className="h-6 w-32" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      {[...Array(3)].map((_, j) => (
-                        <div key={j} className="flex items-center space-x-3">
-                          <Skeleton className="h-4 w-4" />
-                          <Skeleton className="h-4 flex-1" />
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-            <div className="space-y-6">
-              {[...Array(3)].map((_, i) => (
-                <Card key={i} className="dark:bg-gray-800/80 dark:border-gray-700">
-                  <CardHeader>
-                    <Skeleton className="h-6 w-32" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      {[...Array(3)].map((_, j) => (
-                        <Skeleton key={j} className="h-4 w-full" />
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+        <div className="text-center">
+          <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-lg font-medium text-gray-900 dark:text-white">Loading dashboard...</p>
         </div>
       </div>
     )
