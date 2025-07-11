@@ -1,13 +1,18 @@
 "use client"
 
+import { useEffect } from "react"
+import { useRouter } from "next/navigation"
+import Link from "next/link"
+import Image from "next/image"
+import { 
+  BookOpen, Brain, Target, TrendingUp, Users, 
+  ArrowRight, Play, Star, CheckCircle, LogOut, Shield, User 
+} from 'lucide-react'
+import { useAuthStore } from "@/lib/auth"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { BookOpen, Brain, Target, TrendingUp, Users, ArrowRight, Play, Star, CheckCircle, LogOut } from 'lucide-react'
-import Link from "next/link"
-import Image from "next/image"
 import { ThemeToggle } from "@/components/theme-toggle"
-import { useAuthStore } from "@/lib/auth"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
   DropdownMenu,
@@ -18,10 +23,32 @@ import {
 } from "@/components/ui/dropdown-menu"
 
 export default function LandingPage() {
-  const { user, isAuthenticated, logout } = useAuthStore()
+  const router = useRouter()
+  const { user, isAuthenticated, logout, isLoading, checkAuth } = useAuthStore()
 
-  const handleLogout = () => {
-    logout()
+  // Initialize auth state
+  useEffect(() => {
+    checkAuth().catch(console.error)
+  }, [checkAuth])
+
+  const handleLogout = async () => {
+    try {
+      await logout()
+      router.refresh()
+    } catch (error) {
+      console.error("Logout error:", error)
+    }
+  }
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+        <div className="text-center">
+          <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-lg font-medium text-gray-900 dark:text-white">Loading...</p>
+        </div>
+      </div>
+    )
   }
 
   const courses = [
@@ -85,6 +112,8 @@ export default function LandingPage() {
       {/* Header */}
       <header className="border-b bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+          
+          {/* Branding */}
           <div className="flex items-center space-x-2">
             <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
               <BookOpen className="w-5 h-5 text-white" />
@@ -93,110 +122,23 @@ export default function LandingPage() {
               Masterly
             </span>
           </div>
+
+          {/* Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
-            <Link
-              href="#courses"
-              className="text-gray-600 hover:text-blue-600 transition-colors dark:text-gray-300 dark:hover:text-blue-400"
-            >
-              Courses
-            </Link>
-            <Link
-              href="#features"
-              className="text-gray-600 hover:text-blue-600 transition-colors dark:text-gray-300 dark:hover:text-blue-400"
-            >
-              Features
-            </Link>
-            <Link
-              href="#pricing"
-              className="text-gray-600 hover:text-blue-600 transition-colors dark:text-gray-300 dark:hover:text-blue-400"
-            >
-              Pricing
-            </Link>
+            <NavLink href="#courses">Courses</NavLink>
+            <NavLink href="#features">Features</NavLink>
+            <NavLink href="#pricing">Pricing</NavLink>
+            
             <ThemeToggle />
 
-            {/* Always render the Sign In dropdown instantly, regardless of auth state loading */}
-            {typeof window !== 'undefined' && isAuthenticated && user ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage
-                        src={
-                          user?.profile?.avatar && user.profile.avatar !== "null"
-                            ? user.profile.avatar
-                            : ""
-                        }
-                        alt="User avatar"
-                      />
-                      <AvatarFallback className="bg-muted flex items-center justify-center">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          viewBox="0 0 24 24"
-                          fill="currentColor"
-                          className="w-5 h-5 text-muted-foreground"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M18.685 19.097A9.723 9.723 0 0 0 21.75 12c0-5.385-4.365-9.75-9.75-9.75S2.25 6.615 2.25 12a9.723 9.723 0 0 0 3.065 7.097A9.716 9.716 0 0 0 12 21.75a9.716 9.716 0 0 0 6.685-2.653Zm-12.54-1.285A7.486 7.486 0 0 1 12 15a7.486 7.486 0 0 1 5.855 2.812A8.224 8.224 0 0 1 12 20.25a8.224 8.224 0 0 1-5.855-2.438ZM15.75 9a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                      </AvatarFallback>
-                    </Avatar>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56" align="end" forceMount>
-                  <div className="flex items-center justify-start gap-2 p-2">
-                    <div className="flex flex-col space-y-1 leading-none">
-                      <p className="font-medium">{user.profile?.fullName || user.profile?.displayName || user.email?.split('@')[0] || 'User'}</p>
-                      <p className="w-[200px] truncate text-sm text-muted-foreground">
-                        {user.email}
-                      </p>
-                    </div>
-                  </div>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link href="/dashboard">Dashboard</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/profile">Profile</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/settings">Settings</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleLogout}>
-                    <LogOut className="mr-2 h-4 w-4" />
-                    <span>Log out</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+            {/* Authentication Section */}
+            {isAuthenticated ? (
+              <UserDropdown 
+                user={user} 
+                onLogout={handleLogout}
+              />
             ) : (
-              <>
-                {/* Always render the dropdown instantly, even if auth state is loading */}
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline">
-                      Sign In
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-48" align="end">
-                    <DropdownMenuItem asChild>
-                      <Link href="/login" className="flex items-center">
-                        👤 User Login
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link href="/admin/login" className="flex items-center">
-                        👨‍💼 Admin Login
-                      </Link>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-                <Button asChild>
-                  <Link href="/signup">Get Started</Link>
-                </Button>
-              </>
+              <AuthButtons />
             )}
           </nav>
         </div>
@@ -536,3 +478,78 @@ export default function LandingPage() {
     </div>
   )
 }
+
+// Component for navigation links
+const NavLink = ({ href, children }: { href: string, children: React.ReactNode }) => (
+  <Link href={href} className="text-gray-600 hover:text-blue-600 transition-colors dark:text-gray-300 dark:hover:text-blue-400">
+    {children}
+  </Link>
+)
+
+// Component for authenticated user dropdown
+const UserDropdown = ({ user, onLogout }: { user: any, onLogout: () => void }) => (
+  <DropdownMenu>
+    <DropdownMenuTrigger asChild>
+      <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+        <Avatar className="h-8 w-8">
+          <AvatarImage src={user?.profile?.avatar} alt="User avatar" />
+          <AvatarFallback className="bg-muted">
+            {user?.email?.charAt(0).toUpperCase() || "U"}
+          </AvatarFallback>
+        </Avatar>
+      </Button>
+    </DropdownMenuTrigger>
+    <DropdownMenuContent className="w-56" align="end" forceMount>
+      <div className="flex items-center gap-2 p-2">
+        <div className="flex flex-col space-y-1 leading-none">
+          <p className="font-medium">
+            {user?.profile?.fullName || user?.email?.split('@')[0] || 'User'}
+          </p>
+          <p className="text-sm text-muted-foreground truncate">
+            {user?.email}
+          </p>
+        </div>
+      </div>
+      <DropdownMenuSeparator />
+      <DropdownMenuItem asChild>
+        <Link href="/dashboard" className="w-full">Dashboard</Link>
+      </DropdownMenuItem>
+      <DropdownMenuItem asChild>
+        <Link href="/profile" className="w-full">Profile</Link>
+      </DropdownMenuItem>
+      <DropdownMenuSeparator />
+      <DropdownMenuItem 
+        onClick={onLogout}
+        className="cursor-pointer focus:bg-destructive/10 focus:text-destructive"
+      >
+        <LogOut className="mr-2 h-4 w-4" />
+        Log out
+      </DropdownMenuItem>
+    </DropdownMenuContent>
+  </DropdownMenu>
+)
+
+// Component for authentication buttons
+const AuthButtons = () => (
+  <DropdownMenu>
+    <DropdownMenuTrigger asChild>
+      <Button variant="outline">
+        Sign In
+      </Button>
+    </DropdownMenuTrigger>
+    <DropdownMenuContent className="w-48" align="end">
+      <DropdownMenuItem asChild>
+        <Link href="/login" className="flex items-center w-full">
+          <User className="mr-2 h-4 w-4" />
+          User Login
+        </Link>
+      </DropdownMenuItem>
+      <DropdownMenuItem asChild>
+        <Link href="/admin/login" className="flex items-center w-full">
+          <Shield className="mr-2 h-4 w-4" />
+          Admin Login
+        </Link>
+      </DropdownMenuItem>
+    </DropdownMenuContent>
+  </DropdownMenu>
+)

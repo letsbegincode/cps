@@ -65,22 +65,20 @@ export interface User {
 
 interface AuthState {
   user: User | null
-  token: string | null
   isLoading: boolean
   isAuthenticated: boolean
-  login: (email: string, password: string) => Promise<void>
+  login: (email: string, password: string) => Promise<{ success: boolean; user?: User }>
   register: (userData: {
     email: string
     password: string
     firstName: string
     lastName: string
-  }) => Promise<void>
+  }) => Promise<{ success: boolean; user?: User }>
   logout: () => void
   updateUser: (userData: Partial<User>) => void
   checkAuth: () => Promise<void>
   refreshUser: () => Promise<void>
   setUser: (user: User | null) => void
-  setToken: (token: string | null) => void
   setIsAuthenticated: (isAuthenticated: boolean) => void
 }
 
@@ -88,7 +86,6 @@ export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
       user: null,
-      token: null,
       isLoading: true, // Start with loading true
       isAuthenticated: false,
 
@@ -96,23 +93,23 @@ export const useAuthStore = create<AuthState>()(
         try {
           set({ isLoading: true })
           const response = await apiClient.login({ email, password })
-
           if (response.success) {
-            const { user, token } = response.data
-            apiClient.setToken(token)
+            const { user } = response.data
+            if (!user) {
+              throw new Error('Invalid login response: missing user')
+            }
             set({
               user,
-              token,
               isAuthenticated: true,
               isLoading: false,
             })
+            // FIXED: Return success response
+            return { success: true, user }
+          } else {
+            throw new Error(response.message || 'Login failed')
           }
         } catch (error: any) {
           set({ isLoading: false })
-          // Handle Google user case
-          if (error.message && error.message.includes('Google')) {
-            throw new Error('This account was created with Google. Please use "Continue with Google" to sign in.')
-          }
           throw error
         }
       },
@@ -121,33 +118,33 @@ export const useAuthStore = create<AuthState>()(
         try {
           set({ isLoading: true })
           const response = await apiClient.register(userData)
-
           if (response.success) {
-            const { user, token } = response.data
-            apiClient.setToken(token)
+            const { user } = response.data
+            if (!user) {
+              throw new Error('Invalid register response: missing user')
+            }
             set({
               user,
-              token,
               isAuthenticated: true,
               isLoading: false,
             })
+            // FIXED: Return success response
+            return { success: true, user }
+          } else {
+            throw new Error(response.message || 'Registration failed')
           }
         } catch (error: any) {
           set({ isLoading: false })
-          // Handle account linking case
-          if (error.message && error.message.includes('linked')) {
-            // Don't throw error for account linking, just show success message
-            return
-          }
           throw error
         }
       },
 
-      logout: () => {
-        apiClient.clearToken()
+      logout: async () => {
+        try {
+          await apiClient.logout()
+        } catch (err) {}
         set({
           user: null,
-          token: null,
           isAuthenticated: false,
           isLoading: false,
         })
@@ -163,93 +160,35 @@ export const useAuthStore = create<AuthState>()(
       },
 
       checkAuth: async () => {
-        let token = get().token
-      
-        if (!token && typeof window !== 'undefined') {
-          token = localStorage.getItem('auth_token')
-          console.log("📦 token from localStorage:", token)
-        }
-      
         try {
-          // If we have a token, use it
-          if (token) {
-            apiClient.setToken(token)
-            console.log('🔑 Using token for /auth/me:', token)
-            const response = await apiClient.getCurrentUser()
-            console.log("📨 /auth/me response:", response)
-      
-            if (response.success) {
-              set({
-                user: response.data.user,
-                token,
-                isAuthenticated: true,
-                isLoading: false,
-              })
-              console.log("✅ Zustand state updated:", response.data.user)
-              return
-            }
-          }
-          
-          // If no token or token failed, try cookie-based auth
-          console.log("🍪 Trying cookie-based authentication...")
           const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/auth/me`, {
             credentials: 'include',
             headers: {
               'Content-Type': 'application/json',
             },
           })
-          
           if (response.ok) {
             const data = await response.json()
             if (data.success && data.data?.user) {
-              console.log("✅ Cookie-based auth successful")
               set({
                 user: data.data.user,
-                token: null, // No token needed for cookie-based auth
                 isAuthenticated: true,
                 isLoading: false,
               })
-              // Remove any stale token
-              if (typeof window !== 'undefined') {
-                localStorage.removeItem('auth_token')
-              }
               return
             }
           }
-          
-          console.warn("❌ No valid authentication found")
-          set({ isLoading: false })
-          // Always clear token and redirect if no valid auth
-          if (typeof window !== 'undefined') {
-            localStorage.removeItem('auth_token')
-            set({
-              user: null,
-              token: null,
-              isAuthenticated: false,
-              isLoading: false,
-            })
-            const currentPath = window.location.pathname;
-            if (!currentPath.startsWith('/login')) {
-              window.location.href = `/login?redirect=${encodeURIComponent(currentPath)}`
-            }
-          }
-          
+          set({
+            user: null,
+            isAuthenticated: false,
+            isLoading: false,
+          })
         } catch (error: any) {
-          console.error("❌ checkAuth error:", error)
-          // Always clear auth if it's a definitive auth error
-          if (typeof window !== 'undefined') {
-            localStorage.removeItem('auth_token')
-            set({
-              user: null,
-              token: null,
-              isAuthenticated: false,
-              isLoading: false,
-            })
-            const currentPath = window.location.pathname;
-            if (!currentPath.startsWith('/login')) {
-              window.location.href = `/login?redirect=${encodeURIComponent(currentPath)}`
-            }
-          }
+          set({
+            user: null,
+            isAuthenticated: false,
+            isLoading: false,
+          })
         }
       },
 
@@ -259,17 +198,11 @@ export const useAuthStore = create<AuthState>()(
           if (response.success) {
             set({ user: response.data.user })
           }
-        } catch (error) {
-          console.error("Failed to refresh user:", error)
-        }
+        } catch (error) {}
       },
 
       setUser: (user: User | null) => {
         set({ user })
-      },
-
-      setToken: (token: string | null) => {
-        set({ token })
       },
 
       setIsAuthenticated: (isAuthenticated: boolean) => {
@@ -280,7 +213,6 @@ export const useAuthStore = create<AuthState>()(
       name: "auth-storage",
       partialize: (state) => ({
         user: state.user,
-        token: state.token,
         isAuthenticated: state.isAuthenticated,
       }),
     },

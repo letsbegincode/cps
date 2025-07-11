@@ -19,6 +19,8 @@ const generateTokenAndSetCookie = (res: Response, userId: string) => {
     });
 };
 
+export { generateTokenAndSetCookie };
+
 export const registerUser = async (req: Request, res: Response) => {
     const { firstName, lastName, email, password } = req.body;
     try {
@@ -33,8 +35,8 @@ export const registerUser = async (req: Request, res: Response) => {
                 await existingUser.save();
                 generateTokenAndSetCookie(res, (existingUser as any)._id.toString());
                 res.status(200).json({ 
-                    message: 'Account linked successfully',
-                    user: { 
+                    success: true,
+                    data: { user: { 
                         _id: (existingUser as any)._id, 
                         email: (existingUser as any).email, 
                         profile: {
@@ -93,7 +95,7 @@ export const registerUser = async (req: Request, res: Response) => {
                         isActive: (existingUser as any).isActive || true,
                         createdAt: (existingUser as any).createdAt,
                         updatedAt: (existingUser as any).updatedAt
-                    } 
+                    } }
                 });
                 return;
             }
@@ -104,8 +106,8 @@ export const registerUser = async (req: Request, res: Response) => {
         const user = await User.create({ firstName, lastName, email, password });
         generateTokenAndSetCookie(res, (user as any)._id.toString());
         res.status(201).json({ 
-            message: 'Registration successful',
-            user: { 
+            success: true,
+            data: { user: { 
                 _id: (user as any)._id, 
                 email: (user as any).email, 
                 profile: {
@@ -164,7 +166,7 @@ export const registerUser = async (req: Request, res: Response) => {
                 isActive: (user as any).isActive || true,
                 createdAt: (user as any).createdAt,
                 updatedAt: (user as any).updatedAt
-            } 
+            } }
         });
     } catch (error) {
         console.error(error);
@@ -176,43 +178,27 @@ export const loginUser = async (req: Request, res: Response) => {
     const { email, password } = req.body;
     try {
         await logger.auth('Login Attempt', `Login attempt for email: ${email}`, req);
-        console.log('Login attempt for email:', email);
-        
         const user = await User.findOne({ email }).select('+password');
-        console.log('User found:', !!user);
-        
         if (!user) {
             await logger.warning('Login Failed', `User not found for email: ${email}`, 'auth', req);
-            console.log('❌ User not found');
             return res.status(401).json({ message: 'Invalid credentials' });
         }
-        
-        // Check if user signed up with Google (no password)
         if (!user.password) {
-            console.log('❌ User signed up with Google, no password set');
             return res.status(401).json({ 
                 message: 'This account was created with Google. Please use "Continue with Google" to sign in.',
                 googleUser: true 
             });
         }
-        
-        console.log('Stored password hash:', user.password.substring(0, 20) + '...');
-        
         const isPasswordValid = await bcrypt.compare(password, user.password);
-        console.log('Password comparison result:', isPasswordValid);
-        
         if (!isPasswordValid) {
             await logger.warning('Login Failed', `Invalid password for email: ${email}`, 'auth', req);
-            console.log('❌ Password does not match');
             return res.status(401).json({ message: 'Invalid credentials' });
         }
-        
         await logger.success('Login Successful', `User logged in successfully: ${email}`, 'auth', req);
-        console.log('✅ Login successful');
         generateTokenAndSetCookie(res, (user as any)._id.toString());
         res.status(200).json({ 
-            message: 'Login successful',
-            user: { 
+            success: true,
+            data: { user: { 
                 _id: (user as any)._id, 
                 email: (user as any).email, 
                 profile: {
@@ -271,16 +257,15 @@ export const loginUser = async (req: Request, res: Response) => {
                 isActive: (user as any).isActive || true,
                 createdAt: (user as any).createdAt,
                 updatedAt: (user as any).updatedAt
-            } 
+            } }
         });
     } catch (error) {
-        console.error('Login error:', error);
         res.status(500).json({ message: 'Server error' });
     }
 };
 
 export const logoutUser = (req: Request, res: Response) => {
-    res.cookie('token', '', { httpOnly: true, expires: new Date(0) });
+    res.cookie('token', '', { httpOnly: true, expires: new Date(0), sameSite: 'strict', secure: process.env.NODE_ENV === 'production' });
     res.status(200).json({ message: 'Logout successful' });
 };
 

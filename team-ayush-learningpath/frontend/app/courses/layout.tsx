@@ -1,7 +1,7 @@
 import type React from "react"
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/app-sidebar"
-import { AuthGuard } from "@/components/auth-guard"
+import AuthGuard from "@/components/auth-guard"
 
 export default function CoursesLayout({
   children,

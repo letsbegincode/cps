@@ -3,65 +3,27 @@
 import { useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuthStore } from '@/lib/auth'
-import apiClient from '@/lib/api'
 
-export default function AuthCallback() {
+export default function AuthCallbackPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const token = searchParams.get('token')
-  const redirectTo = searchParams.get('redirect') || '/dashboard'
-  const { checkAuth, setUser, setToken, setIsAuthenticated } = useAuthStore()
+  const { checkAuth, setUser, setIsAuthenticated } = useAuthStore()
 
   useEffect(() => {
-    if (!token) {
-      console.error("❌ No token received from Google Auth")
-      router.push('/login?error=no_token')
-      return
+    async function handleAuth() {
+      // After Google OAuth, backend should set cookie. Just check auth.
+      await checkAuth()
+      // Optionally, you can fetch user info and set it here if needed
+      setIsAuthenticated(true)
+      router.replace('/')
     }
-
-    console.log("🔐 Google Token received:", token)
-    
-    // Set token in localStorage and API client
-    localStorage.setItem("auth_token", token)
-    apiClient.setToken(token)
-
-    // Try to get user data directly first
-    apiClient.getCurrentUser()
-      .then((response) => {
-        console.log("✅ User data received:", response)
-        if (response.success && response.data.user) {
-          // Set user data directly in store
-          setUser(response.data.user)
-          setToken(token)
-          setIsAuthenticated(true)
-          console.log("✅ User authenticated successfully")
-          router.push(redirectTo)
-        } else {
-          throw new Error('Failed to get user data')
-        }
-      })
-      .catch((err) => {
-        console.error("❌ Failed to get user data:", err)
-        // Fallback to checkAuth
-        return checkAuth()
-          .then(() => {
-            console.log("✅ checkAuth successful")
-            router.push(redirectTo)
-          })
-          .catch((checkAuthErr) => {
-            console.error("❌ checkAuth also failed:", checkAuthErr)
-            router.push('/login?error=auth_failed')
-          })
-      })
-  }, [token, router, checkAuth, setUser, setToken, setIsAuthenticated])
+    handleAuth()
+  }, [router, checkAuth, setUser, setIsAuthenticated])
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center">
-      <div className="text-center">
-        <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-        <p className="text-lg font-medium text-gray-900 dark:text-white">Signing you in with Google...</p>
-        <p className="text-sm text-gray-600 dark:text-gray-300 mt-2">Please wait while we set up your account</p>
-      </div>
+    <div className="flex flex-col items-center justify-center min-h-screen">
+      <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mb-4" />
+      <p className="text-lg font-medium">Signing you in with Google...</p>
     </div>
   )
 }

@@ -57,48 +57,22 @@ class ApiClient {
     this.baseURL = baseURL
   }
 
-  // Dynamically get latest token
-  private getToken(): string | null {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem("auth_token")
-    }
-    return null
-  }
-
-  setToken(token: string) {
-    if (typeof window !== "undefined") {
-      localStorage.setItem("auth_token", token)
-    }
-  }
-
-  clearToken() {
-    if (typeof window !== "undefined") {
-      localStorage.removeItem("auth_token")
-    }
-  }
-
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const url = `${this.baseURL}${endpoint}`
-    const token = this.getToken()
-
     const config: RequestInit = {
       credentials: "include", // Always include cookies
       headers: {
         "Content-Type": "application/json",
-        ...(token && { Authorization: `Bearer ${token}` }),
         ...options.headers,
       },
       ...options,
     }
-
     try {
       const response = await fetch(url, config)
       const data = await response.json()
-
       if (!response.ok) {
         throw new Error(data.message || "An error occurred")
       }
-
       return data
     } catch (error) {
       console.error("API request failed:", error)
@@ -106,50 +80,18 @@ class ApiClient {
     }
   }
 
-  // Auth endpoints
-  async register(userData: {
-    email: string
-    password: string
-    firstName: string
-    lastName: string
-  }): Promise<AuthResponse> {
-    const response = await this.request<AuthResponse>("/auth/register", {
+  async register(userData: { email: string; password: string; firstName: string; lastName: string }): Promise<{ success: boolean; data: { user: User }; message?: string }> {
+    return this.request<{ success: boolean; data: { user: User }; message?: string }>("/auth/register", {
       method: "POST",
       body: JSON.stringify(userData),
     })
-    
-    // Handle the new response format
-    if (response.message && response.user) {
-      return {
-        success: true,
-        data: {
-          user: response.user,
-          token: this.getToken() || ''
-        }
-      }
-    }
-    
-    return response
   }
 
-  async login(credentials: { email: string; password: string }): Promise<AuthResponse> {
-    const response = await this.request<AuthResponse>("/auth/login", {
+  async login(credentials: { email: string; password: string }): Promise<{ success: boolean; data: { user: User }; message?: string }> {
+    return this.request<{ success: boolean; data: { user: User }; message?: string }>("/auth/login", {
       method: "POST",
       body: JSON.stringify(credentials),
     })
-    
-    // Handle the new response format
-    if (response.message && response.user) {
-      return {
-        success: true,
-        data: {
-          user: response.user,
-          token: this.getToken() || ''
-        }
-      }
-    }
-    
-    return response
   }
 
   async logout() {

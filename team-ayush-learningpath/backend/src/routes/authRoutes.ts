@@ -9,7 +9,8 @@ import {
     changePassword,
     logoutUser,
     forgotPassword, 
-    resetPassword  
+    resetPassword,
+    generateTokenAndSetCookie
 } from '../controllers/authController';
 import { protect } from '../middlewares/authMiddleware';
 import {
@@ -53,11 +54,9 @@ router.get(
         if (!user || !user._id) {
             return res.redirect(`${process.env.CLIENT_URL}/login?error=google-auth-failed`);
         }
-        
-        const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET as string, { expiresIn: '1d' });
-        
-        // Redirect to frontend callback with token
-        res.redirect(`${process.env.CLIENT_URL}/auth/callback?token=${token}`);
+        generateTokenAndSetCookie(res, user._id.toString());
+        // Do NOT expose token in URL, just redirect to frontend
+        res.redirect(`${process.env.CLIENT_URL}/auth/callback`);
     }
 );
 

@@ -60,7 +60,7 @@ interface SidebarItem {
 }
 
 // Accept dashboardData as a prop
-export function AppSidebar({ dashboardData }: { dashboardData: DashboardData | null }) {
+export function AppSidebar({ dashboardData = null }: { dashboardData?: DashboardData | null }) {
   const { user, isAuthenticated } = useAuthStore()
   const pathname = usePathname()
 
