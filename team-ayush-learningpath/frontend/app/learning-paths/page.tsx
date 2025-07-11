@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input"
 import Quiz from "@/components/Quiz"
 import { apiClient } from "@/lib/api"
 import { Search } from "lucide-react"
+import { QuizPlatform } from "@/components/quiz-platform"
 
 export default function LearningPathPage() {
   const router = useRouter()
@@ -24,6 +25,8 @@ export default function LearningPathPage() {
   const [conceptDetails, setConceptDetails] = useState<any>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
+  // Add state to force remount QuizPlatform for retake
+  const [quizKey, setQuizKey] = useState(0);
 
   // Fetch all courses on mount
   useEffect(() => {
@@ -153,9 +156,9 @@ export default function LearningPathPage() {
         </div>
       </div>
       {/* Right interactive panel */}
-      <div className="w-full md:w-1/2 min-w-[320px] max-w-2xl flex flex-col justify-center">
-        <div className="rounded-2xl border-4 border-transparent bg-gradient-to-br from-blue-100 via-purple-100 to-pink-100 dark:from-blue-900/30 dark:via-purple-900/30 dark:to-pink-900/30 shadow-2xl p-0 relative overflow-hidden">
-          <div className="relative z-10 p-8">
+      <div className="w-full md:w-1/2 min-w-[320px] max-w-2xl flex flex-col justify-center min-h-[600px]">
+        <div className="rounded-2xl border-4 border-transparent bg-gradient-to-br from-blue-100 via-purple-100 to-pink-100 dark:from-blue-900/30 dark:via-purple-900/30 dark:to-pink-900/30 shadow-2xl p-0 relative overflow-hidden min-h-[600px] flex flex-col justify-center">
+          <div className="relative z-10 p-8 flex-1 flex flex-col justify-center">
             <h2 className="text-3xl font-extrabold mb-6 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-500 bg-clip-text text-transparent">Create Your Learning Path</h2>
             {error && <div className="mb-4 text-destructive font-semibold">{error}</div>}
             {/* Course selection dropdown */}
@@ -190,7 +193,7 @@ export default function LearningPathPage() {
               </>
             )}
             {/* Search bar and results */}
-            {showSearch && selectedCourse && concepts.length > 0 && (
+            {showSearch && selectedCourse && concepts.length > 0 && !conceptDetails && (
               <div className="mb-8">
                 <label className="block mb-2 font-extrabold text-xl bg-gradient-to-r from-blue-600 via-purple-600 to-pink-500 bg-clip-text text-transparent">Search for a Concept</label>
                 <div className="relative rounded-2xl overflow-hidden mb-4">
@@ -227,16 +230,15 @@ export default function LearningPathPage() {
             )}
             {/* Concept details view */}
             {conceptDetails && (
-              <div className="mb-10 mt-6 border-t-4 border-blue-300 pt-8">
-                <h2 className="text-2xl font-extrabold mb-4 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-500 bg-clip-text text-transparent">Concept Details</h2>
+              <div className="mb-10 mt-6 border-t-4 border-blue-300 pt-8 w-full">
+                <Button
+                  className="mb-6 bg-gradient-to-r from-blue-500 to-purple-500 text-white font-bold shadow-lg text-base px-6 py-2"
+                  onClick={() => { setConceptDetails(null); setSelectedConcept(null); }}
+                >
+                  ← Back to Search
+                </Button>
                 <div className="mb-6">
                   <div className="mb-4 p-4 rounded-xl border-2 border-blue-400 bg-white/80 dark:bg-gray-900/60 shadow flex flex-col gap-2 relative">
-                    <button
-                      className="absolute top-2 right-2 text-xs px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded hover:bg-gray-300 dark:hover:bg-gray-600"
-                      onClick={() => { setSelectedConcept(null); setConceptDetails(null); }}
-                    >
-                      Close
-                    </button>
                     <h3 className="text-3xl font-extrabold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-500 bg-clip-text text-transparent mb-2">
                       {conceptDetails.title}
                     </h3>
@@ -282,12 +284,27 @@ export default function LearningPathPage() {
                     {conceptDetails.quiz && conceptDetails.quiz.questions && conceptDetails.quiz.questions.length > 0 && (
                       <div className="mb-4">
                         <h4 className="font-bold mb-2 text-green-700">Quiz</h4>
-                        <Quiz
-                          key={`node-quiz-${conceptDetails._id}`}
-                          title={`Quiz: ${conceptDetails.title}`}
-                          questions={conceptDetails.quiz.questions || []}
-                          onSubmit={() => {}}
+                        <QuizPlatform
+                          key={quizKey}
+                          quiz={{
+                            id: conceptDetails.quiz._id || conceptDetails._id,
+                            title: `Quiz: ${conceptDetails.title}`,
+                            timeLimit: 600,
+                            questions: conceptDetails.quiz.questions,
+                            completed: false,
+                            totalQuestions: conceptDetails.quiz.questions.length,
+                            testType: 'concept_quiz',
+                            conceptId: conceptDetails._id,
+                            passingScore: 75,
+                          }}
+                          allowRetake={true}
+                          showReview={true}
+                          onQuizComplete={() => {}}
+                          onQuizClose={() => setQuizKey(prev => prev + 1)}
                         />
+                        <Button className="mt-4" onClick={() => setQuizKey(prev => prev + 1)}>
+                          Retake Quiz
+                        </Button>
                       </div>
                     )}
                   </div>
