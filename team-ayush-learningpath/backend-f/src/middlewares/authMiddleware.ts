@@ -16,32 +16,21 @@ declare module 'express-serve-static-core' {
  */
 export const protect = async (req: Request, res: Response, next: NextFunction) => {
     let token;
-
-    // Check for token in Authorization header first
-    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
-        token = req.headers.authorization.split(' ')[1];
-    }
-    // Fallback to cookie if no Authorization header
-    else if (req.cookies && req.cookies.token) {
+    // Only check for token in cookies
+    if (req.cookies && req.cookies.token) {
         token = req.cookies.token;
     }
-
     if (!token) {
         return res.status(401).json({ message: 'Not authorized, no token' });
     }
-
     try {
-        // Verify token
         const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as { id: string };
-
-        // Get user from the token's ID and attach to the request object
         const user = await User.findById(decoded.id).select('-password');
         if (!user) {
             return res.status(401).json({ message: 'Not authorized, user not found' });
         }
         req.user = user as IUser;
-
-        next(); // Proceed to the next middleware or controller
+        next();
     } catch (error) {
         return res.status(401).json({ message: 'Not authorized, token failed' });
     }
@@ -55,8 +44,6 @@ export const protectAdmin = async (req: Request, res: Response, next: NextFuncti
     let token;
     if (req.cookies && req.cookies.admin_token) {
         token = req.cookies.admin_token;
-    } else if (req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
-        token = req.headers.authorization.split(' ')[1];
     }
     if (!token) {
         return res.status(401).json({ message: 'Not authorized, no token' });
@@ -78,9 +65,10 @@ export const protectAdmin = async (req: Request, res: Response, next: NextFuncti
  * Middleware to authenticate token from Authorization header
  */
 export const authenticateToken = async (req: Request, res: Response, next: NextFunction) => {
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
-
+    let token;
+    if (req.cookies && req.cookies.token) {
+        token = req.cookies.token;
+    }
     if (!token) {
         return res.status(401).json({ message: 'Access token required' });
     }
@@ -104,9 +92,10 @@ export const authenticateToken = async (req: Request, res: Response, next: NextF
  * Optional authentication middleware - doesn't fail if no token provided
  */
 export const optionalAuth = async (req: Request, res: Response, next: NextFunction) => {
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
-
+    let token;
+    if (req.cookies && req.cookies.token) {
+        token = req.cookies.token;
+    }
     if (!token) {
         return next(); // Continue without authentication
     }

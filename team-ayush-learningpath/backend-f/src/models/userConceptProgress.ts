@@ -1,15 +1,13 @@
-import mongoose, { Schema, Document, Types } from 'mongoose';
+import mongoose, { Schema } from 'mongoose';
 
 // Individual concept progress schema for sequential learning
 const ConceptProgressSchema = new Schema({
   conceptId: {
-    type: Schema.Types.ObjectId,
-    ref: 'Concept',
+    type: String, // Now a string, not ObjectId
     required: true
   },
   courseId: {
-    type: Schema.Types.ObjectId,
-    ref: 'Course',
+    type: String, // Now a string, not ObjectId
     required: true
   },
   userId: {
@@ -70,7 +68,6 @@ const ConceptProgressSchema = new Schema({
   }
 }, { timestamps: true });
 
-// Indexes for performance
 ConceptProgressSchema.index({ userId: 1, conceptId: 1, courseId: 1 }, { unique: true });
 ConceptProgressSchema.index({ userId: 1, courseId: 1 });
 ConceptProgressSchema.index({ conceptId: 1 });
@@ -122,7 +119,7 @@ ConceptProgressSchema.methods.handleQuizCompletion = function(score: number, pas
 };
 
 // Method to check if concept is unlocked (prerequisites completed)
-ConceptProgressSchema.methods.isUnlocked = function(prerequisites: Types.ObjectId[]) {
+ConceptProgressSchema.methods.isUnlocked = function(prerequisites: string[]) {
   if (!prerequisites || prerequisites.length === 0) {
     return true;
   }
@@ -132,27 +129,4 @@ ConceptProgressSchema.methods.isUnlocked = function(prerequisites: Types.ObjectI
   return true;
 };
 
-// Interface for TypeScript
-export interface IConceptProgress extends Document {
-  conceptId: Types.ObjectId;
-  courseId: Types.ObjectId;
-  userId: Types.ObjectId;
-  masteryScore: number;
-  attempts: number;
-  lastUpdated: Date;
-  mastered: boolean;
-  masteredAt?: Date;
-  timeSpent: number;
-  status: 'not_started' | 'in_progress' | 'completed';
-  descriptionRead: boolean;
-  videoWatched: boolean;
-  quizPassed: boolean;
-  failedAttempts: number;
-  lastQuizAttempt?: Date;
-  markDescriptionRead(): void;
-  markVideoWatched(watchTime?: number): void;
-  handleQuizCompletion(score: number, passed: boolean): void;
-  isUnlocked(prerequisites: Types.ObjectId[]): boolean;
-}
-
-export default mongoose.model<IConceptProgress>('UserConceptProgress', ConceptProgressSchema); 
+export default mongoose.model('UserConceptProgress', ConceptProgressSchema); 

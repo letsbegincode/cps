@@ -1,8 +1,6 @@
 "use client"
 
-import type React from "react"
-
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -13,10 +11,12 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Progress } from "@/components/ui/progress"
 import { Eye, EyeOff, Mail, Lock, User, ArrowRight, BookOpen, CheckCircle, Shield, Home } from "lucide-react"
 import { useAuthStore } from "@/lib/auth"
+import { useToast } from "@/hooks/use-toast"
 
 export default function SignupPage() {
   const router = useRouter()
-  const { register, isLoading } = useAuthStore()
+  const { toast } = useToast()
+  const { register, isLoading, isAuthenticated } = useAuthStore()
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -28,6 +28,14 @@ export default function SignupPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [error, setError] = useState("")
   const [passwordStrength, setPasswordStrength] = useState(0)
+  const [isSigningUp, setIsSigningUp] = useState(false)
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.replace('/dashboard')
+    }
+  }, [isAuthenticated, router])
 
   const calculatePasswordStrength = (password: string) => {
     let strength = 0
@@ -41,30 +49,48 @@ export default function SignupPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
+    setIsSigningUp(true)
 
+    // Validation
     if (formData.password !== formData.confirmPassword) {
       setError("Passwords do not match")
+      setIsSigningUp(false)
       return
     }
 
     if (formData.password.length < 6) {
       setError("Password must be at least 6 characters long")
+      setIsSigningUp(false)
       return
     }
 
     try {
+      console.log("Attempting registration with:", formData.email)
+      
       await register({
         email: formData.email,
         password: formData.password,
         firstName: formData.firstName,
         lastName: formData.lastName,
       })
-      router.push("/dashboard")
+
+      console.log("Registration successful, redirecting immediately...")
+      
+      // Show success message
+      toast({
+        title: "Account created successfully!",
+        description: "Redirecting to dashboard...",
+      })
+
+      // Force immediate redirect after successful registration
+      window.location.href = "/"
+      
     } catch (err: any) {
-      // Handle account linking case
+      console.error("Registration error:", err)
+      setIsSigningUp(false)
+      
       if (err.message && err.message.includes('linked')) {
-        setError("Account linked successfully! You can now sign in with your email and password.")
-        // Clear form after successful linking
+        setError("Account linked successfully! Please sign in.")
         setFormData({
           firstName: "",
           lastName: "",
@@ -105,19 +131,29 @@ export default function SignupPage() {
   }
 
   const handleGoogleLogin = () => {
-    window.location.href = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/auth/google`
+    window.location.href = `${process.env.NEXT_PUBLIC_API_URL }/auth/google`
+  }
+
+  // Show loading state while signing up
+  if (isSigningUp) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+        <div className="text-center">
+          <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-lg font-medium text-gray-900 dark:text-white">
+            Creating your account...
+          </p>
+        </div>
+      </div>
+    )
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center p-4">
-      {/* Home Button - Top Left */}
+      {/* Home Button */}
       <div className="fixed top-6 left-6 z-50">
         <Link href="/">
-          <Button
-            variant="outline"
-            size="sm"
-            className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-gray-200 dark:border-gray-600 hover:bg-white dark:hover:bg-gray-800 shadow-lg"
-          >
+          <Button variant="outline" size="sm" className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
             <Home className="w-4 h-4 mr-2" />
             Back to Home
           </Button>
@@ -190,13 +226,14 @@ export default function SignupPage() {
         <div className="w-full max-w-md mx-auto lg:mx-0">
           <Card className="shadow-2xl border-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
             <CardHeader className="space-y-1 pb-6">
-              <CardTitle className="text-2xl font-bold text-center text-gray-900 dark:text-white">
+              <CardTitle className="text-2xl font-bold text-center">
                 Create your account
               </CardTitle>
-              <CardDescription className="text-center text-gray-600 dark:text-gray-300">
+              <CardDescription className="text-center">
                 Start your learning journey with a free account
               </CardDescription>
             </CardHeader>
+            
             <CardContent className="space-y-6">
               {error && (
                 <Alert variant="destructive">
@@ -221,6 +258,7 @@ export default function SignupPage() {
                         placeholder="Enter your first name"
                         className="pl-10 h-12 bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400"
                         required
+                        disabled={isSigningUp}
                       />
                     </div>
                   </div>
@@ -239,6 +277,7 @@ export default function SignupPage() {
                         placeholder="Enter your last name"
                         className="pl-10 h-12 bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400"
                         required
+                        disabled={isSigningUp}
                       />
                     </div>
                   </div>
@@ -259,6 +298,7 @@ export default function SignupPage() {
                       placeholder="Enter your email"
                       className="pl-10 h-12 bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400"
                       required
+                      disabled={isSigningUp}
                     />
                   </div>
                 </div>
@@ -278,11 +318,13 @@ export default function SignupPage() {
                       placeholder="Create a password"
                       className="pl-10 pr-10 h-12 bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400"
                       required
+                      disabled={isSigningUp}
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
                       className="absolute right-3 top-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                      disabled={isSigningUp}
                     >
                       {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
@@ -319,11 +361,13 @@ export default function SignupPage() {
                       placeholder="Confirm your password"
                       className="pl-10 pr-10 h-12 bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400"
                       required
+                      disabled={isSigningUp}
                     />
                     <button
                       type="button"
                       onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                       className="absolute right-3 top-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                      disabled={isSigningUp}
                     >
                       {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
@@ -332,10 +376,10 @@ export default function SignupPage() {
 
                 <Button
                   type="submit"
-                  disabled={isLoading}
-                  className="w-full h-12 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium rounded-lg transition-all duration-200 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                  disabled={isSigningUp}
+                  className="w-full h-12 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
                 >
-                  {isLoading ? (
+                  {isSigningUp ? (
                     <div className="flex items-center space-x-2">
                       <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                       <span>Creating account...</span>
@@ -365,6 +409,7 @@ export default function SignupPage() {
                 variant="outline"
                 className="w-full h-12 border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 bg-transparent"
                 onClick={handleGoogleLogin}
+                disabled={isSigningUp}
               >
                 <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
                   <path

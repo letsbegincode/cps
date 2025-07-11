@@ -9,7 +9,7 @@ import {
 } from '../controllers/conceptController';
 import { protect } from '../middlewares/authMiddleware';
 import { Request, Response } from 'express';
-import { User } from '../models/userModel';
+import User from '../models/userModel';
 
 const router = Router();
 
@@ -32,8 +32,8 @@ router.get('/test-user', async (req: Request, res: Response) => {
         message: 'Test user found',
         user: {
           _id: testUser._id,
-          firstName: testUser.firstName,
-          lastName: testUser.lastName,
+          firstName: testUser.profile?.firstName,
+          lastName: testUser.profile?.lastName,
           email: testUser.email
         }
       });

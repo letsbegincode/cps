@@ -1,4 +1,4 @@
-import { Graph } from 'graphlib';
+import type { Graph } from 'graphlib';
 
 /**
  * Checks if a user can attempt a concept based on mastery of prerequisites.
@@ -6,12 +6,12 @@ import { Graph } from 'graphlib';
 export function canUserAttempt(
   conceptId: string,
   userProgressMap: Record<string, { masteryScore: number }>,
-  graph: Graph,
+  graph: any,
   masteryThreshold = 70
 ): boolean {
   const prereqEdges = graph.inEdges(conceptId) || [];
 
-  return prereqEdges.every(edge => {
+  return prereqEdges.every((edge: any) => {
     const prereqId = edge.v;
     const score = userProgressMap[prereqId]?.masteryScore ?? 0;
     return score >= masteryThreshold;
