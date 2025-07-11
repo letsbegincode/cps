@@ -240,6 +240,10 @@ class ApiClient {
     })
   }
 
+  async getConceptById(conceptId: string): Promise<any> {
+    return this.request(`/concepts/${conceptId}`)
+  }
+
   // Course Learning APIs
   async enrollInCourseLearning(courseId: string): Promise<any> {
     return this.request(`/learning/courses/${courseId}/enroll`, {
