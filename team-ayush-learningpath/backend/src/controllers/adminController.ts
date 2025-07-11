@@ -216,3 +216,18 @@ export const getEmergencyContacts = async (req: Request, res: Response) => {
         res.status(500).json({ message: 'Server error' });
     }
 };
+
+// GET /api/admin/courses-with-concepts
+export const getCoursesWithConceptTitles = async (req, res) => {
+  try {
+    const courses = await require('../models/courseModel').default.find({}, 'title _id concepts');
+    const result = courses.map(course => ({
+      _id: course._id,
+      title: course.title,
+      concepts: (course.concepts || []).map(c => ({ conceptId: c.conceptId, title: c.title }))
+    }));
+    res.json({ success: true, data: result });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Failed to fetch courses', error: err.message });
+  }
+};

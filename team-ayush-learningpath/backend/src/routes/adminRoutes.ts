@@ -8,6 +8,7 @@ import {
     updateConcept,
     deleteConcept,
     getEmergencyContacts,
+    getCoursesWithConceptTitles,
 } from '../controllers/adminController';
 import {
     registerAdmin,
@@ -311,5 +312,7 @@ router.post('/logout', (req, res) => {
     });
     res.status(200).json({ message: "Logged out successfully" });
 });
+
+router.get('/courses-with-concepts', protectAdmin, getCoursesWithConceptTitles);
 
 export default router;
