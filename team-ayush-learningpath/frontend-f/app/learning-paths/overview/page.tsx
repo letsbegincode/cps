@@ -96,8 +96,15 @@ export default function LearningPathsOverview() {
       try {
         const response = await apiClient.getDashboardData()
         if (response.success && response.data.learningPaths) {
-          setLearningPaths(response.data.learningPaths)
-          setFilteredPaths(response.data.learningPaths)
+          // Ensure all required fields are present
+          const paths = response.data.learningPaths.map((p: any) => ({
+            ...p,
+            totalConcepts: p.totalConcepts ?? 0,
+            completedConcepts: p.completedConcepts ?? 0,
+            createdAt: p.createdAt ?? p.lastAccessed ?? new Date().toISOString(),
+          }))
+          setLearningPaths(paths)
+          setFilteredPaths(paths)
         }
       } catch (error) {
         console.error('Failed to fetch learning paths:', error)
@@ -240,63 +247,6 @@ export default function LearningPathsOverview() {
                   Create New Path
                 </Link>
               </Button>
-            </div>
-
-            {/* Stats Overview */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-              <Card className="dark:bg-gray-800/80 dark:border-gray-700">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-600 dark:text-gray-300">Total Paths</p>
-                      <p className="text-2xl font-bold text-gray-900 dark:text-white">{learningPaths.length}</p>
-                    </div>
-                    <Target className="w-8 h-8 text-blue-600" />
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="dark:bg-gray-800/80 dark:border-gray-700">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-600 dark:text-gray-300">Active</p>
-                      <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                        {learningPaths.filter(p => p.status === 'active').length}
-                      </p>
-                    </div>
-                    <Play className="w-8 h-8 text-green-600" />
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="dark:bg-gray-800/80 dark:border-gray-700">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-600 dark:text-gray-300">Completed</p>
-                      <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                        {learningPaths.filter(p => p.status === 'completed').length}
-                      </p>
-                    </div>
-                    <CheckCircle className="w-8 h-8 text-blue-600" />
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="dark:bg-gray-800/80 dark:border-gray-700">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-600 dark:text-gray-300">Total Time</p>
-                      <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                        {formatTime(learningPaths.reduce((sum, p) => sum + p.totalTimeSpent, 0))}
-                      </p>
-                    </div>
-                    <Clock className="w-8 h-8 text-purple-600" />
-                  </div>
-                </CardContent>
-              </Card>
             </div>
           </div>
 

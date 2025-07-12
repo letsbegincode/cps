@@ -111,8 +111,8 @@ export function DynamicSidebar() {
         title: "Learning Paths",
         url: "/learning-paths",
         icon: Brain,
-        badge: dashboardData.learningPaths.length,
-        description: `${dashboardData.learningPaths.length} active path${dashboardData.learningPaths.length > 1 ? 's' : ''}`
+        badge: dashboardData?.learningPaths?.length ?? 0,
+        description: `${dashboardData?.learningPaths?.length ?? 0} active path${(dashboardData?.learningPaths?.length ?? 0) > 1 ? 's' : ''}`
       })
     } else {
       items.push({
@@ -125,13 +125,13 @@ export function DynamicSidebar() {
     }
 
     // Add courses with progress
-    if (dashboardData?.stats.coursesEnrolled > 0) {
+    if (dashboardData?.stats?.coursesEnrolled && dashboardData.stats.coursesEnrolled > 0) {
       items.push({
         title: "My Courses",
         url: "/courses",
         icon: BookOpen,
-        badge: dashboardData.stats.coursesEnrolled,
-        description: `${dashboardData.stats.completedConcepts} concepts mastered`
+        badge: dashboardData?.stats?.coursesEnrolled ?? 0,
+        description: `${dashboardData?.stats?.completedConcepts ?? 0} concepts mastered`
       })
     } else {
       items.push({
@@ -143,13 +143,13 @@ export function DynamicSidebar() {
     }
 
     // Add progress tracking
-    if (dashboardData?.stats.totalConcepts > 0) {
+    if (dashboardData?.stats?.totalConcepts && dashboardData.stats.totalConcepts > 0) {
       items.push({
         title: "Progress",
         url: "/progress",
         icon: BarChart3,
-        progress: dashboardData.stats.completionRate,
-        description: `${dashboardData.stats.completionRate}% complete`
+        progress: dashboardData?.stats?.completionRate ?? 0,
+        description: `${dashboardData?.stats?.completionRate ?? 0}% complete`
       })
     } else {
       items.push({
@@ -166,8 +166,8 @@ export function DynamicSidebar() {
         title: "Achievements",
         url: "/progress?tab=achievements",
         icon: Trophy,
-        badge: dashboardData.achievements.length,
-        description: `${dashboardData.achievements.length} unlocked`
+        badge: dashboardData?.achievements?.length ?? 0,
+        description: `${dashboardData?.achievements?.length ?? 0} unlocked`
       })
     }
 
@@ -211,13 +211,13 @@ export function DynamicSidebar() {
     }
 
     // Streak reminder
-    if (dashboardData?.stats.currentStreak > 0) {
+    if (dashboardData?.stats?.currentStreak && dashboardData.stats.currentStreak > 0) {
       actions.push({
         title: "Maintain Streak",
         url: "/dashboard",
         icon: Zap,
-        description: `${dashboardData.stats.currentStreak} day streak`,
-        badge: dashboardData.stats.currentStreak
+        description: `${dashboardData?.stats?.currentStreak ?? 0} day streak`,
+        badge: dashboardData?.stats?.currentStreak ?? 0
       })
     }
 
@@ -247,7 +247,7 @@ export function DynamicSidebar() {
         {quickActions.length > 0 && (
           <SidebarGroup>
             <SidebarGroupLabel>Quick Actions</SidebarGroupLabel>
-            <SidebarGroupContent>
+            <SidebarGroupContent className="bg-white dark:bg-gray-900 rounded-lg p-2">
               <SidebarMenu>
                 {quickActions.map((item) => (
                   <SidebarMenuItem key={item.title}>
@@ -255,9 +255,9 @@ export function DynamicSidebar() {
                       <Link href={item.url} className="flex items-center space-x-3">
                         <item.icon className="w-4 h-4" />
                         <div className="flex-1 min-w-0">
-                          <div className="text-sm font-medium">{item.title}</div>
+                          <div className="text-sm font-medium text-gray-900 dark:text-white">{item.title}</div>
                           {item.description && (
-                            <div className="text-xs text-muted-foreground truncate">
+                            <div className="text-xs text-gray-600 dark:text-gray-300 truncate">
                               {item.description}
                             </div>
                           )}

@@ -9,7 +9,8 @@ import {
     changePassword,
     logoutUser,
     forgotPassword, 
-    resetPassword  
+    resetPassword,
+    generateTokenAndSetCookie
 } from '../controllers/authController';
 import { protect } from '../middlewares/authMiddleware';
 import {
@@ -37,6 +38,24 @@ router.put('/changepassword', protect, changePasswordRules(), validate, changePa
 router.post('/forgot-password', forgotPasswordRules(), validate, forgotPassword);
 router.put('/reset-password/:resetToken', resetPasswordRules(), validate, resetPassword);
 
+// Common logout route for both user and admin
+router.post('/logout-all', (req, res) => {
+    res.cookie('token', '', {
+        httpOnly: true,
+        secure: true,
+        sameSite: 'none',
+        expires: new Date(0),
+        path: '/',
+    });
+    res.cookie('admin_token', '', {
+        httpOnly: true,
+        secure: true,
+        sameSite: 'none',
+        expires: new Date(0),
+        path: '/',
+    });
+    res.status(200).json({ message: 'Logged out from all sessions' });
+});
 
 // --- Existing OAuth Routes ---
 router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
@@ -53,11 +72,9 @@ router.get(
         if (!user || !user._id) {
             return res.redirect(`${process.env.CLIENT_URL}/login?error=google-auth-failed`);
         }
-        
-        const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET as string, { expiresIn: '1d' });
-        
-        // Redirect to frontend callback with token
-        res.redirect(`${process.env.CLIENT_URL}/auth/callback?token=${token}`);
+        generateTokenAndSetCookie(res, user._id.toString());
+        // Do NOT expose token in URL, just redirect to frontend
+        res.redirect(`${process.env.CLIENT_URL}/auth/callback`);
     }
 );
 

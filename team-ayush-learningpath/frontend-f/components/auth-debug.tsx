@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { RefreshCw, LogOut, User, Shield } from "lucide-react"
 
 export function AuthDebug() {
-  const { user, token, isAuthenticated, isLoading, checkAuth, logout } = useAuthStore()
+  const { user, isAuthenticated, isLoading, checkAuth, logout } = useAuthStore()
 
   const handleRefresh = async () => {
     try {
@@ -43,21 +43,12 @@ export function AuthDebug() {
             {isLoading ? "Yes" : "No"}
           </Badge>
         </div>
-        
-        <div className="flex items-center justify-between">
-          <span>Token:</span>
-          <Badge variant={token ? "default" : "destructive"}>
-            {token ? "Present" : "Missing"}
-          </Badge>
-        </div>
-        
         <div className="flex items-center justify-between">
           <span>User:</span>
           <Badge variant={user ? "default" : "destructive"}>
             {user ? "Present" : "Missing"}
           </Badge>
         </div>
-        
         {user && (
           <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
             <div className="flex items-center space-x-2 mb-1">
@@ -69,7 +60,6 @@ export function AuthDebug() {
             </div>
           </div>
         )}
-        
         <div className="flex space-x-2 pt-2 border-t border-gray-200 dark:border-gray-700">
           <Button size="sm" variant="outline" onClick={handleRefresh} className="flex-1">
             <RefreshCw className="w-3 h-3 mr-1" />

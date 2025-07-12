@@ -59,29 +59,10 @@ interface SidebarItem {
   isNew?: boolean
 }
 
-export function AppSidebar() {
+// Accept dashboardData as a prop
+export function AppSidebar({ dashboardData = null }: { dashboardData?: DashboardData | null }) {
   const { user, isAuthenticated } = useAuthStore()
   const pathname = usePathname()
-  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-
-  useEffect(() => {
-    const fetchDashboardData = async () => {
-      if (!user) return
-      try {
-        const response = await apiClient.getDashboardData()
-        if (response.success) {
-          setDashboardData(response.data)
-        }
-      } catch (error) {
-        console.error("Failed to fetch dashboard data:", error)
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    fetchDashboardData()
-  }, [user])
 
   // Function to check if a menu item is active
   const isActive = (url: string) => {
@@ -255,6 +236,7 @@ export function AppSidebar() {
                     <SidebarMenuButton 
                       asChild 
                       className={active ? "bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-r-2 border-blue-500" : ""}
+                      tooltip={item.description}
                     >
                       <Link href={item.url} className="flex items-center space-x-3">
                         <item.icon className="w-4 h-4" />
@@ -267,11 +249,7 @@ export function AppSidebar() {
                               </Badge>
                             )}
                           </div>
-                          {item.description && (
-                            <div className="text-xs text-muted-foreground truncate">
-                              {item.description}
-                            </div>
-                          )}
+                          {/* Removed description from visible sidebar */}
                           {item.progress !== undefined && (
                             <Progress value={item.progress} className="h-1 mt-1" />
                           )}
@@ -331,16 +309,12 @@ export function AppSidebar() {
               <SidebarMenu>
                 {quickActions.map((item) => (
                   <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild>
+                    <SidebarMenuButton asChild tooltip={item.description}>
                       <Link href={item.url} className="flex items-center space-x-3">
                         <item.icon className="w-4 h-4" />
                         <div className="flex-1 min-w-0">
                           <div className="text-sm font-medium">{item.title}</div>
-                          {item.description && (
-                            <div className="text-xs text-muted-foreground truncate">
-                              {item.description}
-                            </div>
-                          )}
+                          {/* Removed description from visible sidebar */}
                           {item.progress !== undefined && (
                             <Progress value={item.progress} className="h-1 mt-1" />
                           )}

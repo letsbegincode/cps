@@ -8,6 +8,7 @@ import { Progress } from "@/components/ui/progress"
 import { CheckCircle, Clock, Code, BookOpen, Play, ArrowLeft, AlertTriangle } from "lucide-react"
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
+import Quiz, { QuizQuestion } from "@/components/Quiz";
 
 interface Question {
   id: number
@@ -133,6 +134,22 @@ def maxDepth(root):
       },
     ],
   })
+
+  // Split MCQ and coding questions
+  const mcqQuestions: QuizQuestion[] = mockTest.questions
+    .filter((q) => q.type === "mcq")
+    .map((q) => ({
+      id: q.id,
+      question: q.question,
+      options: q.options || [],
+      correct: q.correct,
+      explanation: q.explanation,
+    }));
+  const codingQuestions = mockTest.questions.filter((q) => q.type === "coding");
+
+  const [mcqCompleted, setMcqCompleted] = useState(false);
+  const [mcqScore, setMcqScore] = useState<number | null>(null);
+  const [mcqPassed, setMcqPassed] = useState<boolean | null>(null);
 
   const [currentQuestion, setCurrentQuestion] = useState(0)
   const [answers, setAnswers] = useState<{ [key: number]: any }>({})
@@ -315,6 +332,26 @@ def maxDepth(root):
         </Card>
       </div>
     )
+  }
+
+  // Show MCQ quiz first, then coding questions
+  if (!mcqCompleted && mcqQuestions.length > 0) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-6">
+        <Quiz
+          title="Mock Test - MCQ Section"
+          questions={mcqQuestions}
+          testType="mock_test"
+          passingScore={mockTest.passingScore}
+          onSubmit={(score, passed) => {
+            setMcqCompleted(true);
+            setMcqScore(score);
+            setMcqPassed(passed);
+          }}
+          allowRetake={true}
+        />
+      </div>
+    );
   }
 
   const currentQ = mockTest.questions[currentQuestion]
