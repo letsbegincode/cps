@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, use as usePromise } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
@@ -24,7 +24,8 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 
-export default function ArrayBasicsPage({ params }: { params: { id: string } }) {
+export default function ArrayBasicsPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = usePromise(params);
   const [activeTab, setActiveTab] = useState("videos")
   const [currentVideo, setCurrentVideo] = useState(0)
   const [currentArticle, setCurrentArticle] = useState(0)
@@ -251,7 +252,7 @@ Output: 15`,
         {/* Header */}
         <div className="mb-6">
           <div className="flex items-center space-x-2 text-sm text-muted-foreground mb-2">
-            <Link href={`/courses/${params.id}`} className="hover:text-blue-600 dark:hover:text-blue-400">
+            <Link href={`/courses/${id}`} className="hover:text-blue-600 dark:hover:text-blue-400">
               Data Structures & Algorithms
             </Link>
             <span>•</span>
@@ -272,9 +273,8 @@ Output: 15`,
                 Mastery: {conceptData.masteryScore.toFixed(1)}/10
               </Badge>
               <Button variant="outline" asChild>
-                <Link href={`/courses/${params.id}`}>
-                  <ArrowLeft className="w-4 h-4 mr-2" />
-                  Back to Course
+                <Link href={`/courses/${id}`} legacyBehavior>
+                  <span className="flex items-center"><ArrowLeft className="w-4 h-4 mr-2" />Back to Course</span>
                 </Link>
               </Button>
             </div>
@@ -689,5 +689,5 @@ Output: 15`,
         </Tabs>
       </div>
     </div>
-  )
+  );
 }

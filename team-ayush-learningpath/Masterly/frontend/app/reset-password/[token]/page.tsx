@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { BookOpen, Lock, Eye, EyeOff, AlertCircle, CheckCircle, X } from "lucide-react"
+import { Logo } from "@/components/ui/logo"
 import Link from "next/link"
 import { useRouter, useParams } from "next/navigation" // <-- Import useParams
 import { ThemeToggle } from "@/components/theme-toggle"
@@ -100,13 +101,8 @@ export default function ResetPasswordPage() {
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center p-4">
         <div className="w-full max-w-md">
           <div className="text-center mb-8">
-            <div className="flex items-center justify-center space-x-2 mb-4">
-              <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
-                <BookOpen className="w-6 h-6 text-white" />
-              </div>
-              <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                Masterly
-              </span>
+            <div className="flex items-center justify-center mb-4">
+              <Logo size="lg" showTagline={true} />
             </div>
           </div>
 
@@ -165,13 +161,8 @@ export default function ResetPasswordPage() {
       <div className="w-full max-w-md">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="flex items-center justify-center space-x-2 mb-4">
-            <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
-              <BookOpen className="w-6 h-6 text-white" />
-            </div>
-            <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              Masterly
-            </span>
+          <div className="flex items-center justify-center mb-4">
+            <Logo size="lg" showTagline={true} />
           </div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Set new password</h1>
           <p className="text-gray-600 dark:text-gray-400">Choose a strong password to secure your account</p>
