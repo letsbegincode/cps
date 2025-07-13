@@ -141,34 +141,15 @@ npm run dev
 NEXT_PUBLIC_API_URL=http://localhost:5000
 
 # Backend (.env)
-MONGODB_URI=your_mongodb_connection_string
-JWT_SECRET=your_jwt_secret
-OPENAI_API_KEY=your_openai_api_key
-GOOGLE_CLIENT_ID=your_google_oauth_client_id
-```
-
-### **Backend Environment Variables**
-
-Add the following to your `Masterly/backend/.env` file:
-
-```env
-# The port for your local Express server
-PORT=5000
-
-# The connection string to your cloud database on MongoDB Atlas
-MONGO_URI=
-# Your secret key for signing tokens
+PORT=5000   //The port for your local Express server
+MONGO_URI=  // The connection string to your cloud database on MongoDB Atlas
 JWT_SECRET=your_super_secret_and_long_string_for_jwt
+CLIENT_URL=http://localhost:3000
 
 # --- NEW OAUTH 2.0 VARIABLES ---
-# Get these from your Google Cloud Platform project
 GOOGLE_CLIENT_ID=
 GOOGLE_CLIENT_SECRET=
-# The full URL to your backend's callback route
 GOOGLE_CALLBACK_UR=http://localhost:5000/api/auth/google/callback
-
-# The URL of your frontend application for redirects
-CLIENT_URL=http://localhost:3000
 
 # --- EMAIL VARIABLES ---
 # These are the credentials from your Mailtrap Sandbox inbox
@@ -176,9 +157,8 @@ EMAIL_HOST=
 EMAIL_PORT=
 EMAIL_USER=
 EMAIL_PASSWORD=
-
-# This can be any "from" address you want for testing
 EMAIL_FROM=
+
 ```
 
 ---
@@ -253,15 +233,6 @@ EMAIL_FROM=
 - Database connection pooling
 
 ---
-## 📱 Mobile Responsiveness
-
-- **Responsive Design** across all devices
-- **Touch-friendly** interface elements
-- **Progressive Web App** capabilities
-- **Offline Support** for cached content
-- **Mobile-optimized** quiz interface
-
----
 ## 👥 **Team Details**
 
 This project was developed as part of our internship program. We worked collaboratively as a team to build this comprehensive learning platform:
@@ -282,46 +253,6 @@ This project was developed as part of our internship program. We worked collabor
 - 🔐 **Security Features** - Built robust authentication and authorization system
 - 📱 **Responsive Design** - Ensured seamless experience across all devices
 - 🚀 **Deployment** - Successfully deployed on Vercel and Render platforms
-
----
-## 🔮 Future Roadmap
-
-### **Phase 1 (Completed by Our Team)**
-- ✅ Core learning platform
-- ✅ Quiz and assessment system
-- ✅ Progress tracking
-- ✅ Basic AI recommendations
-- ✅ Coding platform with multi-language support
-- ✅ Comprehensive dashboard and analytics
-- ✅ Anti-cheating measures in quiz system
-- ✅ Responsive design and mobile optimization
-
-### **Phase 2 (Planned)**
-- 🤖 **Advanced AI Tutor** with conversational interface
-- 🎥 **Video Conferencing** for live sessions
-- 📱 **Mobile App** development
-- 🎮 **Gamification** with more achievements
-- 💰 **Payment Integration** with Stripe
-
-### **Phase 3 (Future)**
-- 🌐 **Multi-language Support**
-- 🎓 **Certification System**
-- 🤝 **Enterprise Features**
-- 📊 **Advanced Analytics Dashboard**
-- 🔗 **API for Third-party Integrations**
-
----
-## 📄 License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
----
-## 📞 Support
-
-- 📧 **Email**: support@masterly.com
-- 💬 **Discord**: Join our community
-- 📖 **Documentation**: Comprehensive guides
-- 🐛 **Issues**: GitHub issue tracker
 
 ---
 ## Deployment links
