@@ -50,13 +50,6 @@ Masterly is a modern, fast, and interactive learning platform that offers person
 - 🔍 **Intelligent Search** across courses and concepts
 - 📈 **Predictive Analytics** for learning outcomes
 
-### 👥 **Social & Collaboration**
-- 👥 **Peer Learning** and study groups
-- 💬 **Discussion Forums** for each course
-- 🤝 **Mentor-Mentee Matching**
-- 📢 **Community Challenges** and competitions
-- 🏆 **Leaderboards** and rankings
-
 ---
 ## 🛠️ Tech Stack
 
@@ -148,10 +141,24 @@ npm run dev
 NEXT_PUBLIC_API_URL=http://localhost:5000
 
 # Backend (.env)
-MONGODB_URI=your_mongodb_connection_string
-JWT_SECRET=your_jwt_secret
-OPENAI_API_KEY=your_openai_api_key
-GOOGLE_CLIENT_ID=your_google_oauth_client_id
+PORT=5000   //The port for your local Express server
+MONGO_URI=  // The connection string to your cloud database on MongoDB Atlas
+JWT_SECRET=your_super_secret_and_long_string_for_jwt
+CLIENT_URL=http://localhost:3000
+
+# --- NEW OAUTH 2.0 VARIABLES ---
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+GOOGLE_CALLBACK_UR=http://localhost:5000/api/auth/google/callback
+
+# --- EMAIL VARIABLES ---
+# These are the credentials from your Mailtrap Sandbox inbox
+EMAIL_HOST=
+EMAIL_PORT=
+EMAIL_USER=
+EMAIL_PASSWORD=
+EMAIL_FROM=
+
 ```
 
 ---
@@ -226,23 +233,12 @@ GOOGLE_CLIENT_ID=your_google_oauth_client_id
 - Database connection pooling
 
 ---
-## 📱 Mobile Responsiveness
-
-- **Responsive Design** across all devices
-- **Touch-friendly** interface elements
-- **Progressive Web App** capabilities
-- **Offline Support** for cached content
-- **Mobile-optimized** quiz interface
-
----
-## 👥 **Team Members**
+## 👥 **Team Details**
 
 This project was developed as part of our internship program. We worked collaboratively as a team to build this comprehensive learning platform:
 
-### **Team Lead**
-- **Ayush Singh** - ayushsinghtechcs@gmail.com
-
-### **Development Team**
+### **Team Members**
+- **Ayush Singh** - ayushsinghtechcs@gmail.com  (Team Lead)
 - **Abhinav Ranjan Sulabh** - abhinavranjan.dev@gmail.com
 - **Ankit Pandey** - ankit211275@gmail.com
 - **Titus George** - titusgeorge2004@gmail.com
@@ -257,46 +253,6 @@ This project was developed as part of our internship program. We worked collabor
 - 🔐 **Security Features** - Built robust authentication and authorization system
 - 📱 **Responsive Design** - Ensured seamless experience across all devices
 - 🚀 **Deployment** - Successfully deployed on Vercel and Render platforms
-
----
-## 🔮 Future Roadmap
-
-### **Phase 1 (Completed by Our Team)**
-- ✅ Core learning platform
-- ✅ Quiz and assessment system
-- ✅ Progress tracking
-- ✅ Basic AI recommendations
-- ✅ Coding platform with multi-language support
-- ✅ Comprehensive dashboard and analytics
-- ✅ Anti-cheating measures in quiz system
-- ✅ Responsive design and mobile optimization
-
-### **Phase 2 (Planned)**
-- 🤖 **Advanced AI Tutor** with conversational interface
-- 🎥 **Video Conferencing** for live sessions
-- 📱 **Mobile App** development
-- 🎮 **Gamification** with more achievements
-- 💰 **Payment Integration** with Stripe
-
-### **Phase 3 (Future)**
-- 🌐 **Multi-language Support**
-- 🎓 **Certification System**
-- 🤝 **Enterprise Features**
-- 📊 **Advanced Analytics Dashboard**
-- 🔗 **API for Third-party Integrations**
-
----
-## 📄 License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
----
-## 📞 Support
-
-- 📧 **Email**: support@masterly.com
-- 💬 **Discord**: Join our community
-- 📖 **Documentation**: Comprehensive guides
-- 🐛 **Issues**: GitHub issue tracker
 
 ---
 ## Deployment links
