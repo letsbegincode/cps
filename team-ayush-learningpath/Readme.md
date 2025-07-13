@@ -50,13 +50,6 @@ Masterly is a modern, fast, and interactive learning platform that offers person
 - 🔍 **Intelligent Search** across courses and concepts
 - 📈 **Predictive Analytics** for learning outcomes
 
-### 👥 **Social & Collaboration**
-- 👥 **Peer Learning** and study groups
-- 💬 **Discussion Forums** for each course
-- 🤝 **Mentor-Mentee Matching**
-- 📢 **Community Challenges** and competitions
-- 🏆 **Leaderboards** and rankings
-
 ---
 ## 🛠️ Tech Stack
 
@@ -152,6 +145,40 @@ MONGODB_URI=your_mongodb_connection_string
 JWT_SECRET=your_jwt_secret
 OPENAI_API_KEY=your_openai_api_key
 GOOGLE_CLIENT_ID=your_google_oauth_client_id
+```
+
+### **Backend Environment Variables**
+
+Add the following to your `Masterly/backend/.env` file:
+
+```env
+# The port for your local Express server
+PORT=5000
+
+# The connection string to your cloud database on MongoDB Atlas
+MONGO_URI=
+# Your secret key for signing tokens
+JWT_SECRET=your_super_secret_and_long_string_for_jwt
+
+# --- NEW OAUTH 2.0 VARIABLES ---
+# Get these from your Google Cloud Platform project
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+# The full URL to your backend's callback route
+GOOGLE_CALLBACK_UR=http://localhost:5000/api/auth/google/callback
+
+# The URL of your frontend application for redirects
+CLIENT_URL=http://localhost:3000
+
+# --- EMAIL VARIABLES ---
+# These are the credentials from your Mailtrap Sandbox inbox
+EMAIL_HOST=
+EMAIL_PORT=
+EMAIL_USER=
+EMAIL_PASSWORD=
+
+# This can be any "from" address you want for testing
+EMAIL_FROM=
 ```
 
 ---
