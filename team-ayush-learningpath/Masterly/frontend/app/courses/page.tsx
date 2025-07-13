@@ -1,454 +1,613 @@
 "use client"
 
-import { useState } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { useState, useEffect } from "react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Progress } from "@/components/ui/progress"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import {
-  Search,
-  Filter,
-  Star,
-  Clock,
-  Users,
-  BookOpen,
-  Play,
-  Code,
-  Database,
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { 
+  Clock, 
+  Users, 
+  Star, 
+  Search, 
+  Filter, 
+  BookOpen, 
+  Play, 
+  CheckCircle, 
+  TrendingUp,
+  Award,
+  Zap,
+  Target,
   Brain,
-  Palette,
-  Globe,
-  Smartphone,
-  X,
+  Code,
+  Video,
+  FileText,
+  Heart,
+  Share2,
+  Eye,
+  Calendar,
+  Clock3,
+  GraduationCap,
+  Rocket,
+  Sparkles
 } from "lucide-react"
-import Image from "next/image"
 import Link from "next/link"
+import { apiClient } from "@/lib/api"
+import { useToast } from "@/hooks/use-toast"
+import { useAuthStore } from "@/lib/auth"
+import type { Course } from "@/lib/types/courses"
 
-export default function Courses() {
-  const [searchQuery, setSearchQuery] = useState("")
-  const [selectedCategory, setSelectedCategory] = useState("All Courses")
+interface CourseWithProgress extends Course {
+  userProgress?: {
+    progress: number
+    status: string
+    lastAccessedAt?: string
+  }
+}
+
+export default function CoursesPage() {
+  const [courses, setCourses] = useState<CourseWithProgress[]>([])
+  const [filteredCourses, setFilteredCourses] = useState<CourseWithProgress[]>([])
+  const [featuredCourses, setFeaturedCourses] = useState<CourseWithProgress[]>([])
+  const [recommendedCourses, setRecommendedCourses] = useState<CourseWithProgress[]>([])
+  const [loading, setLoading] = useState(true)
+  const [searchTerm, setSearchTerm] = useState("")
+  const [selectedCategory, setSelectedCategory] = useState("all")
   const [selectedLevel, setSelectedLevel] = useState("all")
   const [selectedSort, setSelectedSort] = useState("popular")
-  const [showFilters, setShowFilters] = useState(false)
+  const [enrollingCourse, setEnrollingCourse] = useState<string | null>(null)
+  const [activeTab, setActiveTab] = useState("all")
+  const { toast } = useToast()
+  const { user, isAuthenticated } = useAuthStore()
 
-  const categories = [
-    { name: "All Courses", count: 150, active: true },
-    { name: "Programming", count: 45, icon: Code },
-    { name: "Data Science", count: 32, icon: Database },
-    { name: "AI/ML", count: 28, icon: Brain },
-    { name: "Design", count: 25, icon: Palette },
-    { name: "Web Dev", count: 38, icon: Globe },
-    { name: "Mobile", count: 22, icon: Smartphone },
-  ]
+  useEffect(() => {
+    fetchCourses()
+  }, [])
 
-  const allCourses = [
-    {
-      id: 1,
-      title: "Complete Data Structures & Algorithms",
-      instructor: "Sarah Chen",
-      description: "Master DSA with 300+ problems and detailed explanations",
-      image: "/placeholder.svg?height=200&width=300",
-      rating: 4.9,
-      students: "45K+",
-      duration: "12 weeks",
-      level: "Beginner to Advanced",
-      price: "$99",
-      concepts: 85,
-      quizzes: 25,
-      projects: 8,
-      enrolled: true,
-      progress: 65,
-      category: "Programming",
-      skills: ["Arrays", "Trees", "Graphs", "Dynamic Programming"],
-    },
-    {
-      id: 2,
-      title: "System Design Masterclass",
-      instructor: "Mike Rodriguez",
-      description: "Learn to design scalable systems like Netflix, Uber",
-      image: "/placeholder.svg?height=200&width=300",
-      rating: 4.8,
-      students: "32K+",
-      duration: "8 weeks",
-      level: "Intermediate",
-      price: "$129",
-      concepts: 45,
-      quizzes: 15,
-      projects: 6,
-      enrolled: true,
-      progress: 30,
-      category: "Programming",
-      skills: ["Load Balancing", "Databases", "Caching", "Microservices"],
-    },
-    {
-      id: 3,
-      title: "Machine Learning A-Z",
-      instructor: "Dr. Emily Watson",
-      description: "From linear regression to deep neural networks",
-      image: "/placeholder.svg?height=200&width=300",
-      rating: 4.7,
-      students: "28K+",
-      duration: "16 weeks",
-      level: "Intermediate",
-      price: "$149",
-      concepts: 95,
-      quizzes: 30,
-      projects: 12,
-      enrolled: false,
-      progress: 0,
-      category: "AI/ML",
-      skills: ["Regression", "Classification", "Neural Networks", "NLP"],
-    },
-    {
-      id: 4,
-      title: "React & Next.js Complete Guide",
-      instructor: "Ankit Thompson",
-      description: "Build modern web applications with React ecosystem",
-      image: "/placeholder.svg?height=200&width=300",
-      rating: 4.6,
-      students: "38K+",
-      duration: "10 weeks",
-      level: "Beginner",
-      price: "$89",
-      concepts: 65,
-      quizzes: 20,
-      projects: 10,
-      enrolled: false,
-      progress: 0,
-      category: "Web Dev",
-      skills: ["React", "Next.js", "TypeScript", "Tailwind CSS"],
-    },
-    {
-      id: 5,
-      title: "Mobile App Development with Flutter",
-      instructor: "Lisa Park",
-      description: "Create beautiful cross-platform mobile applications",
-      image: "/placeholder.svg?height=200&width=300",
-      rating: 4.5,
-      students: "22K+",
-      duration: "12 weeks",
-      level: "Intermediate",
-      price: "$119",
-      concepts: 75,
-      quizzes: 22,
-      projects: 8,
-      enrolled: false,
-      progress: 0,
-      category: "Mobile",
-      skills: ["Flutter", "Dart", "Firebase", "State Management"],
-    },
-    {
-      id: 6,
-      title: "UI/UX Design Fundamentals",
-      instructor: "David Kim",
-      description: "Learn design principles and create stunning interfaces",
-      image: "/placeholder.svg?height=200&width=300",
-      rating: 4.8,
-      students: "25K+",
-      duration: "8 weeks",
-      level: "Beginner",
-      price: "$79",
-      concepts: 45,
-      quizzes: 15,
-      projects: 6,
-      enrolled: false,
-      progress: 0,
-      category: "Design",
-      skills: ["Figma", "Design Systems", "Prototyping", "User Research"],
-    },
-  ]
+  useEffect(() => {
+    filterAndSortCourses()
+  }, [courses, searchTerm, selectedCategory, selectedLevel, selectedSort, activeTab])
 
-  // Filter courses based on search and filters
-  const filteredCourses = allCourses.filter((course) => {
-    const matchesSearch =
-      course.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      course.instructor.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      course.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      course.skills.some((skill) => skill.toLowerCase().includes(searchQuery.toLowerCase()))
+  const fetchCourses = async () => {
+    try {
+      const backendCourses = await apiClient.getCourses()
 
-    const matchesCategory = selectedCategory === "All Courses" || course.category === selectedCategory
+      // Only mark as enrolled if userEnrollment.enrolled is explicitly true
+      const formattedCourses = backendCourses.map((course) => ({
+        ...course,
+        isEnrolled: course.userEnrollment?.enrolled === true,
+      }))
 
-    const matchesLevel =
-      selectedLevel === "all" ||
-      (selectedLevel === "beginner" && course.level.toLowerCase().includes("beginner")) ||
-      (selectedLevel === "intermediate" && course.level.toLowerCase().includes("intermediate")) ||
-      (selectedLevel === "advanced" && course.level.toLowerCase().includes("advanced"))
+      setCourses(formattedCourses)
+      
+      // Set featured courses (top rated and popular)
+      const featured = formattedCourses
+        .filter(course => course.stats?.averageRating >= 4.5 || course.stats?.enrollments >= 100)
+        .sort((a, b) => (b.stats?.averageRating || 0) - (a.stats?.averageRating || 0))
+        .slice(0, 3)
+      setFeaturedCourses(featured)
 
-    return matchesSearch && matchesCategory && matchesLevel
-  })
-
-  // Sort courses
-  const sortedCourses = [...filteredCourses].sort((a, b) => {
-    switch (selectedSort) {
-      case "rating":
-        return b.rating - a.rating
-      case "students":
-        return Number.parseInt(b.students.replace(/\D/g, "")) - Number.parseInt(a.students.replace(/\D/g, ""))
-      case "price-low":
-        return Number.parseInt(a.price.replace(/\D/g, "")) - Number.parseInt(b.price.replace(/\D/g, ""))
-      case "price-high":
-        return Number.parseInt(b.price.replace(/\D/g, "")) - Number.parseInt(a.price.replace(/\D/g, ""))
-      case "newest":
-        return b.id - a.id
-      default: // popular
-        return Number.parseInt(b.students.replace(/\D/g, "")) - Number.parseInt(a.students.replace(/\D/g, ""))
+      // Set recommended courses (based on user preferences if authenticated)
+      if (isAuthenticated && user) {
+        const recommended = formattedCourses
+          .filter(course => !course.isEnrolled) // Only show non-enrolled courses
+          .sort((a, b) => (b.stats?.enrollments || 0) - (a.stats?.enrollments || 0))
+          .slice(0, 6)
+        setRecommendedCourses(recommended)
+      } else {
+        setRecommendedCourses(formattedCourses.slice(0, 6))
+      }
+    } catch (error) {
+      console.error("Error fetching courses:", error)
+      toast({
+        title: "Error",
+        description: "Failed to load courses. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(false)
     }
-  })
-
-  const clearFilters = () => {
-    setSearchQuery("")
-    setSelectedCategory("All Courses")
-    setSelectedLevel("all")
-    setSelectedSort("popular")
   }
 
-  const hasActiveFilters =
-    searchQuery || selectedCategory !== "All Courses" || selectedLevel !== "all" || selectedSort !== "popular"
+  const filterAndSortCourses = () => {
+    let filtered = courses
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-      {/* Header */}
-      <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-b px-6 py-6">
-        <div className="max-w-7xl mx-auto">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">Explore Courses</h1>
-          <p className="text-gray-600 dark:text-gray-300 mb-6">Discover courses tailored to your learning goals</p>
+    // Filter by tab
+    if (activeTab === "enrolled") {
+      filtered = filtered.filter(course => course.isEnrolled)
+    } else if (activeTab === "featured") {
+      filtered = featuredCourses
+    } else if (activeTab === "recommended") {
+      filtered = recommendedCourses
+    }
 
-          {/* Search and Filter */}
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <Input
-                placeholder="Search courses, instructors, or topics..."
-                className="pl-10"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-            <Button variant="outline" className="flex items-center" onClick={() => setShowFilters(!showFilters)}>
-              <Filter className="w-4 h-4 mr-2" />
-              Filters
-              {hasActiveFilters && <div className="w-2 h-2 bg-blue-500 rounded-full ml-2" />}
-            </Button>
-          </div>
+    // Filter by search
+    if (searchTerm) {
+      filtered = filtered.filter(
+        (course) =>
+          course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          course.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          course.instructor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          course.tags.some((tag) => tag.toLowerCase().includes(searchTerm.toLowerCase())),
+      )
+    }
 
-          {/* Advanced Filters */}
-          {showFilters && (
-            <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div>
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">Level</label>
-                  <Select value={selectedLevel} onValueChange={setSelectedLevel}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Levels</SelectItem>
-                      <SelectItem value="beginner">Beginner</SelectItem>
-                      <SelectItem value="intermediate">Intermediate</SelectItem>
-                      <SelectItem value="advanced">Advanced</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+    // Filter by category
+    if (selectedCategory !== "all") {
+      filtered = filtered.filter((course) => course.category === selectedCategory)
+    }
 
-                <div>
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">Sort By</label>
-                  <Select value={selectedSort} onValueChange={setSelectedSort}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="popular">Most Popular</SelectItem>
-                      <SelectItem value="rating">Highest Rated</SelectItem>
-                      <SelectItem value="newest">Newest</SelectItem>
-                      <SelectItem value="price-low">Price: Low to High</SelectItem>
-                      <SelectItem value="price-high">Price: High to Low</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+    // Filter by level
+    if (selectedLevel !== "all") {
+      filtered = filtered.filter((course) => course.level === selectedLevel)
+    }
 
-                <div className="md:col-span-2 flex items-end">
-                  {hasActiveFilters && (
-                    <Button variant="outline" onClick={clearFilters} className="flex items-center">
-                      <X className="w-4 h-4 mr-2" />
-                      Clear Filters
-                    </Button>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
+    // Sort courses
+    switch (selectedSort) {
+      case "popular":
+        filtered.sort((a, b) => (b.stats?.enrollments || 0) - (a.stats?.enrollments || 0))
+        break
+      case "rating":
+        filtered.sort((a, b) => (b.stats?.averageRating || 0) - (a.stats?.averageRating || 0))
+        break
+      case "newest":
+        filtered.sort((a, b) => new Date(b.updatedAt || 0).getTime() - new Date(a.updatedAt || 0).getTime())
+        break
+      case "price":
+        filtered.sort((a, b) => (a.pricing?.amount || 0) - (b.pricing?.amount || 0))
+        break
+    }
 
-          {/* Results Count */}
-          <div className="mt-4 text-sm text-gray-600 dark:text-gray-300">
-            Showing {sortedCourses.length} of {allCourses.length} courses
-            {searchQuery && ` for "${searchQuery}"`}
-          </div>
-        </div>
-      </div>
+    setFilteredCourses(filtered)
+  }
 
-      <div className="max-w-7xl mx-auto p-6">
-        <div className="grid lg:grid-cols-4 gap-6">
-          {/* Sidebar Categories */}
-          <div className="lg:col-span-1">
-            <Card className="dark:bg-gray-800/80 dark:border-gray-700">
-              <CardHeader>
-                <CardTitle className="text-lg">Categories</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                {categories.map((category, index) => (
-                  <button
-                    key={index}
-                    onClick={() => setSelectedCategory(category.name)}
-                    className={`w-full flex items-center justify-between p-3 rounded-lg text-left transition-colors ${
-                      selectedCategory === category.name
-                        ? "bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800"
-                        : "hover:bg-gray-50 dark:hover:bg-gray-700"
-                    }`}
-                  >
-                    <div className="flex items-center space-x-3">
-                      {category.icon && <category.icon className="w-4 h-4" />}
-                      <span className="font-medium">{category.name}</span>
-                    </div>
-                    <Badge variant="secondary" className="text-xs">
-                      {category.count}
-                    </Badge>
-                  </button>
-                ))}
+  const handleEnroll = async (courseId: string) => {
+    if (!isAuthenticated) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to enroll in courses.",
+        variant: "destructive",
+      })
+      // Redirect to login with current page as redirect
+      if (typeof window !== 'undefined') {
+        window.location.href = `/login?redirect=${encodeURIComponent(window.location.pathname)}`
+      }
+      return
+    }
+
+    try {
+      setEnrollingCourse(courseId)
+      await apiClient.enrollInCourse(courseId)
+
+      // Update the course in the local state
+      setCourses((prevCourses) =>
+        prevCourses.map((course) =>
+          course._id === courseId
+            ? {
+              ...course,
+              isEnrolled: true,
+              userProgress: { progress: 0, status: "enrolled" },
+              stats: {
+                ...course.stats,
+                enrollments: (course.stats?.enrollments || 0) + 1
+              }
+            }
+            : course
+        )
+      )
+
+      toast({
+        title: "Success!",
+        description: "You have successfully enrolled in the course.",
+      })
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to enroll in course. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setEnrollingCourse(null)
+    }
+  }
+
+  const categories = [...new Set(courses.map((course) => course.category))]
+  const levels = [...new Set(courses.map((course) => course.level))]
+
+  const getLevelIcon = (level: string) => {
+    switch (level.toLowerCase()) {
+      case "beginner": return Target
+      case "intermediate": return Brain
+      case "advanced": return Rocket
+      default: return BookOpen
+    }
+  }
+
+  const getCategoryIcon = (category: string) => {
+    switch (category.toLowerCase()) {
+      case "data structures": return Code
+      case "algorithms": return Brain
+      case "python": return Code
+      case "web development": return Video
+      case "machine learning": return Sparkles
+      default: return BookOpen
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[...Array(6)].map((_, i) => (
+            <Card key={i} className="animate-pulse">
+              <div className="h-48 bg-gray-200 rounded-t-lg"></div>
+              <CardContent className="p-6">
+                <div className="h-4 bg-gray-200 rounded mb-2"></div>
+                <div className="h-3 bg-gray-200 rounded mb-4"></div>
+                <div className="h-8 bg-gray-200 rounded"></div>
               </CardContent>
             </Card>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="container mx-auto px-4 py-8">
+      {/* Header */}
+      <div className="mb-8">
+        <div className="flex items-center space-x-2 mb-2">
+          <BookOpen className="w-8 h-8 text-blue-600" />
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Courses</h1>
+        </div>
+        <p className="text-gray-600 dark:text-gray-300 text-lg">
+          Master new skills with our comprehensive courses designed by industry experts
+        </p>
+      </div>
+
+      {/* Featured Courses Section */}
+      {featuredCourses.length > 0 && (
+        <div className="mb-12">
+          <div className="flex items-center space-x-2 mb-6">
+            <Award className="w-6 h-6 text-yellow-500" />
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Featured Courses</h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {featuredCourses.map((course) => (
+              <FeaturedCourseCard 
+                key={course._id} 
+                course={course} 
+                onEnroll={handleEnroll}
+                enrollingCourse={enrollingCourse}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-8">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="all">All Courses</TabsTrigger>
+          <TabsTrigger value="enrolled">My Courses</TabsTrigger>
+          <TabsTrigger value="featured">Featured</TabsTrigger>
+          <TabsTrigger value="recommended">Recommended</TabsTrigger>
+        </TabsList>
+      </Tabs>
+
+      {/* Filters */}
+      <div className="mb-8 space-y-4 md:space-y-0 md:flex md:items-center md:space-x-4">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+          <Input
+            placeholder="Search courses, instructors, or topics..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+
+        <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+          <SelectTrigger className="w-full md:w-48">
+            <Filter className="w-4 h-4 mr-2" />
+            <SelectValue placeholder="Category" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Categories</SelectItem>
+            {categories.map((category) => (
+              <SelectItem key={category} value={category}>
+                {category}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Select value={selectedLevel} onValueChange={setSelectedLevel}>
+          <SelectTrigger className="w-full md:w-48">
+            <SelectValue placeholder="Level" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Levels</SelectItem>
+            {levels.map((level) => (
+              <SelectItem key={level} value={level}>
+                {level}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Select value={selectedSort} onValueChange={setSelectedSort}>
+          <SelectTrigger className="w-full md:w-48">
+            <SelectValue placeholder="Sort by" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="popular">Most Popular</SelectItem>
+            <SelectItem value="rating">Highest Rated</SelectItem>
+            <SelectItem value="newest">Newest</SelectItem>
+            <SelectItem value="price">Price: Low to High</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Course Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {filteredCourses.map((course) => (
+          <CourseCard 
+            key={course._id} 
+            course={course} 
+            onEnroll={handleEnroll}
+            enrollingCourse={enrollingCourse}
+            getLevelIcon={getLevelIcon}
+            getCategoryIcon={getCategoryIcon}
+          />
+        ))}
+      </div>
+
+      {filteredCourses.length === 0 && !loading && (
+        <div className="text-center py-12">
+          <BookOpen className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">No courses found</h3>
+          <p className="text-gray-600 dark:text-gray-300 mb-4">
+            Try adjusting your search criteria or browse all available courses.
+          </p>
+          <Button onClick={() => {
+            setSearchTerm("")
+            setSelectedCategory("all")
+            setSelectedLevel("all")
+            setActiveTab("all")
+          }}>
+            Clear Filters
+          </Button>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// Featured Course Card Component
+function FeaturedCourseCard({ 
+  course, 
+  onEnroll, 
+  enrollingCourse 
+}: { 
+  course: CourseWithProgress
+  onEnroll: (courseId: string) => void
+  enrollingCourse: string | null
+}) {
+  return (
+    <Card className="group hover:shadow-xl transition-all duration-300 dark:bg-gray-800/80 dark:border-gray-700 border-2 border-yellow-200 dark:border-yellow-800">
+      <div className="relative">
+        <img
+          src={course.thumbnail || "/placeholder.svg"}
+          alt={course.title}
+          className="w-full h-48 object-cover rounded-t-lg"
+        />
+        <div className="absolute top-2 left-2">
+          <Badge className="bg-yellow-500 text-white">
+            <Award className="w-3 h-3 mr-1" />
+            Featured
+          </Badge>
+        </div>
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-t-lg" />
+      </div>
+
+      <CardContent className="p-6">
+        <div className="mb-3">
+          <div className="flex items-center justify-between mb-2">
+            <Badge variant="secondary" className="text-xs">
+              {course.category}
+            </Badge>
+            <div className="flex items-center space-x-1 text-sm text-yellow-500">
+              <Star className="w-4 h-4 fill-current" />
+              <span>{course.stats?.averageRating?.toFixed(1) || "N/A"}</span>
+            </div>
+          </div>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2 line-clamp-2">
+            {course.title}
+          </h3>
+          <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-2 mb-3">
+            {course.description}
+          </p>
+        </div>
+
+        <div className="space-y-3">
+          <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
+            <span className="flex items-center space-x-1">
+              <BookOpen className="w-4 h-4" />
+              <span>{course.instructor.name}</span>
+            </span>
+            <span className="flex items-center space-x-1">
+              <Clock className="w-4 h-4" />
+              <span>{course.stats?.totalDuration || "N/A"}</span>
+            </span>
           </div>
 
-          {/* Courses Grid */}
-          <div className="lg:col-span-3">
-            {sortedCourses.length === 0 ? (
-              <Card className="dark:bg-gray-800/80 dark:border-gray-700">
-                <CardContent className="text-center py-12">
-                  <Search className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No courses found</h3>
-                  <p className="text-gray-600 dark:text-gray-300 mb-4">
-                    Try adjusting your search or filters to find what you're looking for.
-                  </p>
-                  <Button onClick={clearFilters}>Clear all filters</Button>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="grid md:grid-cols-2 gap-6">
-                {sortedCourses.map((course) => (
-                  <Card
-                    key={course.id}
-                    className="overflow-hidden hover:shadow-lg transition-all duration-300 dark:bg-gray-800/80 dark:border-gray-700"
-                  >
-                    <div className="relative">
-                      <Image
-                        src={course.image || "/placeholder.svg"}
-                        alt={course.title}
-                        width={300}
-                        height={200}
-                        className="w-full h-48 object-cover"
-                      />
-                      <Badge className="absolute top-3 left-3 bg-white/90 text-gray-700">{course.level}</Badge>
-                      {course.enrolled && (
-                        <Badge className="absolute top-3 right-3 bg-green-500 text-white">Enrolled</Badge>
-                      )}
-                    </div>
+          <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
+            <span className="flex items-center space-x-1">
+              <Users className="w-4 h-4" />
+              <span>{(course.stats?.totalStudents || 0).toLocaleString()} students</span>
+            </span>
+            <Badge variant="outline">{course.level}</Badge>
+          </div>
 
-                    <CardHeader className="pb-3">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center space-x-1">
-                          <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                          <span className="text-sm font-medium">{course.rating}</span>
-                          <span className="text-sm text-gray-500">({course.students})</span>
-                        </div>
-                        <span className="text-lg font-bold text-blue-600">{course.price}</span>
-                      </div>
+          <div className="flex items-center justify-between pt-3 border-t border-gray-200 dark:border-gray-700">
+            <div className="flex items-center space-x-2">
+              <span className="text-2xl font-bold text-gray-900 dark:text-white">
+                ${course.pricing?.discountPrice ?? course.pricing.amount}
+              </span>
+              {course.pricing?.originalPrice > (course.pricing?.discountPrice ?? course.pricing.amount) && (
+                <span className="text-sm text-gray-500 line-through">
+                  ${course.pricing.originalPrice}
+                </span>
+              )}
+            </div>
 
-                      <CardTitle className="text-lg leading-tight">{course.title}</CardTitle>
-                      <p className="text-sm text-gray-600 dark:text-gray-300">by {course.instructor}</p>
-                      <CardDescription className="mt-2">{course.description}</CardDescription>
-                    </CardHeader>
-
-                    <CardContent className="space-y-4">
-                      {course.enrolled && (
-                        <div>
-                          <div className="flex items-center justify-between text-sm mb-2">
-                            <span className="text-gray-600 dark:text-gray-300">Progress</span>
-                            <span className="font-medium">{course.progress}%</span>
-                          </div>
-                          <Progress value={course.progress} className="h-2" />
-                        </div>
-                      )}
-
-                      <div className="grid grid-cols-3 gap-4 text-sm text-gray-600 dark:text-gray-300">
-                        <div className="flex items-center space-x-1">
-                          <Clock className="w-4 h-4" />
-                          <span>{course.duration}</span>
-                        </div>
-                        <div className="flex items-center space-x-1">
-                          <BookOpen className="w-4 h-4" />
-                          <span>{course.concepts}</span>
-                        </div>
-                        <div className="flex items-center space-x-1">
-                          <Users className="w-4 h-4" />
-                          <span>{course.students}</span>
-                        </div>
-                      </div>
-
-                      <div className="space-y-2">
-                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                          Skills you'll learn:
-                        </span>
-                        <div className="flex flex-wrap gap-1">
-                          {course.skills.slice(0, 3).map((skill, index) => (
-                            <Badge key={index} variant="outline" className="text-xs">
-                              {skill}
-                            </Badge>
-                          ))}
-                          {course.skills.length > 3 && (
-                            <Badge variant="outline" className="text-xs">
-                              +{course.skills.length - 3} more
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="flex space-x-2">
-                        {course.enrolled ? (
-                          <Button className="flex-1" asChild>
-                            <Link href={`/courses/${course.id}`}>
-                              <Play className="w-4 h-4 mr-2" />
-                              Continue Learning
-                            </Link>
-                          </Button>
-                        ) : (
-                          <>
-                            <Button className="flex-1" asChild>
-                              <Link href={`/courses/${course.id}`}>Enroll Now</Link>
-                            </Button>
-                            <Button variant="outline" size="icon">
-                              <BookOpen className="w-4 h-4" />
-                            </Button>
-                          </>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
-
-            {/* Load More */}
-            {sortedCourses.length > 0 && (
-              <div className="text-center mt-8">
-                <Button variant="outline" size="lg">
-                  Load More Courses
+            {course.isEnrolled ? (
+              <Link href={`/courses/${course.slug}`}>
+                <Button className="bg-green-600 hover:bg-green-700">
+                  <Play className="w-4 h-4 mr-2" />
+                  Continue
                 </Button>
-              </div>
+              </Link>
+            ) : (
+              <Button
+                onClick={() => onEnroll(course._id)}
+                disabled={enrollingCourse === course._id}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                {enrollingCourse === course._id ? "Enrolling..." : "Enroll Now"}
+              </Button>
             )}
           </div>
         </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+// Regular Course Card Component
+function CourseCard({ 
+  course, 
+  onEnroll, 
+  enrollingCourse,
+  getLevelIcon,
+  getCategoryIcon
+}: { 
+  course: CourseWithProgress
+  onEnroll: (courseId: string) => void
+  enrollingCourse: string | null
+  getLevelIcon: (level: string) => any
+  getCategoryIcon: (category: string) => any
+}) {
+  const LevelIcon = getLevelIcon(course.level)
+  const CategoryIcon = getCategoryIcon(course.category)
+
+  return (
+    <Card className="group hover:shadow-lg transition-all duration-300 dark:bg-gray-800/80 dark:border-gray-700">
+      <div className="relative">
+        <img
+          src={course.thumbnail || "/placeholder.svg"}
+          alt={course.title}
+          className="w-full h-48 object-cover rounded-t-lg"
+        />
+        {course.isEnrolled && (
+          <div className="absolute top-2 left-2">
+            <Badge className="bg-green-500 text-white">
+              <CheckCircle className="w-3 h-3 mr-1" />
+              Enrolled
+            </Badge>
+          </div>
+        )}
+        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300 rounded-t-lg" />
       </div>
-    </div>
+
+      <CardContent className="p-6">
+        <div className="mb-3">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center space-x-1">
+              <CategoryIcon className="w-4 h-4 text-blue-500" />
+              <Badge variant="secondary" className="text-xs">
+                {course.category}
+              </Badge>
+            </div>
+            <div className="flex items-center space-x-1 text-sm text-yellow-500">
+              <Star className="w-4 h-4 fill-current" />
+              <span>{course.stats?.averageRating?.toFixed(1) || "N/A"}</span>
+            </div>
+          </div>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2 line-clamp-2">
+            {course.title}
+          </h3>
+          <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-2 mb-3">
+            {course.description}
+          </p>
+        </div>
+
+        <div className="space-y-3">
+          <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
+            <span className="flex items-center space-x-1">
+              <BookOpen className="w-4 h-4" />
+              <span>{course.instructor.name}</span>
+            </span>
+            <span className="flex items-center space-x-1">
+              <Clock className="w-4 h-4" />
+              <span>{course.stats?.totalDuration || "N/A"}</span>
+            </span>
+          </div>
+
+          <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
+            <span className="flex items-center space-x-1">
+              <Users className="w-4 h-4" />
+              <span>{(course.stats?.totalStudents || 0).toLocaleString()} students</span>
+            </span>
+            <div className="flex items-center space-x-1">
+              <LevelIcon className="w-4 h-4 text-blue-500" />
+              <Badge variant="outline">{course.level}</Badge>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap gap-1 mb-3">
+            {course.tags.slice(0, 3).map((tag) => (
+              <Badge key={tag} variant="secondary" className="text-xs">
+                {tag}
+              </Badge>
+            ))}
+          </div>
+
+          <div className="flex items-center justify-between pt-3 border-t border-gray-200 dark:border-gray-700">
+            <div className="flex items-center space-x-2">
+              <span className="text-2xl font-bold text-gray-900 dark:text-white">
+                ${course.pricing?.discountPrice ?? course.pricing.amount}
+              </span>
+              {course.pricing?.originalPrice > (course.pricing?.discountPrice ?? course.pricing.amount) && (
+                <span className="text-sm text-gray-500 line-through">
+                  ${course.pricing.originalPrice}
+                </span>
+              )}
+            </div>
+
+            {course.isEnrolled ? (
+              <Link href={`/courses/${course.slug}`}>
+                <Button className="bg-green-600 hover:bg-green-700">
+                  <Play className="w-4 h-4 mr-2" />
+                  Continue
+                </Button>
+              </Link>
+            ) : (
+              <Button
+                onClick={() => onEnroll(course._id)}
+                disabled={enrollingCourse === course._id}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                {enrollingCourse === course._id ? "Enrolling..." : "Enroll Now"}
+              </Button>
+            )}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   )
 }

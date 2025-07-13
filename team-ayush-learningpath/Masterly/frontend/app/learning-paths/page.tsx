@@ -1,301 +1,317 @@
 "use client"
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
+import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Progress } from "@/components/ui/progress"
-import { ArrowRight, CheckCircle, Star, Users, Brain, Target, Zap, BookOpen, Code, Globe } from "lucide-react"
-import Link from "next/link"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Input } from "@/components/ui/input"
+import Quiz from "@/components/Quiz"
+import { apiClient } from "@/lib/api"
+import { Search } from "lucide-react"
+import { QuizPlatform } from "@/components/quiz-platform"
 
-export default function LearningPaths() {
-  const learningPaths = [
-    {
-      id: 1,
-      title: "Full Stack Developer",
-      description: "Master both frontend and backend development",
-      duration: "16 weeks",
-      difficulty: "Intermediate",
-      students: "25K+",
-      rating: 4.8,
-      progress: 45,
-      concepts: 120,
-      completed: 54,
-      icon: Globe,
-      color: "from-blue-500 to-purple-600",
-      skills: ["React", "Node.js", "MongoDB", "System Design"],
-      path: [
-        { name: "Frontend Basics", status: "completed", concepts: 15 },
-        { name: "React Fundamentals", status: "completed", concepts: 20 },
-        { name: "Backend Development", status: "current", concepts: 25 },
-        { name: "Database Design", status: "locked", concepts: 18 },
-        { name: "System Architecture", status: "locked", concepts: 22 },
-        { name: "Deployment & DevOps", status: "locked", concepts: 20 },
-      ],
-    },
-    {
-      id: 2,
-      title: "Data Scientist",
-      description: "From statistics to machine learning and AI",
-      duration: "20 weeks",
-      difficulty: "Advanced",
-      students: "18K+",
-      rating: 4.9,
-      progress: 0,
-      concepts: 95,
-      completed: 0,
-      icon: Brain,
-      color: "from-green-500 to-teal-600",
-      skills: ["Python", "Statistics", "ML", "Deep Learning"],
-      path: [
-        { name: "Python for Data Science", status: "available", concepts: 12 },
-        { name: "Statistics & Probability", status: "locked", concepts: 18 },
-        { name: "Data Analysis", status: "locked", concepts: 15 },
-        { name: "Machine Learning", status: "locked", concepts: 25 },
-        { name: "Deep Learning", status: "locked", concepts: 15 },
-        { name: "MLOps & Deployment", status: "locked", concepts: 10 },
-      ],
-    },
-    {
-      id: 3,
-      title: "Software Engineer",
-      description: "Master algorithms, system design, and coding interviews",
-      duration: "12 weeks",
-      difficulty: "Intermediate",
-      students: "40K+",
-      rating: 4.7,
-      progress: 75,
-      concepts: 85,
-      completed: 64,
-      icon: Code,
-      color: "from-orange-500 to-red-600",
-      skills: ["DSA", "System Design", "Coding Patterns", "Mock Interviews"],
-      path: [
-        { name: "Data Structures", status: "completed", concepts: 20 },
-        { name: "Algorithms", status: "completed", concepts: 25 },
-        { name: "System Design", status: "current", concepts: 15 },
-        { name: "Coding Patterns", status: "locked", concepts: 12 },
-        { name: "Mock Interviews", status: "locked", concepts: 8 },
-        { name: "Behavioral Prep", status: "locked", concepts: 5 },
-      ],
-    },
-  ]
+export default function LearningPathPage() {
+  const router = useRouter()
+  // UI state
+  const [courses, setCourses] = useState<any[]>([])
+  const [selectedCourse, setSelectedCourse] = useState<string | null>(null)
+  const [selectedCourseSlug, setSelectedCourseSlug] = useState<string>("")
+  const [concepts, setConcepts] = useState<any[]>([])
+  const [showSearch, setShowSearch] = useState(false)
+  const [search, setSearch] = useState("")
+  const [searchResults, setSearchResults] = useState<any[]>([])
+  const [selectedConcept, setSelectedConcept] = useState<any>(null)
+  const [conceptDetails, setConceptDetails] = useState<any>(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState("")
+  // Add state to force remount QuizPlatform for retake
+  const [quizKey, setQuizKey] = useState(0);
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "completed":
-        return "text-green-500 bg-green-500"
-      case "current":
-        return "text-blue-500 bg-blue-500"
-      case "available":
-        return "text-purple-500 bg-purple-500"
-      default:
-        return "text-gray-400 bg-gray-400"
+  // Fetch all courses on mount
+  useEffect(() => {
+    setLoading(true)
+    apiClient.getCourses()
+      .then((data) => {
+        setCourses(data.map((c: any) => ({ _id: c._id, title: c.title, slug: c.slug })))
+        setLoading(false)
+      })
+      .catch(() => {
+        setError("Failed to load courses.")
+        setLoading(false)
+      })
+  }, [])
+
+  // When a course is selected, fetch all concepts and filter to those in the course
+  const handleCourseChange = async (courseId: string) => {
+    setSelectedCourse(courseId)
+    setShowSearch(false)
+    setSelectedConcept(null)
+    setConceptDetails(null)
+    setSearch("")
+    setSearchResults([])
+    setError("")
+    setLoading(true)
+    try {
+      const course = courses.find((c) => c._id === courseId)
+      setSelectedCourseSlug(course.slug)
+      // Fetch course details to get concept IDs
+      const courseRes = await apiClient.getCourseBySlug(course.slug)
+      let courseData: any = null;
+      if (courseRes && typeof courseRes === 'object') {
+        if ('data' in courseRes && courseRes.data && typeof courseRes.data === 'object' && 'course' in courseRes.data) {
+          courseData = (courseRes as any).data.course;
+        } else if ('course' in courseRes) {
+          courseData = (courseRes as any).course;
+        }
+      }
+      const courseConceptIds = (courseData?.concepts || []).map((c: any) => String(c.conceptId));
+      // Fetch all concepts
+      const allConcepts = await apiClient.getConcepts();
+      // Filter only concepts that are in this course (by _id)
+      const filteredConcepts = allConcepts.filter((concept: any) => {
+        const conceptIdStr = typeof concept._id === 'string' ? concept._id : concept._id?.$oid || '';
+        return courseConceptIds.includes(conceptIdStr);
+      });
+      console.log('Filtered concepts:', filteredConcepts);
+      setConcepts(filteredConcepts);
+    } catch {
+      setError("Failed to load concepts.");
     }
+    setLoading(false);
   }
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case "completed":
-        return <CheckCircle className="w-4 h-4" />
-      case "current":
-        return <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
-      case "available":
-        return <div className="w-2 h-2 bg-white rounded-full" />
-      default:
-        return <div className="w-2 h-2 bg-white rounded-full opacity-50" />
+  // When user clicks 'Search Custom Path', show search bar and all concepts
+  const handleShowSearch = () => {
+    setShowSearch(true)
+    setSearch("")
+    setSearchResults([...concepts])
+    setSelectedConcept(null)
+    setConceptDetails(null)
+  }
+
+  // Filter search results as user types
+  useEffect(() => {
+    if (showSearch) {
+      if (search.trim().length > 0) {
+        setSearchResults(concepts.filter((c: any) =>
+          c.title.toLowerCase().includes(search.trim().toLowerCase())
+        ))
+      } else {
+        setSearchResults([...concepts])
+      }
+    }
+  }, [search, concepts, showSearch])
+
+  // When a concept is clicked, fetch its details
+  const handleConceptClick = async (concept: any) => {
+    setSelectedConcept(concept)
+    setConceptDetails(null)
+    setLoading(true)
+    try {
+      const res = await apiClient.getConceptById(concept._id)
+      setConceptDetails(res)
+    } catch {
+      setError("Failed to load concept details.")
+    }
+    setLoading(false)
+  }
+
+  // Handle Start Complete Learning
+  const handleStartCompleteCourse = async () => {
+    if (!selectedCourse || !selectedCourseSlug) return
+    setLoading(true)
+    try {
+      await apiClient.enrollInCourse(selectedCourse)
+      setLoading(false)
+      router.push(`/courses/${selectedCourseSlug}`)
+    } catch (e: any) {
+      setLoading(false)
+      if (
+        typeof e?.message === 'string' &&
+        e.message.toLowerCase().includes('already enrolled')
+      ) {
+        router.push(`/courses/${selectedCourseSlug}`)
+      } else {
+        setError(e?.message || 'Failed to enroll in course.')
+      }
     }
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-      {/* Header */}
-      <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-b px-6 py-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">Personalized Learning Paths</h1>
-            <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
-              AI-curated learning journeys tailored to your goals, current knowledge, and learning pace
-            </p>
-          </div>
-
-          <div className="flex items-center justify-center space-x-8 text-sm text-gray-600 dark:text-gray-300">
-            <div className="flex items-center space-x-2">
-              <Target className="w-4 h-4 text-blue-500" />
-              <span>Goal-oriented</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Zap className="w-4 h-4 text-yellow-500" />
-              <span>Adaptive difficulty</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Brain className="w-4 h-4 text-purple-500" />
-              <span>AI-powered</span>
-            </div>
-          </div>
+    <div className="max-w-6xl mx-auto py-10 px-4 flex flex-col md:flex-row gap-8">
+      {/* Left info/marketing panel */}
+      <div className="hidden md:flex flex-col justify-center items-start w-1/2 min-w-[320px] max-w-2xl bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 dark:from-blue-900/40 dark:via-purple-900/40 dark:to-pink-900/40 rounded-2xl shadow-lg p-10 border border-blue-100 dark:border-blue-900/30 sticky top-8 h-fit self-start">
+        <h1 className="text-4xl font-extrabold mb-4 leading-tight">
+          <span className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-500 bg-clip-text text-transparent">AI-Powered Learning Paths</span>
+        </h1>
+        <p className="text-lg text-muted-foreground mb-6">
+          <span className="text-blue-700 font-semibold">Personalize</span> your journey, <span className="text-purple-700 font-semibold">unlock</span> any topic, and <span className="text-pink-600 font-semibold">master</span> skills at your own pace.<br/>
+          Choose a course, start from the beginning or any node, and let our platform guide you through all prerequisites with interactive quizzes.
+        </p>
+        <div className="flex flex-col gap-2 mt-4">
+          <span className="inline-block bg-gradient-to-r from-blue-500 to-purple-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow">Dynamic</span>
+          <span className="inline-block bg-gradient-to-r from-pink-500 to-purple-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow">Adaptive</span>
+          <span className="inline-block bg-gradient-to-r from-green-400 to-blue-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow">Skill-Based</span>
         </div>
       </div>
-
-      <div className="max-w-7xl mx-auto p-6">
-        {/* Create Custom Path CTA - Moved to Top */}
-        <Card className="mb-8 bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 border-purple-200 dark:border-purple-800 dark:bg-gray-800/80 dark:border-gray-700">
-          <CardHeader className="text-center">
-            <CardTitle className="text-2xl text-purple-700 text-gray-900 dark:text-white">
-              Create Your Custom Path
-            </CardTitle>
-            <CardDescription className="text-lg text-gray-600 dark:text-gray-300">
-              Can't find the perfect path? Let our AI create a personalized learning journey just for you
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="text-center">
-            <Button
-              size="lg"
-              className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
-              asChild
-            >
-              <Link href="/learning-paths/custom">
-                <Brain className="w-4 h-4 mr-2" />
-                Generate Custom Path
-              </Link>
-            </Button>
-          </CardContent>
-        </Card>
-
-        {/* Predefined Learning Paths */}
-        <div className="space-y-8">
-          <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">Predefined Learning Paths</h2>
-            <Badge variant="outline">{learningPaths.length} Paths Available</Badge>
-          </div>
-
-          {learningPaths.map((path) => (
-            <Card
-              key={path.id}
-              className="overflow-hidden hover:shadow-xl transition-all duration-300 dark:bg-gray-800/80 dark:border-gray-700"
-            >
-              <div className="grid lg:grid-cols-3 gap-6">
-                {/* Path Info */}
-                <div className="lg:col-span-1 p-6">
-                  <div className="flex items-center space-x-3 mb-4">
-                    <div
-                      className={`w-12 h-12 rounded-xl bg-gradient-to-r ${path.color} flex items-center justify-center`}
-                    >
-                      <path.icon className="w-6 h-6 text-white" />
-                    </div>
-                    <div>
-                      <h3 className="text-xl font-bold text-gray-900 dark:text-white">{path.title}</h3>
-                      <p className="text-gray-600 dark:text-gray-300">{path.description}</p>
-                    </div>
-                  </div>
-
-                  <div className="space-y-3 mb-6">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600 dark:text-gray-300">Progress</span>
-                      <span className="font-medium">{path.progress}%</span>
-                    </div>
-                    <Progress value={path.progress} className="h-2" />
-
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                      <div>
-                        <span className="text-gray-600 dark:text-gray-300">Duration</span>
-                        <div className="font-medium">{path.duration}</div>
-                      </div>
-                      <div>
-                        <span className="text-gray-600 dark:text-gray-300">Concepts</span>
-                        <div className="font-medium">
-                          {path.completed}/{path.concepts}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between text-sm">
-                      <div className="flex items-center space-x-1">
-                        <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                        <span>{path.rating}</span>
-                      </div>
-                      <div className="flex items-center space-x-1">
-                        <Users className="w-4 h-4 text-gray-400" />
-                        <span>{path.students}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-3">
-                    <div>
-                      <span className="text-sm text-gray-600 dark:text-gray-300 mb-2 block">Key Skills</span>
-                      <div className="flex flex-wrap gap-2">
-                        {path.skills.map((skill, index) => (
-                          <Badge key={index} variant="secondary" className="text-xs">
-                            {skill}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-
-                    <Button className="w-full" asChild>
-                      <Link href={`/learning-paths/${path.id}`}>
-                        {path.progress > 0 ? "Continue Path" : "Start Path"}
-                        <ArrowRight className="w-4 h-4 ml-2" />
-                      </Link>
-                    </Button>
-                  </div>
+      {/* Right interactive panel */}
+      <div className="w-full md:w-1/2 min-w-[320px] max-w-2xl flex flex-col justify-center min-h-[600px]">
+        <div className="rounded-2xl border-4 border-transparent bg-gradient-to-br from-blue-100 via-purple-100 to-pink-100 dark:from-blue-900/30 dark:via-purple-900/30 dark:to-pink-900/30 shadow-2xl p-0 relative overflow-hidden min-h-[600px] flex flex-col justify-center">
+          <div className="relative z-10 p-8 flex-1 flex flex-col justify-center">
+            <h2 className="text-3xl font-extrabold mb-6 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-500 bg-clip-text text-transparent">Create Your Learning Path</h2>
+            {error && <div className="mb-4 text-destructive font-semibold">{error}</div>}
+            {/* Course selection dropdown */}
+            <div className="mb-4">
+              <label className="block mb-1 font-bold text-lg bg-gradient-to-r from-blue-600 via-purple-600 to-pink-500 bg-clip-text text-transparent">Select Course</label>
+              <Select value={selectedCourse || ""} onValueChange={handleCourseChange} disabled={loading}>
+                <SelectTrigger className="w-full text-base font-semibold border-2 border-blue-300 focus:border-blue-500 shadow-md focus:shadow-lg transition-all">
+                  <SelectValue placeholder={loading ? "Loading courses..." : "Choose a course"} />
+                </SelectTrigger>
+                <SelectContent>
+                  {courses.map((course) => (
+                    <SelectItem key={course._id} value={course._id}>{course.title}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            {/* After course selection */}
+            {selectedCourse && (
+              <>
+                <div className="mb-6">
+                  <h2 className="text-2xl font-extrabold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-500 bg-clip-text text-transparent">{courses.find(c => c._id === selectedCourse)?.title}</h2>
                 </div>
-
-                {/* Visual Path - Fixed vertical lines issue */}
-                <div className="lg:col-span-2 p-6 bg-gray-50 dark:bg-gray-800/80">
-                  <h4 className="font-semibold mb-4 flex items-center text-gray-900 dark:text-white">
-                    <BookOpen className="w-4 h-4 mr-2" />
-                    Learning Journey
-                  </h4>
-
-                  <div className="space-y-4">
-                    {path.path.map((step, index) => (
-                      <div key={index} className="relative">
-                        <div className="flex items-center space-x-4">
-                          {/* Step Indicator */}
-                          <div
-                            className={`w-8 h-8 rounded-full flex items-center justify-center ${getStatusColor(step.status)} relative z-10`}
-                          >
-                            {getStatusIcon(step.status)}
-                          </div>
-
-                          {/* Step Content */}
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center justify-between">
-                              <h5
-                                className={`font-medium ${step.status === "locked" ? "text-gray-400" : "text-gray-900 dark:text-white"}`}
-                              >
-                                {step.name}
-                              </h5>
-                              <span
-                                className={`text-xs ${step.status === "locked" ? "text-gray-400" : "text-gray-600 dark:text-gray-300"}`}
-                              >
-                                {step.concepts} concepts
-                              </span>
-                            </div>
-
-                            {step.status === "current" && (
-                              <div className="mt-2">
-                                <div className="flex items-center justify-between text-xs text-gray-600 dark:text-gray-300 mb-1">
-                                  <span>In Progress</span>
-                                  <span>12/25 concepts</span>
-                                </div>
-                                <Progress value={48} className="h-1" />
-                              </div>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Connection Line - Fixed positioning */}
-                        {index < path.path.length - 1 && (
-                          <div className="ml-4 mt-2 mb-2 w-0.5 h-4 bg-gray-300 dark:bg-gray-600"></div>
-                        )}
+                <div className="flex flex-col md:flex-row gap-4 mb-8">
+                  <Button className="w-full bg-gradient-to-r from-green-500 to-blue-500 text-white font-bold shadow-lg text-lg py-3" onClick={handleStartCompleteCourse} disabled={loading}>
+                    {loading ? "Processing..." : "Start Complete Learning"}
+                  </Button>
+                  <Button className="w-full bg-gradient-to-r from-blue-500 to-purple-500 text-white font-bold shadow-lg text-lg py-3" onClick={handleShowSearch}>
+                    Search Custom Path
+                  </Button>
+                </div>
+                {concepts.length === 0 && <div className="mb-4 text-lg text-red-500 font-semibold">No concepts found for this course.</div>}
+              </>
+            )}
+            {/* Search bar and results */}
+            {showSearch && selectedCourse && concepts.length > 0 && !conceptDetails && (
+              <div className="mb-8">
+                <label className="block mb-2 font-extrabold text-xl bg-gradient-to-r from-blue-600 via-purple-600 to-pink-500 bg-clip-text text-transparent">Search for a Concept</label>
+                <div className="relative rounded-2xl overflow-hidden mb-4">
+                  <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-blue-400 w-7 h-7 z-10" />
+                  <Input
+                    type="text"
+                    placeholder="Type concept title..."
+                    value={search}
+                    onChange={e => setSearch(e.target.value)}
+                    className="w-full text-lg pl-14 py-4 border-4 border-blue-400 focus:border-blue-600 shadow-xl focus:shadow-2xl transition-all bg-white dark:bg-gray-900 text-primary font-bold relative z-10 placeholder:text-blue-400 rounded-2xl"
+                    autoFocus
+                  />
+                </div>
+                <div className="max-h-72 overflow-y-auto space-y-3 pr-1">
+                  {searchResults.length === 0 ? (
+                    <div className="text-muted-foreground text-lg font-semibold">No topics found.</div>
+                  ) : (
+                    searchResults.map((concept: any) => (
+                      <Card
+                        key={concept._id}
+                        className={`transition-all border-2 ${selectedConcept?._id === concept._id ? 'border-gradient-to-r from-blue-500 to-purple-500 bg-primary/10' : 'border-transparent bg-card hover:border-blue-400'} cursor-pointer group`}
+                        onClick={() => handleConceptClick(concept)}
+                      >
+                        <CardContent className="py-4 px-6 flex flex-col gap-1">
+                          <span className="font-semibold text-lg bg-gradient-to-r from-blue-600 via-purple-600 to-pink-500 bg-clip-text text-transparent group-hover:text-blue-700 transition-colors">
+                            {concept.title}
+                          </span>
+                        </CardContent>
+                      </Card>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
+            {/* Concept details view */}
+            {conceptDetails && (
+              <div className="mb-10 mt-6 border-t-4 border-blue-300 pt-8 w-full">
+                <Button
+                  className="mb-6 bg-gradient-to-r from-blue-500 to-purple-500 text-white font-bold shadow-lg text-base px-6 py-2"
+                  onClick={() => { setConceptDetails(null); setSelectedConcept(null); }}
+                >
+                  ← Back to Search
+                </Button>
+                <div className="mb-6">
+                  <div className="mb-4 p-4 rounded-xl border-2 border-blue-400 bg-white/80 dark:bg-gray-900/60 shadow flex flex-col gap-2 relative">
+                    <h3 className="text-3xl font-extrabold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-500 bg-clip-text text-transparent mb-2">
+                      {conceptDetails.title}
+                    </h3>
+                    {/* Description/theory */}
+                    {(conceptDetails.description || conceptDetails.content?.intro) && (
+                      <div className="mb-4">
+                        <h4 className="font-bold mb-1 text-blue-700">Description</h4>
+                        <p className="text-base text-muted-foreground">{conceptDetails.description || conceptDetails.content?.intro}</p>
                       </div>
-                    ))}
+                    )}
+                    {/* Video */}
+                    {conceptDetails.videoUrl && (
+                      <div className="mb-4">
+                        <h4 className="font-bold mb-1 text-blue-700">Video</h4>
+                        <video controls className="w-full rounded-xl border border-blue-200">
+                          <source src={conceptDetails.videoUrl} type="video/mp4" />
+                          Your browser does not support the video tag.
+                        </video>
+                      </div>
+                    )}
+                    {/* Content Sections */}
+                    {conceptDetails.content?.sections && conceptDetails.content.sections.length > 0 && (
+                      <div className="mb-4">
+                        <h4 className="font-bold mb-2 text-purple-700">Content</h4>
+                        <div className="space-y-6">
+                          {conceptDetails.content.sections.map((section: any, idx: number) => (
+                            <div key={idx} className="p-4 rounded-xl border border-purple-200 bg-purple-50 dark:bg-gray-900/30">
+                              <h5 className="font-bold text-lg mb-1 text-purple-700">{section.heading}</h5>
+                              <p className="mb-2 text-base text-muted-foreground">{section.content}</p>
+                              {section.codeExamples && section.codeExamples.length > 0 && (
+                                <div className="bg-gray-900 text-white rounded-lg p-3 overflow-x-auto text-sm">
+                                  {section.codeExamples.map((code: string, cidx: number) => (
+                                    <pre key={cidx} className="mb-2 whitespace-pre-wrap"><code>{code}</code></pre>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {/* Quiz */}
+                    {conceptDetails.quiz && conceptDetails.quiz.questions && conceptDetails.quiz.questions.length > 0 && (
+                      <div className="mb-4">
+                        <h4 className="font-bold mb-2 text-green-700">Quiz</h4>
+                        <QuizPlatform
+                          key={quizKey}
+                          quiz={{
+                            id: conceptDetails.quiz._id || conceptDetails._id,
+                            title: `Quiz: ${conceptDetails.title}`,
+                            timeLimit: 600,
+                            questions: conceptDetails.quiz.questions,
+                            completed: false,
+                            totalQuestions: conceptDetails.quiz.questions.length,
+                            testType: 'concept_quiz',
+                            conceptId: conceptDetails._id,
+                            passingScore: 75,
+                          }}
+                          allowRetake={true}
+                          showReview={true}
+                          onQuizComplete={() => {}}
+                          onQuizClose={() => setQuizKey(prev => prev + 1)}
+                        />
+                        <Button className="mt-4" onClick={() => setQuizKey(prev => prev + 1)}>
+                          Retake Quiz
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
-            </Card>
-          ))}
+            )}
+          </div>
         </div>
       </div>
     </div>

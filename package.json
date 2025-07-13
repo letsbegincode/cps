@@ -1,0 +1,9 @@
+{
+  "dependencies": {
+    "framer-motion": "^12.23.0",
+    "graphlib": "^2.1.8"
+  },
+  "devDependencies": {
+    "@types/graphlib": "^2.1.12"
+  }
+}

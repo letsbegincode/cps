@@ -3,14 +3,15 @@ import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
+import { AuthProvider } from "@/components/auth-provider"
 import { Toaster } from "@/components/toaster"
+import Head from "next/head"
 
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Masterly - Personalized Learning Platform",
-  description: "Master skills with AI-powered personalized learning paths",
-    generator: 'v0.dev'
+  title: "EduPlatform - Learn, Grow, Succeed",
+  description: "Master new skills with our comprehensive educational platform",
 }
 
 export default function RootLayout({
@@ -20,10 +21,15 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <Head>
+        <link rel="icon" href="/favicon.ico" type="image/ico" />
+      </Head>
       <body className={inter.className}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-          {children}
-          <Toaster />
+          <AuthProvider>
+            {children}
+            <Toaster />
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>

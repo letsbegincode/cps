@@ -1,2 +1,25 @@
-"cps/" 
+# Node
 node_modules/
+
+# Build output
+.next/
+out/
+dist/
+
+# Env
+.env
+.env.local
+.env.production
+.env.development
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# Editor/OS
+.vscode/
+.DS_Store
+
+# System
+*.log

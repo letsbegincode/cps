@@ -1,12 +1,59 @@
+"use client"
+
+import { useEffect } from "react"
+import { useRouter } from "next/navigation"
+import Link from "next/link"
+import Image from "next/image"
+import { 
+  BookOpen, Brain, Target, TrendingUp, Users, 
+  ArrowRight, Play, Star, CheckCircle, LogOut, Shield, User 
+} from 'lucide-react'
+import { useAuthStore } from "@/lib/auth"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { BookOpen, Brain, Target, TrendingUp, Users, ArrowRight, Play, Star, CheckCircle } from "lucide-react"
-import Link from "next/link"
-import Image from "next/image"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 export default function LandingPage() {
+  const router = useRouter()
+  const { user, isAuthenticated, logout, isLoading, checkAuth } = useAuthStore()
+
+  // Initialize auth state
+  useEffect(() => {
+    checkAuth().catch(console.error)
+  }, [checkAuth])
+
+  const handleLogout = async () => {
+    try {
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/logout-all`, {
+        method: "POST",
+        credentials: "include",
+      });
+      window.location.href = "/";
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
+  }
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+        <div className="text-center">
+          <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-lg font-medium text-gray-900 dark:text-white">Loading...</p>
+        </div>
+      </div>
+    )
+  }
+
   const courses = [
     {
       title: "Data Structures & Algorithms",
@@ -68,6 +115,8 @@ export default function LandingPage() {
       {/* Header */}
       <header className="border-b bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+          
+          {/* Branding */}
           <div className="flex items-center space-x-2">
             <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
               <BookOpen className="w-5 h-5 text-white" />
@@ -76,32 +125,23 @@ export default function LandingPage() {
               Masterly
             </span>
           </div>
+
+          {/* Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
-            <Link
-              href="#courses"
-              className="text-gray-600 hover:text-blue-600 transition-colors dark:text-gray-300 dark:hover:text-blue-400"
-            >
-              Courses
-            </Link>
-            <Link
-              href="#features"
-              className="text-gray-600 hover:text-blue-600 transition-colors dark:text-gray-300 dark:hover:text-blue-400"
-            >
-              Features
-            </Link>
-            <Link
-              href="#pricing"
-              className="text-gray-600 hover:text-blue-600 transition-colors dark:text-gray-300 dark:hover:text-blue-400"
-            >
-              Pricing
-            </Link>
+            <NavLink href="#courses">Courses</NavLink>
+            <NavLink href="#features">Features</NavLink>
+            
             <ThemeToggle />
-            <Button variant="outline" asChild>
-              <Link href="/login">Sign In</Link>
-            </Button>
-            <Button asChild>
-              <Link href="/signup">Get Started</Link>
-            </Button>
+
+            {/* Authentication Section */}
+            {isAuthenticated ? (
+              <UserDropdown 
+                user={user} 
+                onLogout={handleLogout}
+              />
+            ) : (
+              <AuthButtons />
+            )}
           </nav>
         </div>
       </header>
@@ -121,15 +161,27 @@ export default function LandingPage() {
               master concepts through interactive quizzes and real-world projects.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-              <Button
-                size="lg"
-                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-                asChild
-              >
-                <Link href="/dashboard">
-                  Start Learning <ArrowRight className="ml-2 w-4 h-4" />
-                </Link>
-              </Button>
+              {isAuthenticated ? (
+                <Button
+                  size="lg"
+                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                  asChild
+                >
+                  <Link href="/dashboard">
+                    Continue Learning <ArrowRight className="ml-2 w-4 h-4" />
+                  </Link>
+                </Button>
+              ) : (
+                <Button
+                  size="lg"
+                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                  asChild
+                >
+                  <Link href="/signup">
+                    Start Learning <ArrowRight className="ml-2 w-4 h-4" />
+                  </Link>
+                </Button>
+              )}
               <Button size="lg" variant="outline" className="group">
                 <Play className="mr-2 w-4 h-4 group-hover:scale-110 transition-transform" />
                 Watch Demo
@@ -302,7 +354,9 @@ export default function LandingPage() {
                     <span>📖 {course.concepts} concepts</span>
                   </div>
                   <Button className="w-full" asChild>
-                    <Link href="/dashboard">Start Learning</Link>
+                    <Link href={isAuthenticated ? "/dashboard" : "/signup"}>
+                      {isAuthenticated ? "Continue Learning" : "Start Learning"}
+                    </Link>
                   </Button>
                 </CardContent>
               </Card>
@@ -319,12 +373,20 @@ export default function LandingPage() {
             Join thousands of learners who have accelerated their careers with personalized learning paths
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" variant="secondary" asChild>
-              <Link href="/signup">
-                Start Free Trial <ArrowRight className="ml-2 w-4 h-4" />
-              </Link>
-            </Button>
-            <Button size="lg" variant="outline" className="border-white text-gray-400 hover:bg-white hover:text-blue-600">
+            {isAuthenticated ? (
+              <Button size="lg" variant="secondary" asChild>
+                <Link href="/dashboard">
+                  Go to Dashboard <ArrowRight className="ml-2 w-4 h-4" />
+                </Link>
+              </Button>
+            ) : (
+              <Button size="lg" variant="secondary" asChild>
+                <Link href="/signup">
+                  Start Free Trial <ArrowRight className="ml-2 w-4 h-4" />
+                </Link>
+              </Button>
+            )}
+            <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-blue-600">
               Schedule Demo
             </Button>
           </div>
@@ -348,23 +410,18 @@ export default function LandingPage() {
               <h3 className="font-semibold mb-4">Platform</h3>
               <ul className="space-y-2 text-gray-400">
                 <li>
-                  <Link href="#" className="hover:text-white transition-colors">
+                  <Link href="/courses" className="hover:text-white transition-colors">
                     Courses
                   </Link>
                 </li>
                 <li>
-                  <Link href="#" className="hover:text-white transition-colors">
+                  <Link href="/learning-paths" className="hover:text-white transition-colors">
                     Learning Paths
                   </Link>
                 </li>
                 <li>
-                  <Link href="#" className="hover:text-white transition-colors">
+                  <Link href="/mock-tests" className="hover:text-white transition-colors">
                     Mock Tests
-                  </Link>
-                </li>
-                <li>
-                  <Link href="#" className="hover:text-white transition-colors">
-                    Certifications
                   </Link>
                 </li>
               </ul>
@@ -373,22 +430,17 @@ export default function LandingPage() {
               <h3 className="font-semibold mb-4">Support</h3>
               <ul className="space-y-2 text-gray-400">
                 <li>
-                  <Link href="#" className="hover:text-white transition-colors">
+                  <Link href="/help" className="hover:text-white transition-colors">
                     Help Center
                   </Link>
                 </li>
                 <li>
-                  <Link href="#" className="hover:text-white transition-colors">
-                    Community
-                  </Link>
-                </li>
-                <li>
-                  <Link href="#" className="hover:text-white transition-colors">
+                  <Link href="/help" className="hover:text-white transition-colors">
                     Contact Us
                   </Link>
                 </li>
                 <li>
-                  <Link href="#" className="hover:text-white transition-colors">
+                  <Link href="/dashboard" className="hover:text-white transition-colors">
                     Status
                   </Link>
                 </li>
@@ -398,22 +450,22 @@ export default function LandingPage() {
               <h3 className="font-semibold mb-4">Company</h3>
               <ul className="space-y-2 text-gray-400">
                 <li>
-                  <Link href="#" className="hover:text-white transition-colors">
+                  <Link href="/about" className="hover:text-white transition-colors">
                     About
                   </Link>
                 </li>
                 <li>
-                  <Link href="#" className="hover:text-white transition-colors">
+                  <Link href="/careers" className="hover:text-white transition-colors">
                     Careers
                   </Link>
                 </li>
                 <li>
-                  <Link href="#" className="hover:text-white transition-colors">
+                  <Link href="/profile" className="hover:text-white transition-colors">
                     Privacy
                   </Link>
                 </li>
                 <li>
-                  <Link href="#" className="hover:text-white transition-colors">
+                  <Link href="/settings" className="hover:text-white transition-colors">
                     Terms
                   </Link>
                 </li>
@@ -428,3 +480,83 @@ export default function LandingPage() {
     </div>
   )
 }
+
+// Component for navigation links
+const NavLink = ({ href, children }: { href: string, children: React.ReactNode }) => (
+  <Link href={href} className="text-gray-600 hover:text-blue-600 transition-colors dark:text-gray-300 dark:hover:text-blue-400">
+    {children}
+  </Link>
+)
+
+// Component for authenticated user dropdown
+const UserDropdown = ({ user, onLogout }: { user: any, onLogout: () => void }) => (
+  <DropdownMenu>
+    <DropdownMenuTrigger asChild>
+      <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+        <Avatar className="h-8 w-8">
+          <AvatarImage src={user?.profile?.avatar} alt="User avatar" />
+          <AvatarFallback className="bg-muted">
+            {user?.email?.charAt(0).toUpperCase() || "U"}
+          </AvatarFallback>
+        </Avatar>
+      </Button>
+    </DropdownMenuTrigger>
+    <DropdownMenuContent className="w-56" align="end" forceMount>
+      <div className="flex items-center gap-2 p-2">
+        <div className="flex flex-col space-y-1 leading-none">
+          <p className="font-medium">
+            {user?.profile?.fullName || user?.email?.split('@')[0] || 'User'}
+          </p>
+          <p className="text-sm text-muted-foreground truncate">
+            {user?.email}
+          </p>
+        </div>
+      </div>
+      <DropdownMenuSeparator />
+      <DropdownMenuItem asChild>
+        <Link href="/dashboard" className="w-full">Dashboard</Link>
+      </DropdownMenuItem>
+      <DropdownMenuItem asChild>
+        <Link href="/profile" className="w-full">Profile</Link>
+      </DropdownMenuItem>
+      <DropdownMenuSeparator />
+      <DropdownMenuItem 
+        onClick={onLogout}
+        className="cursor-pointer focus:bg-destructive/10 focus:text-destructive"
+      >
+        <LogOut className="mr-2 h-4 w-4" />
+        Log out
+      </DropdownMenuItem>
+    </DropdownMenuContent>
+  </DropdownMenu>
+)
+
+// Component for authentication buttons
+const AuthButtons = () => (
+  <div className="flex items-center space-x-2">
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="outline">
+          Sign In
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent className="w-48" align="end">
+        <DropdownMenuItem asChild>
+          <Link href="/login" className="flex items-center w-full">
+            <User className="mr-2 h-4 w-4" />
+            User Login
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link href="/admin/login" className="flex items-center w-full">
+            <Shield className="mr-2 h-4 w-4" />
+            Admin Login
+          </Link>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+    <Button asChild variant="default">
+      <Link href="/signup">Sign Up</Link>
+    </Button>
+  </div>
+)

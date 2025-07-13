@@ -260,7 +260,7 @@ Output: 3
                 Mastery: {conceptData.masteryScore.toFixed(1)}/10
               </Badge>
               <Button variant="outline" asChild>
-                <Link href={`/courses/${params.id}`}>
+                <Link href={`/courses/${params.id}`} legacyBehavior>
                   <ArrowLeft className="w-4 h-4 mr-2" />
                   Back to Course
                 </Link>
@@ -677,5 +677,5 @@ Output: 3
         </Tabs>
       </div>
     </div>
-  )
+  );
 }
