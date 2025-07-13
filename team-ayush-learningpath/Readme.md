@@ -235,14 +235,12 @@ GOOGLE_CLIENT_ID=your_google_oauth_client_id
 - **Mobile-optimized** quiz interface
 
 ---
-## 👥 **Team Members**
+## 👥 **Team Details**
 
 This project was developed as part of our internship program. We worked collaboratively as a team to build this comprehensive learning platform:
 
-### **Team Lead**
-- **Ayush Singh** - ayushsinghtechcs@gmail.com
-
-### **Development Team**
+### **Team Members**
+- **Ayush Singh** - ayushsinghtechcs@gmail.com  (Team Lead)
 - **Abhinav Ranjan Sulabh** - abhinavranjan.dev@gmail.com
 - **Ankit Pandey** - ankit211275@gmail.com
 - **Titus George** - titusgeorge2004@gmail.com
